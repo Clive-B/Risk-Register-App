@@ -1,0 +1,39 @@
+const { logAudit } = require('../utils/auditLogger');
+
+module.exports = (...allowedRoles) => {
+
+    return async (req, res, next) => {
+
+        // req.user comes from authMiddleware
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Authentication required.'
+            });
+        }
+
+        if (!allowedRoles.includes(req.user.role)) {
+            await logAudit({
+                req,
+                action: 'ACCESS_DENIED',
+                entityType: 'API',
+                entityId: req.originalUrl,
+                status: 'Denied',
+                details: {
+                    method: req.method,
+                    allowedRoles,
+                    attemptedRole: req.user.role
+                }
+            });
+
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. You do not have permission.'
+            });
+        }
+
+        next();
+
+    };
+
+};

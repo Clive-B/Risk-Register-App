@@ -1,0 +1,33 @@
+/* Administration pages own their sidebar colours explicitly. */
+body .sidebar {
+    padding: 24px 20px;
+    background: linear-gradient(180deg, #003a70 0%, #00457f 100%);
+    color: #fff;
+    box-shadow: 8px 0 24px rgba(0, 35, 68, .12);
+}
+
+body .sidebar .sidebar-nav a {
+    color: rgba(255, 255, 255, .92);
+    font-weight: 600;
+}
+
+body .sidebar .sidebar-nav a:hover,
+body .sidebar .sidebar-nav a:focus-visible {
+    background: rgba(255, 255, 255, .14);
+    color: #fff;
+}
+
+body .sidebar .sidebar-nav a:focus-visible {
+    outline: 3px solid #ffc72c;
+    outline-offset: 2px;
+}
+
+body .sidebar .sidebar-nav .active a {
+    background: #0874c9;
+    color: #fff;
+    box-shadow: inset 4px 0 0 #ffc72c;
+}
+
+body .sidebar .sidebar-footer {
+    border-top-color: rgba(255, 255, 255, .18);
+}

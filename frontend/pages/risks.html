@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consolidated Risk Register</title>
+<link rel="stylesheet" href="../css/risks.css?v=13">
+<link rel="stylesheet" href="../css/approval-dialog.css?v=4">
+<link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
+
+<body>
+
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+<div id="riskModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add Risk</h2>
+            <span id="closeModal" class="close-btn">&times;</span>
+        </div>
+
+        <div class="form-grid">
+            <div class="form-group full-width">
+                <label>Risk Title</label>
+                <input id="risk_title" maxlength="200" placeholder="Enter risk title">
+            </div>
+
+            <div class="form-group full-width">
+                <label>Risk Description</label>
+                <textarea id="risk_description" rows="4" placeholder="Describe the risk event, cause, and possible consequence"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Risk Category</label>
+                <select id="risk_category">
+                    <option value="">Select Category</option>
+                    <option>Strategic</option>
+                    <option>Financial</option>
+                    <option>Operational</option>
+                    <option>Reputational</option>
+                    <option>Human Capital</option>
+                    <option>Regulatory Compliance</option>
+                    <option>Supervision</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Division</label>
+                <select id="directorate">
+                    <option value="">Select Division</option>
+                    <option>RIPS</option>
+                    <option>Legal</option>
+                    <option>Regulatory Administration</option>
+                    <option>Consumer Affairs</option>
+                    <option>Corporate Affairs</option>
+                    <option>Finance</option>
+                    <option>Engineering</option>
+                    <option>Information Technology</option>
+                    <option>Procurement and Protocol</option>
+                    <option>Internal Audit</option>
+                    <option>Human Resource</option>
+                    <option>ROD</option>
+                    <option>Administration</option>
+                    <option>Cybersecurity</option>
+                    <option>International Affairs</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Business Unit</label>
+                <input id="business_unit" placeholder="Business unit">
+            </div>
+
+            <div class="form-group">
+                <label>Programme / Project</label>
+                <input id="programme_project" placeholder="Programme or project">
+            </div>
+
+            <div id="sourceActionPointGroup" class="form-group full-width" hidden>
+                <label>Work-plan Action Point</label>
+                <textarea id="source_action_point" rows="2" placeholder="Work-plan action point"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Risk Owner</label>
+                <input id="risk_owner" placeholder="Responsible officer or unit">
+            </div>
+
+            <div class="form-group">
+                <label>Date Identified</label>
+                <input id="date_identified" type="date">
+            </div>
+
+            <div class="form-group">
+                <label>Assessment Year</label>
+                <input id="assessment_year" type="number" min="2020" max="2100">
+            </div>
+
+            <div class="form-group">
+                <label>Risk Treatment</label>
+                <select id="risk_treatment">
+                    <option value="">Select Treatment</option>
+                    <option>Terminate</option>
+                    <option>Treat</option>
+                    <option>Transfer</option>
+                    <option>Tolerate</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Likelihood</label>
+                <select id="likelihood">
+                    <option value="">Select Likelihood</option>
+                    <option value="1">1 - Rare (Very Low)</option>
+                    <option value="2">2 - Unlikely (Low)</option>
+                    <option value="3">3 - Possible (Medium)</option>
+                    <option value="4">4 - Likely (High)</option>
+                    <option value="5">5 - Almost Certain (Very High)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Impact</label>
+                <select id="impact">
+                    <option value="">Select Impact</option>
+                    <option value="1">1 - Insignificant (Very Low)</option>
+                    <option value="2">2 - Minor (Low)</option>
+                    <option value="3">3 - Moderate (Medium)</option>
+                    <option value="4">4 - Major (High)</option>
+                    <option value="5">5 - Catastrophic (Very High)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Inherent Risk Score</label>
+                <input id="inherent_risk_score" disabled value="0">
+            </div>
+
+            <div class="form-group">
+                <label>Risk Level</label>
+                <input id="risk_level" disabled value="Low">
+            </div>
+
+            <div class="form-group">
+                <label>Residual Risk Score</label>
+                <input id="residual_risk_score" type="number" min="1" max="25" value="1">
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select id="status">
+                    <option>Draft</option>
+                    <option>Submitted</option>
+                    <option>Under Review</option>
+                    <option>Accepted</option>
+                    <option>Returned</option>
+                    <option>Treatment In Progress</option>
+                    <option>Monitoring</option>
+                    <option>Closed</option>
+                </select>
+            </div>
+
+            <div class="form-group full-width">
+                <label>Existing Controls</label>
+                <textarea id="existing_controls" rows="3" placeholder="Document existing preventive, detective, or corrective controls"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Control Effectiveness</label>
+                <select id="control_effectiveness">
+                    <option>Not Assessed</option>
+                    <option>Effective</option>
+                    <option>Partially Effective</option>
+                    <option>Ineffective</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Control Type</label>
+                <select id="control_type">
+                    <option>Not Assessed</option>
+                    <option>Preventive</option>
+                    <option>Detective</option>
+                    <option>Corrective</option>
+                    <option>Mixed</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Control Owner</label>
+                <input id="control_owner" placeholder="Person or office responsible for the control">
+            </div>
+
+            <div class="form-group">
+                <label>Control Design Adequacy</label>
+                <select id="control_design_adequacy">
+                    <option>Not Assessed</option>
+                    <option>Adequate</option>
+                    <option>Partially Adequate</option>
+                    <option>Inadequate</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Last Tested Date</label>
+                <input id="control_last_tested_date" type="date">
+            </div>
+
+            <div class="form-group full-width">
+                <label>Control Evidence / Reference</label>
+                <textarea id="control_evidence" rows="3" placeholder="Reference test reports, reconciliations, logs, certificates or other evidence"></textarea>
+            </div>
+
+            <div class="form-group full-width">
+                <label>Exceptions or Control Gaps</label>
+                <textarea id="control_exceptions" rows="3" placeholder="Record exceptions, weaknesses or gaps; leave blank when none were identified"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Next Control Review Date</label>
+                <input id="control_next_review_date" type="date">
+            </div>
+
+            <div class="form-group full-width">
+                <label>Assessment Basis</label>
+                <textarea id="control_assessment_basis" rows="3" placeholder="Explain the basis for the control-effectiveness conclusion"></textarea>
+            </div>
+
+            <div class="form-group full-width">
+                <label>Initial Mitigation / Treatment Recommendation</label>
+                <textarea id="initial_mitigation_plan" rows="3" placeholder="Treatment recommendation or initial mitigation plan"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Responsible Officer</label>
+                <input id="responsible_officer" placeholder="Responsible officer">
+            </div>
+
+            <div class="form-group">
+                <label>Target Completion Date</label>
+                <input id="target_completion_date" type="date">
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button id="closeModalBtn" class="cancel-btn" type="button">Cancel</button>
+            <button id="saveRisk" class="save-btn" type="button">Save Draft</button>
+            <button id="submitRisk" class="save-btn" type="button">Submit Risk</button>
+        </div>
+    </div>
+</div>
+
+<div id="importRiskModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="importRiskTitle">
+    <div class="modal-content import-modal-content">
+        <div class="modal-header">
+            <div>
+                <h2 id="importRiskTitle">Upload Risk Register</h2>
+                <p class="modal-subtitle">Upload a supported NCA risk-register workbook. Standard, tracking and Legal register formats are validated before admission.</p>
+            </div>
+            <button id="closeImportModal" class="close-btn close-button" type="button" aria-label="Close import dialog">&times;</button>
+        </div>
+
+        <div class="import-body">
+            <input id="riskWorkbookInput" class="visually-hidden" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+
+            <div class="official-risk-template">
+                <div>
+                    <strong>Use the governed NCA risk-register workbook</strong>
+                    <p>Includes authoritative ERM dropdowns, assessment guidance and protected score calculations.</p>
+                </div>
+                <a href="../templates/NCA_Official_Risk_Register_Upload_Template.xlsx" download>Download Official Template</a>
+            </div>
+            <div class="official-risk-template legal-risk-template">
+                <div>
+                    <strong>Use NCA Official Risk Register Template 2</strong>
+                    <p>Retains Objective/Process, Risk Source, Risk Event and Risk Cause while adding ERM assessments, controls and treatments.</p>
+                </div>
+                <a href="../templates/NCA_Official_Risk_Register_Template_2.xlsx" download>Download Template 2</a>
+            </div>
+
+            <div id="importDropZone" class="import-file-panel">
+                <div>
+                    <strong id="importFileName">Choose the official NCA Excel template</strong>
+                    <p id="importFileHelp">Accepted formats: .xlsx and .xls. Maximum file size: 8 MB.</p>
+                </div>
+                <button id="chooseWorkbookBtn" class="cancel-btn" type="button">Choose File</button>
+            </div>
+
+            <div id="importProgress" class="import-progress" hidden>
+                <div class="progress-label">
+                    <span id="importProgressLabel">Reading workbook...</span>
+                    <span id="importProgressValue">0%</span>
+                </div>
+                <div class="progress-track"><span id="importProgressBar"></span></div>
+            </div>
+
+            <div id="importPreview" class="import-preview" hidden>
+                <div class="preview-heading">
+                    <div>
+                        <h3>Import Preview</h3>
+                        <p id="importSheetMeta"></p>
+                    </div>
+                    <div class="import-summary" aria-label="Import validation summary">
+                        <span>Total <strong id="previewTotal">0</strong></span>
+                        <span class="summary-valid">Valid <strong id="previewValid">0</strong></span>
+                        <span class="summary-invalid">Failed <strong id="previewFailed">0</strong></span>
+                    </div>
+                </div>
+
+                <section id="correctionEducation" class="correction-education" hidden>
+                    <div>
+                        <span>Guided correction workspace</span>
+                        <h4 id="correctionEducationTitle">How guided correction works</h4>
+                        <ol id="correctionEducationSteps"></ol>
+                    </div>
+                    <button id="confirmAllCorrections" type="button">Confirm All Valid Corrections</button>
+                </section>
+
+                <div id="correctionWorkspace" class="correction-workspace" hidden></div>
+
+                <div id="previewTableWrap" class="preview-table-wrap">
+                    <table class="preview-table">
+                        <thead id="importPreviewHead"></thead>
+                        <tbody id="importPreviewBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="importValidationErrors" class="validation-errors" hidden>
+                    <h4>Validation errors</h4>
+                    <ul id="importErrorList"></ul>
+                </div>
+            </div>
+
+            <div id="importResult" class="import-result" hidden></div>
+        </div>
+
+        <div class="modal-footer">
+            <button id="cancelImportBtn" class="cancel-btn" type="button">Cancel</button>
+            <button id="confirmImportBtn" class="save-btn" type="button" disabled>Import Valid Records</button>
+        </div>
+    </div>
+</div>
+
+<div id="closureModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="closureModalTitle">
+    <div class="modal-content closure-modal-content">
+        <div class="closure-modal-header">
+            <span class="closure-icon" aria-hidden="true">✓</span>
+            <div>
+                <span class="closure-eyebrow">Governance decision</span>
+                <h2 id="closureModalTitle">Close Risk</h2>
+                <p id="closureRiskSummary">Confirm the closure rationale and effective date.</p>
+            </div>
+            <button id="dismissClosureModal" class="closure-x" type="button" aria-label="Close dialog">×</button>
+        </div>
+        <div class="closure-modal-body">
+            <label class="closure-field">
+                <span>Effective closure date</span>
+                <input id="closureDateInput" type="date">
+            </label>
+            <label class="closure-field">
+                <span>Closure rationale and evidence summary</span>
+                <textarea id="closureCommentsInput" rows="5" maxlength="2000" placeholder="Explain why the risk can be closed and reference the evidence reviewed."></textarea>
+                <small>Required for the permanent risk history and audit trail.</small>
+            </label>
+        </div>
+        <div class="closure-modal-footer">
+            <button id="cancelClosureBtn" class="cancel-btn" type="button">Keep Risk Open</button>
+            <button id="confirmClosureBtn" class="confirm-closure-btn" type="button">Confirm Risk Closure</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>NCA GRC</h2>
+        </div>
+
+        <ul>
+            <li><a href="../nca-grc-risk-register.html">Dashboard</a></li>
+            <li><a href="users.html">Users</a></li>
+            <li class="active"><a href="risks.html">Risk Register</a></li>
+            <li><a href="assessment.html">Risk Assessment</a></li>
+            <li><a href="treatment.html">Risk Treatment</a></li>
+            <li><a href="reports.html">Reports</a></li>
+        </ul>
+
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <h1>Consolidated Risk Register</h1>
+                <p>All manual, work-plan and tracker risks in one governed annual register</p>
+            </div>
+            <div class="topbar-actions">
+                <button id="assessmentRules" class="assessment-rules-button" type="button">View Assessment Rules</button>
+                <div class="user-card" id="userInfo"></div>
+            </div>
+        </div>
+
+        <section class="stats">
+            <div class="stat-card total-card">
+                <h4>Total Risks</h4>
+                <h2 id="totalRisks">0</h2>
+            </div>
+            <div class="stat-card open-card">
+                <h4>Open Risks</h4>
+                <h2 id="openRisks">0</h2>
+            </div>
+            <div class="stat-card low-card">
+                <h4>Low Risks</h4>
+                <h2 id="lowRisks">0</h2>
+            </div>
+            <div class="stat-card medium-card">
+                <h4>Medium Risks</h4>
+                <h2 id="mediumRisks">0</h2>
+            </div>
+            <div class="stat-card high-card">
+                <h4>High Risks</h4>
+                <h2 id="highRisks">0</h2>
+            </div>
+        </section>
+
+        <div class="toolbar" aria-label="Risk register filters and actions">
+            <div class="toolbar-primary">
+                <label class="toolbar-control search-control" for="searchInput">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+                    <input id="searchInput" class="search" type="search" placeholder="Search Risk ID, Title, Owner...">
+                </label>
+
+                <label class="toolbar-control select-control division-control" for="directorateFilter">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21h16M6 21V5h8v16M14 9h4v12M9 8h2M9 12h2M9 16h2M17 12h1M17 16h1"></path></svg>
+                    <select id="directorateFilter" aria-label="Division">
+                    <option value="">All Divisions</option>
+                    <option>RIPS</option>
+                    <option>Legal</option>
+                    <option>Regulatory Administration</option>
+                    <option>Consumer Affairs</option>
+                    <option>Corporate Affairs</option>
+                    <option>Finance</option>
+                    <option>Engineering</option>
+                    <option>Information Technology</option>
+                    <option>Procurement and Protocol</option>
+                    <option>Internal Audit</option>
+                    <option>Human Resource</option>
+                    <option>ROD</option>
+                    <option>Administration</option>
+                    <option>Cybersecurity</option>
+                    <option>International Affairs</option>
+                    </select>
+                </label>
+
+                <label class="toolbar-control select-control" for="levelFilter">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.8 2.8 8.3 7 10 4.2-1.7 7-5.2 7-10V6l-7-3Z"></path><path d="m9.5 12 1.6 1.6 3.5-4"></path></svg>
+                    <select id="levelFilter" aria-label="Risk level">
+                    <option value="">All Levels</option>
+                    <option>Low</option>
+                    <option>Medium</option>
+                    <option>High</option>
+                    </select>
+                </label>
+
+                <label class="toolbar-control select-control status-control" for="statusFilter">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 2.5 2.5L16 9"></path></svg>
+                    <select id="statusFilter" aria-label="Risk status">
+                    <option value="">All Statuses</option>
+                    <option>Draft</option>
+                    <option>Submitted</option>
+                    <option>Under Review</option>
+                    <option>Accepted</option>
+                    <option>Returned</option>
+                    <option>Treatment In Progress</option>
+                    <option>Monitoring</option>
+                    <option>Closed</option>
+                    </select>
+                </label>
+
+                <label class="toolbar-control select-control" for="workflowFilter">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-5V2"></path><path d="M19 5a9 9 0 0 0-15 4M4 17h5v5"></path><path d="M5 19a9 9 0 0 0 15-4"></path></svg>
+                    <select id="workflowFilter" aria-label="Workflow state">
+                    <option value="">All Workflow States</option>
+                    <option>Draft</option>
+                    <option>Submitted</option>
+                    <option>Under Review</option>
+                    <option>Accepted</option>
+                    <option>Returned</option>
+                    <option>Treatment In Progress</option>
+                    <option>Monitoring</option>
+                    <option>Closed</option>
+                    </select>
+                </label>
+
+                <label class="toolbar-control select-control" for="sourceFilter">
+                    <select id="sourceFilter" aria-label="Risk source">
+                    <option value="">All Sources</option>
+                    <option value="Manual - Risk Focal Person">Manual · Focal Person</option>
+                    <option value="Manual - Risk Champion">Manual · Risk Champion</option>
+                    <option value="Work Plan">Work Plan Upload</option>
+                    <option value="Risk Register Tracking Template">Register Tracker Upload</option>
+                    </select>
+                </label>
+
+                <label class="toolbar-control select-control" for="reviewStageFilter">
+                    <select id="reviewStageFilter" aria-label="Assessment review stage">
+                    <option value="">All Review Stages</option>
+                    <option>Awaiting Focal Review</option>
+                    <option>Awaiting Champion Review</option>
+                    <option>Awaiting Chairman Review</option>
+                    <option>Finalised</option>
+                    <option>Returned</option>
+                    </select>
+                </label>
+
+                <div class="risk-actions">
+                    <button id="importRiskBtn" class="import-btn" type="button">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3M7 8l5-5 5 5M5 14v6h14v-6"></path></svg>
+                        <span>Upload Risk Register</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="toolbar-secondary">
+                <div class="secondary-actions secondary-actions-left">
+                    <button id="moreFiltersBtn" class="secondary-btn more-filters-btn" type="button" aria-haspopup="true">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z"></path></svg>
+                        <span>More Filters</span>
+                        <svg class="chevron-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"></path></svg>
+                    </button>
+                    <span class="secondary-divider" aria-hidden="true"></span>
+                    <button id="clearFiltersBtn" class="secondary-btn clear-filters-btn" type="button">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8.6"></path><path d="M4 4v4.6h4.6"></path></svg>
+                        <span>Clear All</span>
+                    </button>
+                </div>
+
+                <div class="active-filter-summary" aria-live="polite">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z"></path></svg>
+                    <span>Active Filters</span>
+                    <strong id="activeFiltersCount">0</strong>
+                </div>
+
+                <div class="secondary-actions secondary-actions-right">
+                    <span class="secondary-divider" aria-hidden="true"></span>
+                    <button id="savedFiltersBtn" class="secondary-btn saved-filters-btn" type="button" aria-haspopup="true">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4V3Z"></path></svg>
+                        <span>Saved Filters</span>
+                        <svg class="chevron-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <section id="importBatchBar" class="import-batch-bar" hidden aria-label="Imported risk-register batch review">
+            <div>
+                <span class="import-batch-eyebrow">Risk register batch review</span>
+                <strong id="importBatchTitle">Select an uploaded register</strong>
+                <p id="importBatchProgress">Review each imported risk before approving the complete batch.</p>
+            </div>
+            <div class="import-batch-actions">
+                <select id="importBatchFilter" aria-label="Uploaded risk register">
+                    <option value="">All uploaded registers</option>
+                </select>
+                <button id="approveImportBatch" type="button" hidden>Approve All</button>
+            </div>
+        </section>
+
+        <section id="committeeBulkBar" class="import-batch-bar committee-bulk-bar" hidden aria-label="Risk Committee bulk approval">
+            <div>
+                <span class="import-batch-eyebrow">Risk Committee final decisions</span>
+                <strong id="committeeBulkTitle">Committee-ready risks</strong>
+                <p id="committeeBulkProgress">Loading eligible risks...</p>
+            </div>
+            <div class="import-batch-actions">
+                <button id="committeeApproveRisks" type="button">Committee Approve All</button>
+            </div>
+        </section>
+
+        <section id="workplanFocalBulkBar" class="import-batch-bar" hidden aria-label="Work-plan Focal Person bulk assessment submission">
+            <div>
+                <span class="import-batch-eyebrow">Work-plan assessments</span>
+                <strong id="workplanFocalBulkTitle">Submit remaining assessments together</strong>
+                <p id="workplanFocalBulkProgress"></p>
+            </div>
+            <div class="import-batch-actions">
+                <select id="workplanFocalBulkFilter" aria-label="Select work-plan upload"></select>
+                <button id="openWorkplanFocalBulk" type="button">Submit All Assessments</button>
+            </div>
+        </section>
+
+        <section id="championBulkBar" class="import-batch-bar" hidden aria-label="Risk Champion bulk review submission">
+            <div>
+                <span class="import-batch-eyebrow">Division Champion reviews</span>
+                <strong id="championBulkTitle">Submit Champion reviews together</strong>
+                <p id="championBulkProgress"></p>
+            </div>
+            <div class="import-batch-actions">
+                <button id="openChampionBulk" type="button">Submit All Champion Reviews</button>
+            </div>
+        </section>
+
+        <div class="table-card">
+            <div id="loadingState" class="loading-state">Loading risks...</div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th data-sort="risk_id">Risk ID</th>
+                        <th data-sort="risk_title">Risk</th>
+                        <th data-sort="directorate">Division</th>
+                        <th data-sort="assessment_year">Year</th>
+                        <th data-sort="entry_source">Source</th>
+                        <th data-sort="risk_owner">Owner</th>
+                        <th>Assessment Comparison</th>
+                        <th data-sort="risk_level">Level</th>
+                        <th>Assessment Explanation</th>
+                        <th>Treatment</th>
+                        <th data-sort="status">Status</th>
+                        <th data-sort="workflow_status">Workflow</th>
+                        <th data-sort="admission_status">Annual Register</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="risksTable"></tbody>
+            </table>
+
+            <div id="emptyState" class="empty-state">No risks found.</div>
+
+            <div class="pagination-bar">
+                <div id="paginationSummary" class="pagination-summary">Showing 0 risks</div>
+                <div class="pagination-controls">
+                    <button id="prevPage" class="page-btn" type="button">Previous</button>
+                    <span id="pageInfo" class="page-info">Page 1 of 1</span>
+                    <button id="nextPage" class="page-btn" type="button">Next</button>
+                </div>
+            </div>
+        </div>
+        <dialog id="riskViewDialog" class="nca-approval-dialog nca-risk-view-dialog">
+            <div class="nca-approval-accent"></div>
+            <div class="nca-approval-body">
+                <div class="nca-approval-icon" aria-hidden="true">i</div>
+                <span class="nca-approval-eyebrow">NCA Consolidated Risk Register</span>
+                <h2 id="riskViewTitle">Risk details</h2>
+                <p id="riskViewIdentity" class="nca-approval-risk"></p>
+                <div class="nca-approval-summary risk-view-summary">
+                    <div><span>Division</span><strong id="riskViewDivision"></strong></div>
+                    <div><span>Owner</span><strong id="riskViewOwner"></strong></div>
+                    <div><span>Category</span><strong id="riskViewCategory"></strong></div>
+                    <div><span>Inherent rating</span><strong id="riskViewRating"></strong></div>
+                    <div><span>Workflow</span><strong id="riskViewWorkflow"></strong></div>
+                    <div><span>Source</span><strong id="riskViewSource"></strong></div>
+                </div>
+                <section class="risk-view-section">
+                    <span>Risk description</span>
+                    <p id="riskViewDescription"></p>
+                </section>
+                <section class="risk-view-section">
+                    <span>Risk source</span>
+                    <p id="riskViewRiskSource"></p>
+                </section>
+                <section class="risk-view-section">
+                    <span>Risk cause</span>
+                    <p id="riskViewRiskCause"></p>
+                </section>
+                <section class="risk-view-section">
+                    <span>Existing controls</span>
+                    <p id="riskViewControls"></p>
+                </section>
+                <div class="nca-approval-summary risk-view-summary">
+                    <div><span>Control effectiveness</span><strong id="riskViewControlEffectiveness"></strong></div>
+                    <div><span>Control type</span><strong id="riskViewControlType"></strong></div>
+                    <div><span>Control owner</span><strong id="riskViewControlOwner"></strong></div>
+                    <div><span>Design adequacy</span><strong id="riskViewControlDesign"></strong></div>
+                    <div><span>Last tested</span><strong id="riskViewControlTested"></strong></div>
+                    <div><span>Next review</span><strong id="riskViewControlReview"></strong></div>
+                </div>
+                <section class="risk-view-section">
+                    <span>Control evidence and assessment basis</span>
+                    <p id="riskViewControlEvidence"></p>
+                    <p id="riskViewControlBasis"></p>
+                </section>
+                <div class="nca-approval-actions">
+                    <button id="closeRiskView" class="confirm" type="button">Close</button>
+                </div>
+            </div>
+        </dialog>
+        <dialog id="riskApprovalDialog" class="nca-approval-dialog">
+            <div class="nca-approval-accent"></div>
+            <div class="nca-approval-body">
+                <div id="riskApprovalIcon" class="nca-approval-icon" aria-hidden="true">✓</div>
+                <span class="nca-approval-eyebrow">NCA risk governance decision</span>
+                <h2 id="riskApprovalTitle">Approve this risk?</h2>
+                <p id="riskApprovalRisk" class="nca-approval-risk"></p>
+                <div class="nca-approval-summary"><div><span>Risk rating</span><strong id="riskApprovalRating"></strong></div><div><span>Workflow outcome</span><strong id="riskApprovalOutcome"></strong></div></div>
+                <label class="nca-approval-comment">Review comments<textarea id="riskApprovalComments" rows="4" maxlength="2000" placeholder="Record the reason and governance basis for this decision."></textarea></label>
+                <div class="nca-approval-note">This decision will be recorded in the risk history and audit trail.</div>
+                <div class="nca-approval-actions"><button id="cancelRiskApproval" type="button">Continue Reviewing</button><button id="confirmRiskApproval" class="confirm" type="button">Confirm Approval</button></div>
+            </div>
+        </dialog>
+        <dialog id="assessmentDecisionDialog" class="consolidated-review-dialog">
+            <form method="dialog" class="consolidated-review-panel">
+                <div class="consolidated-review-head">
+                    <div>
+                        <span class="review-eyebrow">Consolidated assessment decision</span>
+                        <h2 id="assessmentDecisionTitle">Review risk assessment</h2>
+                        <p id="assessmentDecisionRisk"></p>
+                    </div>
+                    <button id="closeAssessmentDecision" type="button" aria-label="Close">×</button>
+                </div>
+                <div id="assessmentBaselineCards" class="assessment-baseline-cards"></div>
+                <label class="review-field">
+                    <span>Decision</span>
+                    <select id="assessmentSelection"></select>
+                </label>
+                <div id="assessmentAdjustedFields" class="review-score-fields" hidden>
+                    <label class="review-field"><span>Likelihood</span><select id="assessmentLikelihood"><option value="">Select</option><option value="1">1 · Rare (Very Low)</option><option value="2">2 · Unlikely (Low)</option><option value="3">3 · Possible (Medium)</option><option value="4">4 · Likely (High)</option><option value="5">5 · Almost Certain (Very High)</option></select></label>
+                    <label class="review-field"><span>Impact</span><select id="assessmentImpact"><option value="">Select</option><option value="1">1 · Insignificant (Very Low)</option><option value="2">2 · Minor (Low)</option><option value="3">3 · Moderate (Medium)</option><option value="4">4 · Major (High)</option><option value="5">5 · Catastrophic (Very High)</option></select></label>
+                </div>
+                <label id="assessmentCategoryField" class="review-field" hidden><span>Risk category</span><select id="assessmentCategory"></select></label>
+                <label class="review-field"><span>Reason / governance basis <small id="assessmentReasonRequirement">(optional)</small></span><textarea id="assessmentReason" rows="4" maxlength="2000" placeholder="Optionally record the evidence supporting this decision."></textarea></label>
+                <div class="consolidated-review-actions">
+                    <button id="cancelAssessmentDecision" type="button">Continue Reviewing</button>
+                    <button id="saveAssessmentDecision" class="primary" type="button">Record Decision</button>
+                </div>
+            </form>
+        </dialog>
+        <dialog id="importBatchApprovalDialog" class="nca-approval-dialog">
+            <div class="nca-approval-accent"></div>
+            <div class="nca-approval-body">
+                <div class="nca-approval-icon" aria-hidden="true">✓</div>
+                <span class="nca-approval-eyebrow">Risk Champion batch decision</span>
+                <h2>Approve this complete risk register?</h2>
+                <p id="importBatchApprovalDescription" class="nca-approval-risk"></p>
+                <div class="nca-approval-summary">
+                    <div><span>Risks in batch</span><strong id="importBatchApprovalCount">0</strong></div>
+                    <div><span>Champion reviews saved</span><strong id="importBatchReviewedCount">0</strong></div>
+                </div>
+                <label class="nca-approval-comment">Champion comments <small>(optional)</small>
+                    <textarea id="importBatchComments" rows="4" maxlength="2000" placeholder="Optionally record the basis for this batch decision."></textarea>
+                </label>
+                <div class="nca-approval-note">Every risk in this uploaded register will be approved together and sent to the Chairman for final review.</div>
+                <div class="nca-approval-actions">
+                    <button id="cancelImportBatchApproval" type="button">Continue Reviewing</button>
+                    <button id="confirmImportBatchApproval" class="confirm" type="button">Approve &amp; Send to Chairman</button>
+                </div>
+            </div>
+        </dialog>
+        <dialog id="committeeBulkApprovalDialog" class="nca-approval-dialog nca-scroll-dialog">
+            <div class="nca-approval-accent"></div>
+            <div class="nca-approval-body">
+                <div class="nca-scroll-content">
+                    <div class="nca-approval-icon" aria-hidden="true">✓</div>
+                    <span class="nca-approval-eyebrow">Risk Committee final risk decision</span>
+                    <h2>Approve all eligible risks in this scope?</h2>
+                    <p id="committeeBulkDescription" class="nca-approval-risk"></p>
+                    <div class="nca-approval-summary">
+                        <div><span>Eligible risks</span><strong id="committeeBulkCount">0</strong></div>
+                        <div><span>High risks</span><strong id="committeeBulkHighCount">0</strong></div>
+                        <div><span>Divisions</span><strong id="committeeBulkDivisionCount">0</strong></div>
+                    </div>
+                    <label class="nca-approval-comment">Committee comments <small>(optional)</small>
+                        <textarea id="committeeBulkComments" rows="4" maxlength="2000" placeholder="Optionally record the basis for the Committee’s final decision."></textarea>
+                    </label>
+                    <div class="nca-approval-note">Only risks already reviewed by their Division Champion will be approved. The Champion assessment and full audit history will be retained.</div>
+                </div>
+                <div class="nca-approval-actions">
+                    <button id="cancelCommitteeBulk" type="button">Continue Reviewing</button>
+                    <button id="confirmCommitteeBulk" class="confirm" type="button">Confirm Final Approval</button>
+                </div>
+            </div>
+        </dialog>
+        <dialog id="workplanFocalBulkDialog" class="nca-approval-dialog">
+            <div class="nca-approval-accent"></div>
+            <div class="nca-approval-body">
+                <div class="nca-approval-icon" aria-hidden="true">✓</div>
+                <span class="nca-approval-eyebrow">Focal Person work-plan submission</span>
+                <h2>Submit all remaining assessments?</h2>
+                <p id="workplanFocalBulkDescription" class="nca-approval-risk"></p>
+                <div class="nca-approval-summary">
+                    <div><span>Assessments awaiting submission</span><strong id="workplanFocalBulkCount">0</strong></div>
+                    <div><span>Assessment selected</span><strong>System baseline</strong></div>
+                </div>
+                <label class="nca-approval-comment">Submission comment <small>(optional)</small>
+                    <textarea id="workplanFocalBulkComments" rows="4" maxlength="2000" placeholder="Optionally record the basis for accepting the remaining system assessments."></textarea>
+                </label>
+                <div class="nca-approval-note">Assessments already submitted individually will not be changed. Every remaining risk in this work-plan upload will accept its system-generated assessment and move to Champion Review.</div>
+                <div class="nca-approval-actions">
+                    <button id="cancelWorkplanFocalBulk" type="button">Continue Reviewing</button>
+                    <button id="confirmWorkplanFocalBulk" class="confirm" type="button">Submit All to Champion</button>
+                </div>
+            </div>
+        </dialog>
+        <dialog id="championBulkDialog" class="nca-approval-dialog nca-scroll-dialog">
+            <div class="nca-approval-accent"></div>
+            <div class="nca-approval-body">
+                <div class="nca-scroll-content">
+                    <div class="nca-approval-icon" aria-hidden="true">✓</div>
+                    <span class="nca-approval-eyebrow">Risk Champion bulk review</span>
+                    <h2>Submit all Champion reviews in this selection?</h2>
+                    <p id="championBulkDescription" class="nca-approval-risk"></p>
+                    <div class="nca-approval-summary">
+                        <div><span>Awaiting Champion review</span><strong id="championBulkCount">0</strong></div>
+                        <div><span>Saved individual reviews retained</span><strong id="championBulkSavedCount">0</strong></div>
+                        <div><span>Focal assessments accepted</span><strong id="championBulkFocalCount">0</strong></div>
+                        <div><span>System assessments accepted</span><strong id="championBulkSystemCount">0</strong></div>
+                    </div>
+                    <label class="nca-approval-comment">Champion comment <small>(optional)</small>
+                        <textarea id="championBulkComments" rows="4" maxlength="2000" placeholder="Optionally record the basis for this bulk Champion review."></textarea>
+                    </label>
+                    <div class="nca-approval-note">Saved individual Champion decisions will be retained. For every remaining risk, the Focal Person assessment will be accepted where available; otherwise the system assessment will be accepted. All reviewed risks will move to final Chairman review.</div>
+                </div>
+                <div class="nca-approval-actions">
+                    <button id="cancelChampionBulk" type="button">Continue Reviewing</button>
+                    <button id="confirmChampionBulk" class="confirm" type="button">Submit All to Chairman</button>
+                </div>
+            </div>
+        </dialog>
+        <dialog id="rulesDialog" class="rules-dialog" data-erm-rules-dialog>
+            <div class="rules-dialog-head">
+                <div><small>Governed methodology</small><h2>Assessment Rules</h2></div>
+                <button id="closeRulesDialog" type="button" aria-label="Close rules">×</button>
+            </div>
+        </dialog>
+    </main>
+</div>
+
+<script src="../js/app.js?v=5"></script>
+<script src="../js/authGuard.js"></script>
+<script src="../js/sidebar.js?v=20260725-10"></script>
+<script src="../js/erm-assessment-rules.js?v=1"></script>
+<script src="../js/risks.js?v=24"></script>
+</body>
+
+</html>

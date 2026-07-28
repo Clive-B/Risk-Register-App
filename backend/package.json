@@ -1,0 +1,45 @@
+{
+  "name": "nca-grc-backend",
+  "version": "1.0.0",
+  "description": "National Communications Authority enterprise risk register API",
+  "main": "server.js",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node --check server.js && node --test tests/*.test.js",
+    "readiness": "node scripts/readiness-check.js",
+    "verify:erm": "node scripts/verify-erm-alignment.js",
+    "verify:treatment-preview": "node scripts/verify-treatment-upload-preview.js",
+    "verify:treatments": "node scripts/verify-treatment-plan-alignment.js",
+    "verify:treatment-approve-all": "node scripts/verify-treatment-approve-all.js",
+    "verify:controls": "node scripts/verify-control-assurance.js",
+    "migrate": "node scripts/migrate.js",
+    "seed:test-users": "node scripts/seed-test-users.js",
+    "seed:rips-test-users": "node scripts/seed-rips-test-users.js",
+    "seed:audit-test-users": "node scripts/seed-audit-test-users.js",
+    "reset:test-risks": "node scripts/reset-test-risks.js",
+    "reset:test-approvals": "node scripts/reset-test-approval-data.js",
+    "reset:test-imported-register": "node scripts/reset-test-imported-risk-register.js",
+    "reset:test-workplan": "node scripts/reset-current-workplan-upload.js",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^9.0.3",
+    "pg": "^8.22.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  }
+}

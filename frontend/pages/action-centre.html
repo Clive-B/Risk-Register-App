@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Action Centre | NCA GRC</title>
+    <link rel="stylesheet" href="../css/action-centre.css">
+    <link rel="stylesheet" href="../css/action-centre-enhancements.css?v=20260726-1">
+<link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
+<body>
+<div class="container">
+    <aside class="sidebar"></aside>
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <nav class="breadcrumb" aria-label="Breadcrumb">
+                    <a href="../nca-grc-risk-register.html">Dashboard</a>
+                    <span aria-hidden="true">›</span>
+                    <span aria-current="page">Action Centre</span>
+                </nav>
+                <h1>Action Centre</h1>
+                <p>Supporting governance, risk, compliance and audit workflows across the Authority.</p>
+            </div>
+            <div class="identity">
+                <button id="notificationBell" class="icon-button" type="button" aria-label="Open notifications" aria-expanded="false">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
+                    <span id="unreadCount" class="unread" hidden>0</span>
+                </button>
+                <div id="notificationPanel" class="notification-panel" hidden>
+                    <div class="notification-panel-head">
+                        <strong>Recent notifications</strong>
+                        <button id="markAllNotificationsRead" type="button">Mark all read</button>
+                    </div>
+                    <div id="notificationList" class="notification-list" aria-live="polite"></div>
+                    <button id="viewAllNotifications" class="view-all-notifications" type="button">View all notifications</button>
+                </div>
+                <div id="userInfo" class="user-info"></div>
+            </div>
+        </header>
+
+        <section class="welcome">
+            <div>
+                <span class="eyebrow">Enterprise work management</span>
+                <h2 id="welcomeTitle">Good morning</h2>
+                <p>Welcome to your Enterprise Action Centre.</p>
+                <small>Supporting NCA's 2024–2028 Strategic Plan · Moving from Good to Great.</small>
+            </div>
+            <div class="today">
+                <span>Today's date</span>
+                <strong id="todayDate"></strong>
+                <span id="todayTime"></span>
+                <a href="../nca-grc-risk-register.html">Dashboard</a>
+            </div>
+        </section>
+
+        <section id="summary" class="kpis" aria-label="Action summary"></section>
+
+        <section class="workspace">
+            <div class="work-column">
+                <section class="filters" aria-label="Action filters">
+                    <label class="search"><span class="sr-only">Search actions</span><input id="search" type="search" placeholder="Search actions" aria-label="Search actions"></label>
+                    <select id="status" aria-label="Filter by status"><option value="">Status: All</option><option>Pending</option><option>Due Today</option><option>Overdue</option><option>Waiting for Review</option><option>Waiting for Approval</option><option>Returned</option><option>Escalated</option></select>
+                    <select id="priority" aria-label="Filter by priority"><option value="">Priority: All</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option><option>Information</option></select>
+                    <select id="module" aria-label="Filter by module"><option value="">Module: All</option><option>Risk</option><option>Treatment</option><option>Audit</option><option>Compliance</option><option>Communication</option><option>User Management</option></select>
+                    <select id="sort" aria-label="Sort actions"><option value="urgency">Sort: Urgency</option><option value="newest">Sort: Newest</option><option value="due">Sort: Due date</option></select>
+                    <button id="refresh" class="secondary" type="button">Refresh</button>
+                    <a class="history-link" href="action-history.html">Completed history</a>
+                </section>
+
+                <section class="panel">
+                    <div class="section-head"><div><span class="eyebrow">Work queue</span><h2>My Actions</h2></div><span id="count" class="muted"></span></div>
+                    <div id="actions" class="action-grid" aria-live="polite"></div>
+                    <div id="pager" class="pager"></div>
+                </section>
+
+                <section class="panel activity-panel">
+                    <div class="section-head"><div><span class="eyebrow">Audit trail</span><h2>Recent Activity</h2></div></div>
+                    <div id="activity" class="activity-list"></div>
+                </section>
+            </div>
+
+            <aside class="right-column">
+                <section id="priorityOverview" class="panel priority-overview">
+                    <div class="section-head"><div><span class="eyebrow">Live workload</span><h2>Priority Mix</h2></div></div>
+                    <div class="priority-visual">
+                        <div id="priorityDonut" class="priority-donut"><strong id="priorityTotal">0</strong></div>
+                        <div id="priorityLegend" class="priority-legend"></div>
+                    </div>
+                </section>
+                <section class="panel quick">
+                    <div class="section-head"><div><span class="eyebrow">Shortcuts</span><h2>Quick Actions</h2></div></div>
+                    <div id="quickActions"></div>
+                </section>
+                <section class="panel help">
+                    <h3>Action Centre guidance</h3>
+                    <p>Items are prioritised automatically. Overdue and critical work appears first, and completed items move to history.</p>
+                </section>
+            </aside>
+        </section>
+        <footer class="footer">National Communications Authority · Enterprise GRC Platform</footer>
+    </main>
+</div>
+<dialog id="treatmentCompletionDialog" class="notification-dialog treatment-completion-dialog" aria-labelledby="treatmentCompletionTitle">
+    <div class="notification-dialog-accent" aria-hidden="true"></div>
+    <header>
+        <div>
+            <span class="eyebrow">Governed completion check</span>
+            <h2 id="treatmentCompletionTitle">Treatment is not yet complete</h2>
+            <p id="treatmentCompletionMessage"></p>
+        </div>
+        <button id="closeTreatmentCompletion" class="notification-dialog-close" type="button" aria-label="Close treatment completion check">&times;</button>
+    </header>
+    <div class="treatment-completion-body">
+        <div class="treatment-completion-summary">
+            <div><span>Progress</span><strong id="treatmentCompletionProgress">0%</strong></div>
+            <div><span>Status</span><strong id="treatmentCompletionStatus">Not recorded</strong></div>
+            <div><span>Due date</span><strong id="treatmentCompletionDue">Not recorded</strong></div>
+        </div>
+        <h3>Outstanding requirements</h3>
+        <ul id="treatmentCompletionRequirements"></ul>
+    </div>
+    <footer class="treatment-completion-actions">
+        <button id="continueActionReview" type="button">Continue reviewing</button>
+        <a id="openTreatmentPlan" href="treatment.html">Open Treatment Plan</a>
+    </footer>
+</dialog>
+<dialog id="allNotificationsDialog" class="notification-dialog" aria-labelledby="allNotificationsTitle">
+    <div class="notification-dialog-accent" aria-hidden="true"></div>
+    <header>
+        <div>
+            <span class="eyebrow">Action Centre</span>
+            <h2 id="allNotificationsTitle">My notifications</h2>
+            <p>Operational updates that need your attention. Audit records remain in the audit trail.</p>
+        </div>
+        <button id="closeNotifications" class="notification-dialog-close" type="button" aria-label="Close notifications">&times;</button>
+    </header>
+    <div class="notification-dialog-toolbar">
+        <label><input id="unreadNotificationsOnly" type="checkbox"> Show unread only</label>
+        <button id="dialogMarkAllRead" type="button">Mark all as read</button>
+    </div>
+    <div id="allNotificationsList" class="all-notifications-list" aria-live="polite"></div>
+    <footer id="notificationPager" class="notification-dialog-pager"></footer>
+</dialog>
+<script src="../js/app.js"></script>
+<script src="../js/authGuard.js"></script>
+<script src="../js/sidebar.js?v=20260725-10"></script>
+<script src="../js/action-centre.js?v=20260726-1"></script>
+</body>
+</html>

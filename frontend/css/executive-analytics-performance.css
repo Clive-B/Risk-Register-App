@@ -1,0 +1,153 @@
+.widget[data-widget="risk-trends"] canvas{
+    display:block;
+    width:100% !important;
+    height:220px !important;
+    max-width:100%;
+}
+
+.widget[data-widget="heatmap"]{
+    min-height:0;
+    align-self:start;
+}
+
+.widget[data-widget="heatmap"] .heatmap{
+    width:100%;
+    max-width:620px;
+    min-height:0;
+    align-content:start;
+    grid-auto-flow:row;
+    grid-template-rows:repeat(5,minmax(96px,auto));
+}
+
+.widget[data-widget="heatmap"] .heat-cell{
+    width:100%;
+    min-height:96px;
+    padding:10px;
+    aspect-ratio:auto;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:space-between;
+    border:1px solid rgba(15,23,42,.08);
+    text-align:left;
+    color:inherit;
+}
+
+.widget[data-widget="heatmap"] .heat-cell:disabled{
+    cursor:default;
+}
+
+.widget[data-widget="heatmap"] .heat-cell small{
+    display:flex;
+    align-items:baseline;
+    gap:4px;
+    line-height:1.2;
+}
+
+.widget[data-widget="heatmap"] .heat-cell small b{
+    font-size:20px;
+}
+
+.widget[data-widget="heatmap"] .heat-cell small em{
+    font-size:8px;
+    font-style:normal;
+    font-weight:600;
+}
+
+.widget[data-widget="heatmap"] .heat-cell span,
+.widget[data-widget="heatmap"] .heat-cell strong{
+    font-size:12px;
+    font-weight:700;
+}
+
+.widget[data-widget="heatmap"] .heat-low{
+    background:#dcfae6;
+    color:#027a48;
+}
+
+.widget[data-widget="heatmap"] .heat-medium{
+    background:#fffaeb;
+    color:#b54708;
+}
+
+.widget[data-widget="heatmap"] .heat-high{
+    background:#fee4e2;
+    color:#b42318;
+}
+
+.widget[data-widget="heatmap"] .open-full-heatmap{
+    width:auto;
+    padding:8px 11px;
+    border:1px solid #b9d2e9;
+    border-radius:8px;
+    background:#f4f9fd;
+    color:#003a70;
+    font-size:11px;
+    font-weight:800;
+    text-decoration:none;
+    white-space:nowrap;
+}
+
+.widgets{
+    align-items:start;
+}
+
+.personalization-dialog{
+    width:min(820px,calc(100vw - 32px));
+    max-height:calc(100vh - 34px);
+    padding:0;
+    overflow:auto;
+    border-radius:22px;
+}
+
+.personalization-dialog .personalization-accent{
+    height:8px;
+    background:linear-gradient(90deg,#0067b9 0 68%,#ffc72c 68% 84%,#00a651 84%);
+}
+
+.personalization-dialog>header{
+    padding:23px 26px 15px;
+    align-items:flex-start;
+    background:linear-gradient(145deg,#f6fbff,#fff);
+}
+
+.personalization-dialog h2{margin:5px 0 0;font-size:25px}
+.dialog-eyebrow{color:#0067b9;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.dialog-close{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;margin:0!important;padding:0;border-radius:50%;color:#003a70;font-size:27px;line-height:1}
+.personalization-intro{margin:0;padding:0 26px 18px;color:#667085;line-height:1.55}
+.personalization-section{margin:0 26px 16px;padding:17px;border:1px solid #dfe7f1;border-radius:13px;background:#f9fbfd}
+.personalization-section h3{margin:0;color:#003a70;font-size:16px}
+.personalization-section p{margin:5px 0 13px;color:#667085;font-size:12px}
+.widget-choices{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.widget-choices label{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #dfe7f1;border-radius:9px;background:#fff;color:#172b4d;font-weight:700}
+.widget-choices input{width:18px;height:18px;padding:0;accent-color:#0067b9}
+.personalization-section>label{display:grid;gap:4px;margin-bottom:10px}
+.personalization-section>label strong{color:#003a70}
+.personalization-section>label span{color:#667085;font-size:12px;font-weight:400}
+.personalization-actions{display:flex;justify-content:flex-end;gap:10px;padding:2px 26px 18px}
+.personalization-actions button{width:auto;margin:0;padding:11px 16px}
+.personalization-reset{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 26px;border-top:1px solid #ead8a4;background:#fffaeb}
+.personalization-reset strong,.personalization-reset span{display:block}
+.personalization-reset strong{color:#694b00}
+.personalization-reset span{margin-top:3px;color:#80672c;font-size:11px}
+.personalization-reset button{width:auto;margin:0;border-color:#e0b63b;color:#694b00;font-weight:700;white-space:nowrap}
+
+.hero-actions .executive-session-card{
+    flex:1 0 100%;
+    padding:10px 13px;
+    border:1px solid rgba(255,255,255,.3);
+    border-radius:13px;
+    background:rgba(255,255,255,.12);
+    backdrop-filter:blur(8px);
+}
+.hero-actions .executive-session-card .nca-profile-avatar{width:40px;height:40px;flex-basis:40px;background:#fff}
+.hero-actions .executive-session-card .nca-profile-copy strong,
+.hero-actions .executive-session-card .nca-profile-copy small{color:#fff}
+
+@media(max-width:700px){
+    .widget[data-widget="risk-trends"] canvas{height:180px !important}
+    .widget[data-widget="heatmap"] .heatmap{grid-template-rows:repeat(5,minmax(72px,auto))}
+    .widget[data-widget="heatmap"] .heat-cell{min-height:72px}
+    .widget-choices{grid-template-columns:1fr}
+    .personalization-reset{align-items:flex-start;flex-direction:column}
+}

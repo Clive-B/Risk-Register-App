@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Compliance Assurance | NCA GRC</title>
+    <link rel="stylesheet" href="../css/compliance.css?v=1">
+<link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
+<body>
+<div class="container">
+    <aside class="sidebar"></aside>
+    <main class="main">
+        <header class="page-head">
+            <div><span>Governed compliance source</span><h1>Compliance Assurance Register</h1><p>Assess applicable obligations, retain evidence references and verify compliance independently.</p></div>
+            <button id="addObligation" class="primary" type="button">Add Obligation</button>
+        </header>
+        <section class="guidance"><strong>How the rate works</strong><p>Verified Compliant obligations ÷ all assessed, applicable obligations. Not Assessed is reported separately; Not Applicable is excluded.</p></section>
+        <section class="filters">
+            <select id="division"><option value="">All Divisions</option></select>
+            <select id="assessmentStatus"><option value="">All Assessment Statuses</option></select>
+            <button id="apply" type="button">Apply Filters</button>
+            <button id="reset" type="button">Reset</button>
+        </section>
+        <section id="summary" class="summary"></section>
+        <section class="card">
+            <div class="table-wrap"><table><thead><tr><th>Obligation</th><th>Source</th><th>Division / Owner</th><th>Assessment</th><th>Evidence</th><th>Corrective action</th><th>Actions</th></tr></thead><tbody id="rows"></tbody></table></div>
+            <div id="empty" class="empty" hidden>No compliance obligations match this scope.</div>
+        </section>
+    </main>
+</div>
+<dialog id="obligationDialog"><form id="obligationForm"><header><div><span>Compliance register</span><h2>Add obligation</h2></div><button class="close" type="button" data-close="obligationDialog">×</button></header><div class="form-grid">
+    <label>Obligation code<input name="obligationCode" required></label><label>Title<input name="title" required></label>
+    <label>Regulatory source<input name="regulatorySource" required></label><label>Division<select name="division" required></select></label>
+    <label>Owner<input name="owner" required></label><label>Frequency<select name="frequency" required></select></label>
+    <label>Due date<input name="dueDate" type="date"></label><label class="wide">Requirement<textarea name="requirement" required></textarea></label>
+</div><footer><button type="button" data-close="obligationDialog">Cancel</button><button class="primary" type="submit">Create obligation</button></footer></form></dialog>
+<dialog id="assessmentDialog"><form id="assessmentForm"><input name="id" type="hidden"><header><div><span>Focal assessment</span><h2 id="assessmentTitle">Assess obligation</h2></div><button class="close" type="button" data-close="assessmentDialog">×</button></header><div class="form-grid">
+    <label>Applicability<select name="applicability"></select></label><label>Assessment status<select name="assessmentStatus"></select></label>
+    <label class="wide">Evidence reference<input name="evidenceReference" placeholder="Document ID, repository path or controlled link"></label>
+    <label class="wide">Evidence summary<textarea name="evidenceSummary"></textarea></label>
+    <label class="wide">Corrective action<textarea name="correctiveAction"></textarea></label><label>Corrective due date<input name="correctiveDueDate" type="date"></label>
+</div><footer><button type="button" data-close="assessmentDialog">Cancel</button><button class="primary" type="submit">Save assessment</button></footer></form></dialog>
+<dialog id="verificationDialog"><form id="verificationForm"><input name="id" type="hidden"><header><div><span>Champion assurance</span><h2>Verify recorded evidence</h2></div><button class="close" type="button" data-close="verificationDialog">×</button></header><label>Verification notes<textarea name="notes" required placeholder="Record what was checked and the basis for verification."></textarea></label><footer><button type="button" data-close="verificationDialog">Cancel</button><button class="primary" type="submit">Confirm verification</button></footer></form></dialog>
+<div id="toast"></div>
+<script src="../js/app.js?v=6"></script><script src="../js/authGuard.js"></script><script src="../js/sidebar.js?v=20260725-10"></script><script src="../js/compliance.js?v=1"></script>
+</body></html>

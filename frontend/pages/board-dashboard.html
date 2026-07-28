@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Board Dashboard | NCA GRC</title>
+    <link rel="stylesheet" href="../css/executive-analytics.css?v=20260725-2">
+    <link rel="stylesheet" href="../css/board-dashboard.css?v=20260725-2">
+<link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
+<body>
+<div class="container">
+    <aside class="sidebar"></aside>
+    <main class="main">
+        <header class="hero board">
+            <div><small>National Communications Authority</small><h1>Board Governance Dashboard</h1><p>Strategic risk posture and executive oversight.</p></div>
+            <div class="hero-actions"><a href="executive-analytics.html">Executive Analytics</a><button id="boardReport" type="button">Governed AI Report</button></div>
+        </header>
+        <section id="boardError" class="board-error" hidden role="alert">
+            <div><strong>Dashboard data could not be loaded.</strong><span id="boardErrorMessage">Please retry.</span></div>
+            <button id="retryBoard" type="button">Retry</button>
+        </section>
+        <section id="boardLoading" class="board-loading">Loading governed enterprise data…</section>
+        <section id="boardContent" hidden>
+            <section id="boardKpis" class="kpis"></section>
+            <section class="board-grid">
+                <article class="card span2">
+                    <header><h2>Top 10 Enterprise Risks</h2><span>Latest governed score</span></header>
+                    <div class="table-wrap"><table><thead><tr><th>Risk</th><th>Division</th><th>Owner</th><th>Level</th><th>Score</th></tr></thead><tbody id="topRisks"></tbody></table></div>
+                    <div id="topRisksEmpty" class="board-empty" hidden>No enterprise risks are currently recorded.</div>
+                </article>
+                <article class="card"><header><h2>Risk Appetite Position</h2><span>Complete enterprise register</span></header><div id="appetite" class="gauge"></div><div id="appetiteLegend" class="appetite-legend"></div></article>
+                <article class="card"><header><h2>Executive Summary</h2><span>Live governed assessment</span></header><p id="summary"></p></article>
+                <article class="card"><header><h2>Emerging Risks</h2><a href="risks.html">View register</a></header><div id="emerging"></div></article>
+                <article class="card"><header><h2>Strategic Risks</h2><a href="risks.html">View register</a></header><div id="strategic"></div></article>
+                <article class="card"><header><h2>Key Compliance Issues</h2><a href="risks.html">View register</a></header><div id="complianceIssues"></div></article>
+                <article class="card"><header><h2>Open Audit Findings</h2><a href="action-centre.html?module=Audit">Open Action Centre</a></header><div id="auditFindings"></div></article>
+                <article class="card span2"><header><h2>High-Priority Treatments</h2><a href="treatment.html">View treatments</a></header><div id="treatments"></div></article>
+            </section>
+        </section>
+        <div id="toast"></div>
+    </main>
+</div>
+<script src="../js/app.js?v=20260725-2"></script><script src="../js/authGuard.js"></script><script src="../js/sidebar.js?v=20260725-10"></script><script src="../js/board-dashboard.js?v=20260725-2"></script>
+</body>
+</html>

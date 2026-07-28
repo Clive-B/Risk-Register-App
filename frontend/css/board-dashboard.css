@@ -1,0 +1,146 @@
+.board-loading,
+.board-error{
+    padding:18px 20px;
+    margin-bottom:18px;
+    border-radius:13px;
+}
+
+.board-loading{
+    background:#fff;
+    border:1px solid var(--border);
+    color:var(--muted);
+    font-weight:700;
+}
+
+.board-error{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    background:#fff0ee;
+    border:1px solid #efbbb5;
+    color:#8f2118;
+}
+
+.board-error[hidden],
+.board-loading[hidden]{
+    display:none;
+}
+
+.board-error strong,
+.board-error span{
+    display:block;
+}
+
+.board-error span{
+    margin-top:4px;
+}
+
+.board-error button{
+    width:auto;
+    background:#b42318;
+    color:#fff;
+    border:0;
+    font-weight:800;
+}
+
+.card>header span,
+.card>header a{
+    color:var(--muted);
+    font-size:12px;
+}
+
+.card>header a{
+    color:var(--blue);
+    font-weight:700;
+    text-decoration:none;
+}
+
+.appetite-legend{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-top:12px;
+    font-size:12px;
+}
+
+.appetite-legend span{
+    padding:5px 8px;
+    border-radius:99px;
+}
+
+.appetite-legend .high,
+.level.high{
+    background:#fde2df;
+    color:#9e241a;
+}
+
+.appetite-legend .medium,
+.level.medium{
+    background:#fff2cc;
+    color:#765400;
+}
+
+.appetite-legend .low,
+.level.low{
+    background:#ddf4e7;
+    color:#05683e;
+}
+
+.risk-item{
+    display:block;
+    color:var(--text);
+    text-decoration:none;
+}
+
+.risk-item:hover{
+    background:#edf6ff;
+}
+
+.risk-item strong,
+.risk-item span{
+    display:block;
+}
+
+.risk-item span{
+    margin-top:4px;
+    color:var(--muted);
+    font-size:12px;
+}
+
+.board-empty{
+    padding:18px;
+    color:var(--muted);
+    text-align:center;
+    font-style:italic;
+}
+
+.level{
+    display:inline-block;
+    padding:5px 8px;
+    border-radius:99px;
+    font-size:11px;
+    font-weight:800;
+}
+
+#topRisks td:last-child small{
+    display:block;
+    color:var(--muted);
+    font-size:10px;
+}
+
+#topRisks a{
+    color:var(--text);
+    text-decoration:none;
+}
+
+@media(max-width:620px){
+    .board-error{
+        align-items:stretch;
+        flex-direction:column;
+    }
+
+    .appetite-legend{
+        flex-wrap:wrap;
+    }
+}

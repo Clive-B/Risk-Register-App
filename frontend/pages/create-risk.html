@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Risk</title>
+<link rel="stylesheet" href="../css/create-risk.css?v=2">
+<link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
+
+<body>
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+<div class="container">
+    <aside class="sidebar"></aside>
+
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <h1 id="pageTitle">Create Risk</h1>
+                <p>Enterprise risk lifecycle intake, assessment, treatment planning, and monitoring</p>
+            </div>
+            <div class="topbar-actions"><button id="assessmentRules" class="assessment-rules-button" type="button">View Assessment Rules</button><div class="user-card" id="userInfo"></div></div>
+        </div>
+
+        <section class="workflow-strip">
+            <span class="active">Identification</span>
+            <span>Inherent Assessment</span>
+            <span>Controls</span>
+            <span>Treatment</span>
+            <span>Attachments</span>
+            <span>Workflow</span>
+            <button id="historyTab" type="button" aria-controls="riskHistorySection" disabled>History</button>
+        </section>
+
+        <form id="riskForm" class="risk-workspace">
+            <section class="form-section">
+                <div class="section-heading">
+                    <h2>Risk Identification</h2>
+                    <span id="workflowBadge" class="status draft">Draft</span>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Risk ID</label>
+                        <input id="risk_id" value="Auto-generated on save" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Date Identified</label>
+                        <input id="date_identified" type="date">
+                    </div>
+                    <div class="form-group">
+                        <label>Annual Register Year</label>
+                        <input id="assessment_year" type="number" min="2020" max="2100">
+                    </div>
+                    <div id="focalVisibilityGroup" class="form-group hidden">
+                        <label for="focal_visibility">Focal Person Viewership</label>
+                        <select id="focal_visibility">
+                            <option value="true">Visible to the Risk Focal Person</option>
+                            <option value="false">Hidden from the Risk Focal Person</option>
+                        </select>
+                        <small>The Chairman will always be able to view this risk.</small>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Risk Title</label>
+                        <input id="risk_title" maxlength="200" placeholder="Enter concise risk title">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Risk Description</label>
+                        <textarea id="risk_description" rows="4" placeholder="Describe event, cause, and consequence"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Division</label>
+                        <select id="directorate"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Business Unit</label>
+                        <input id="business_unit" placeholder="Business unit">
+                    </div>
+                    <div class="form-group">
+                        <label>Programme / Project</label>
+                        <input id="programme_project" placeholder="Programme or project">
+                    </div>
+                    <div class="form-group">
+                        <label>Risk Category</label>
+                        <select id="risk_category"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Risk Owner</label>
+                        <input id="risk_owner" placeholder="Risk owner">
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <div class="section-heading">
+                    <h2>Inherent Risk Assessment</h2>
+                    <span id="riskRatingBadge" class="level-badge low">Low</span>
+                </div>
+                <div class="form-grid compact">
+                    <div class="form-group">
+                        <label>Impact</label>
+                        <select id="impact"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Likelihood</label>
+                        <select id="likelihood"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Inherent Risk Score</label>
+                        <input id="inherent_risk_score" value="0" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Risk Rating</label>
+                        <input id="risk_level" value="Low" disabled>
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <div class="section-heading">
+                    <h2>Existing Controls</h2>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>Existing Controls</label>
+                        <textarea id="existing_controls" rows="4" placeholder="Preventive, detective, or corrective controls already in place"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Control Effectiveness</label>
+                        <select id="control_effectiveness" disabled aria-describedby="controlEffectivenessGuidance"></select>
+                        <small id="controlEffectivenessGuidance" class="response-guidance" aria-live="polite">The system evaluates the risk description and existing controls automatically.</small>
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <div class="section-heading">
+                    <h2>Treatment Planning</h2>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Risk Response</label>
+                        <select id="risk_treatment" disabled aria-describedby="riskResponseGuidance"></select>
+                        <small id="riskResponseGuidance" class="response-guidance" aria-live="polite">Select impact and likelihood to receive a recommended response.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Responsible Officer</label>
+                        <input id="responsible_officer" placeholder="Officer responsible for mitigation">
+                    </div>
+                    <div class="form-group">
+                        <label>Target Completion Date</label>
+                        <input id="target_completion_date" type="date">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Initial Mitigation Plan</label>
+                        <textarea id="initial_mitigation_plan" rows="4" placeholder="Actions required to treat the risk"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section id="monitoringSection" class="form-section hidden">
+                <div class="section-heading">
+                    <h2>Risk Monitoring and Residual Assessment</h2>
+                    <span id="residualBadge" class="level-badge low">Residual 0</span>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Current Impact</label>
+                        <select id="current_impact"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Current Likelihood</label>
+                        <select id="current_likelihood"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Current Risk Score</label>
+                        <input id="current_risk_score" value="0" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Treatment Status</label>
+                        <select id="treatment_status"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Review Date</label>
+                        <input id="review_date" type="date">
+                    </div>
+                    <div class="form-group">
+                        <label>Residual Impact</label>
+                        <select id="residual_impact"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Residual Likelihood</label>
+                        <select id="residual_likelihood"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Residual Score</label>
+                        <input id="residual_score" value="0" disabled>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Progress Notes</label>
+                        <textarea id="progress_notes" rows="4" placeholder="Monitoring notes and treatment progress"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <div class="section-heading">
+                    <h2>Attachments</h2>
+                    <span>PDF, Word, Excel, and images</span>
+                </div>
+                <div class="attachment-row">
+                    <input id="attachments" type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,image/*">
+                    <div id="attachmentList" class="attachment-list">No attachments selected.</div>
+                </div>
+            </section>
+
+            <section id="closureSection" class="form-section hidden">
+                <div class="section-heading">
+                    <h2>Risk Closure</h2>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Closure Date</label>
+                        <input id="closure_date" type="date">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Closure Comments</label>
+                        <textarea id="closure_comments" rows="4" placeholder="Closure rationale and evidence summary"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section id="riskHistorySection" class="form-section hidden" aria-labelledby="riskHistoryHeading">
+                <div class="section-heading">
+                    <h2 id="riskHistoryHeading">Risk History</h2>
+                    <span>Workflow, review, and monitoring activity</span>
+                </div>
+                <div id="riskHistoryContent" class="risk-history-content">
+                    <p class="history-empty">Select History to load this risk's activity.</p>
+                </div>
+            </section>
+
+            <div class="action-bar">
+                <button id="cancelBtn" class="cancel-btn" type="button">Cancel</button>
+                <button id="saveDraftBtn" class="save-btn" type="button">Save Draft</button>
+                <button id="submitBtn" class="save-btn" type="button">Submit for Approval</button>
+                <button id="saveMonitoringBtn" class="save-btn hidden" type="button">Save Monitoring Update</button>
+                <button id="closeRiskBtn" class="delete-btn hidden" type="button">Close Risk</button>
+            </div>
+        </form>
+    </main>
+</div>
+
+<dialog id="rulesDialog" class="rules-dialog" data-erm-rules-dialog>
+    <div class="rules-dialog-head"><div><small>Governed methodology</small><h2>Manual Risk Assessment Rules</h2></div><button id="closeRulesDialog" type="button" aria-label="Close rules">×</button></div>
+    <div data-erm-assessment-rules></div>
+</dialog>
+
+<script src="../js/app.js?v=5"></script>
+<script src="../js/authGuard.js"></script>
+<script src="../js/sidebar.js?v=20260725-10"></script>
+<script src="../js/erm-assessment-rules.js?v=1"></script>
+<script src="../js/create-risk.js?v=6"></script>
+</body>
+
+</html>

@@ -1,0 +1,45 @@
+CREATE SEQUENCE IF NOT EXISTS users_staff_id_seq START 1;
+
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS position VARCHAR(150),
+ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS last_login TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS last_failed_login TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS last_password_reset TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+ADD COLUMN IF NOT EXISTS updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN IF NOT EXISTS reset_token_hash VARCHAR(64),
+ADD COLUMN IF NOT EXISTS reset_token_expires_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS reset_token_requested_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS reset_token_used_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 0;
+
+UPDATE users SET staff_id = 'NCA' || LPAD(nextval('users_staff_id_seq')::text, 6, '0') WHERE staff_id IS NULL OR BTRIM(staff_id) = '';
+CREATE UNIQUE INDEX IF NOT EXISTS users_staff_id_unique ON users(staff_id);
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_unique ON users(LOWER(email));
+CREATE UNIQUE INDEX IF NOT EXISTS users_reset_token_hash_unique ON users(reset_token_hash) WHERE reset_token_hash IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS password_history (
+    id BIGSERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_password_history_user ON password_history(user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS user_sessions (
+    id UUID PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    refresh_token_hash VARCHAR(64) NOT NULL UNIQUE,
+    ip_address VARCHAR(80),
+    user_agent TEXT,
+    expires_at TIMESTAMPTZ NOT NULL,
+    revoked_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user ON user_sessions(user_id);

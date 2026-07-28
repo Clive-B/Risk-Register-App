@@ -1,0 +1,32 @@
+# Local environment files and secrets
+.env
+.env.*
+!.env.example
+!.env.production.example
+backend/.env
+
+# Installed dependencies and generated output
+node_modules/
+backend/node_modules/
+coverage/
+dist/
+build/
+
+# Logs and local runtime files
+*.log
+*.pid
+.DS_Store
+Thumbs.db
+~$*
+~WRL*.tmp
+*.tmp
+
+# Local archives are retained outside the maintained source tree
+*.zip
+
+# Editor and local tool metadata
+.vscode/
+.idea/
+.agents/
+.codex/
+.local/

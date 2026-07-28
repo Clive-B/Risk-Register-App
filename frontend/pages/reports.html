@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Governed AI Reports | NCA GRC</title>
+    <link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-2">
+    <link rel="stylesheet" href="../css/reports.css?v=20260725-2">
+<link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
+<body>
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
+<div class="container">
+    <aside class="sidebar"></aside>
+    <main class="main">
+        <header class="report-hero">
+            <button id="closeReportBtn" class="close-report no-print" type="button" aria-label="Close report and return to the previous page"><span aria-hidden="true">×</span> Close Report</button>
+            <div><span class="eyebrow">NCA ERM · Governed reporting</span><h1>AI Risk Intelligence Reports</h1><p>Evidence-linked divisional and Risk Committee reports with controlled visibility, versioning and audit history.</p></div>
+            <div class="governance-seal"><span>✓</span><div><strong>Rules-driven</strong><small>No unrecorded claims</small></div></div>
+        </header>
+        <section class="report-builder no-print">
+            <div class="section-heading"><div><span class="step">01</span><h2>Report scope</h2></div><button id="viewVersionsBtn" class="secondary" type="button">Version History</button></div>
+            <div class="builder-grid">
+                <label>Report<select id="reportType"></select></label>
+                <label>Division<select id="division"><option value="">All Divisions</option></select></label>
+                <label>Period from<input id="periodStart" type="date"></label>
+                <label>As at<input id="periodEnd" type="date"></label>
+                <button id="generateBtn" class="primary generate" type="button">Generate Governed Report</button>
+            </div>
+            <p id="scopeHelp" class="scope-help"></p>
+        </section>
+        <section id="emptyWorkspace" class="empty-workspace">
+            <span class="empty-icon">✦</span><h2>Generate a current, evidence-linked report</h2>
+            <p>The report engine uses governed scores, recorded treatments, progress, evidence and approval states. Missing information is identified, never invented.</p>
+        </section>
+        <section id="reportWorkspace" class="workspace" hidden>
+            <div class="report-actions no-print">
+                <div class="report-state"><span id="reportStatus" class="status draft">Draft</span><span id="reportVersion"></span></div>
+                <div><button id="scheduleBtn" class="secondary">Schedule</button><button id="emailBtn" class="secondary">Email</button><button id="wordBtn" class="secondary">Word</button><button id="pdfBtn" class="secondary">PDF</button><button id="finaliseBtn" class="primary">Finalise Version</button></div>
+            </div>
+            <article id="printArea" class="report-document">
+                <header class="document-header">
+                    <div class="document-brand"><img src="../assets/images/NCA_-_Logo-04.png" alt="NCA logo"><div><strong>National Communications Authority</strong><span>Enterprise Risk Management</span></div></div>
+                    <div class="classification">NCA INTERNAL</div>
+                </header>
+                <div class="document-title"><span id="reportEyebrow">Governed AI report</span><h2 id="reportTitle"></h2><p id="reportMeta"></p></div>
+                <section id="summaryCards" class="summary-cards"></section>
+                <section class="document-section"><div class="section-heading"><div><span class="step">02</span><h2>Executive assessment</h2></div></div><p id="narrative" class="narrative"></p><div id="portfolioBreakdown" class="portfolio-breakdown"></div><div id="comparison"></div></section>
+                <section class="document-section"><div class="section-heading"><div><span class="step">03</span><h2>Decisions and recommended actions</h2></div></div><ul id="recommendations" class="recommendations"></ul></section>
+                <section class="document-section">
+                    <div class="section-heading"><div><span class="step">04</span><h2 id="riskSectionTitle">Risk and treatment detail</h2></div><select id="displayStatus" class="no-print"><option value="">All treatment states</option><option>Not Started</option><option>In Progress</option><option>Overdue</option><option>Completed</option></select></div>
+                    <div id="riskCards" class="risk-cards"></div>
+                </section>
+                <section class="document-section"><div class="section-heading"><div><span class="step">05</span><h2>Data quality and assurance</h2></div></div><div id="dataQuality"></div><p id="evidenceRule" class="assurance-note"></p></section>
+                <section class="document-section commentary-section">
+                    <div class="section-heading"><div><span class="step">06</span><h2>Management commentary</h2></div></div>
+                    <textarea id="commentary" class="no-print" placeholder="Add the Division Champion’s or Committee Chair’s contextual commentary (optional)."></textarea><div id="commentaryPrint" class="print-only"></div><button id="saveCommentaryBtn" class="secondary no-print">Save Commentary</button>
+                </section>
+                <footer class="document-footer"><span id="generatedAt"></span><span id="auditStamp">Governed draft</span></footer>
+            </article>
+        </section>
+    </main>
+</div>
+<dialog id="versionsDialog"><div class="dialog-header"><div><span class="eyebrow">Audit history</span><h2>Report versions</h2></div><button class="dialog-close" data-close="versionsDialog">×</button></div><div id="versionsList" class="versions-list"></div></dialog>
+<dialog id="scheduleDialog">
+    <div class="dialog-header"><div><span class="eyebrow">Automated delivery</span><h2>Schedule this report</h2></div><button class="dialog-close" data-close="scheduleDialog">×</button></div>
+    <form id="scheduleForm"><label>Frequency<select id="scheduleFrequency"><option>Weekly</option><option>Monthly</option><option>Quarterly</option></select></label><label>First run<input id="scheduleFirstRun" type="datetime-local" required></label><label>Email recipient (optional)<input id="scheduleRecipient" type="email" placeholder="name@nca.org.gh"></label><p>Leave the recipient blank to create the governed version without email delivery.</p><button class="primary">Create Schedule</button></form>
+    <div id="schedulesList" class="schedules-list"></div>
+</dialog>
+<dialog id="emailDialog"><div class="dialog-header"><div><span class="eyebrow">Controlled distribution</span><h2>Email report summary</h2></div><button class="dialog-close" data-close="emailDialog">×</button></div><form id="emailForm"><label>Official NCA email<input id="emailRecipient" type="email" placeholder="name@nca.org.gh" required></label><p>The email contains the governed summary and report version reference. Full evidence remains inside the secured platform.</p><button class="primary">Queue Email</button></form></dialog>
+<script src="../js/app.js?v=5"></script><script src="../js/authGuard.js"></script><script src="../js/sidebar.js?v=20260725-10"></script><script src="../js/reports.js?v=20260725-2"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+const router=require('express').Router();
+const auth=require('../middleware/authMiddleware');
+const role=require('../middleware/roleMiddleware');
+const c=require('../controllers/workflowController');
+const governance=require('../controllers/riskGovernanceWorkflowController');
+router.use(auth);
+router.post('/',c.create);
+router.get('/my-approvals',governance.mine);
+router.get('/kpis',governance.kpis);
+router.get('/reports',role('System Administrator','Risk Committee Chairman'),c.report);
+router.get('/definitions',role('System Administrator'),c.definitions);
+router.put('/definitions/:id',role('System Administrator'),c.updateDefinition);
+router.post('/bulk-actions',c.bulk);
+router.post('/escalate-overdue',role('System Administrator'),c.escalate);
+router.get('/:id',governance.authorizeDetails,c.details);
+router.post('/:id/actions',c.action);
+module.exports=router;

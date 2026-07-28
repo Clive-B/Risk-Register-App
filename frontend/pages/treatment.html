@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Risk Treatment</title>
+<link rel="stylesheet" href="../css/treatment.css?v=20260728-3">
+<link rel="stylesheet" href="../css/approval-dialog.css?v=2">
+<link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
+
+<body>
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+<div id="treatmentModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add Treatment Plan</h2>
+            <span id="closeModal" class="close-btn">&times;</span>
+        </div>
+
+        <div class="form-grid">
+            <div class="form-group full-width">
+                <label>Linked Risk</label>
+                <select id="risk_id">
+                    <option value="">Select Risk</option>
+                </select>
+                <small id="treatmentVisibilityHelp">Treatment visibility follows the linked risk. The Chairman always has access.</small>
+            </div>
+
+            <div class="form-group full-width">
+                <label>Plan Title</label>
+                <input id="plan_title" maxlength="200" placeholder="Define the treatment action">
+            </div>
+
+            <div class="form-group">
+                <label>Treatment Strategy</label>
+                <select id="treatment_strategy" aria-describedby="treatmentStrategyHelp">
+                    <option value="">Select Strategy</option>
+                    <option>Terminate</option>
+                    <option>Treat</option>
+                    <option>Transfer</option>
+                    <option>Tolerate</option>
+                </select>
+                <small id="treatmentStrategyHelp">The system proposal is a starting point. The Focal Person may change this strategy.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Action Owner</label>
+                <input id="action_owner" placeholder="Responsible officer">
+            </div>
+
+            <div class="form-group">
+                <label>Due Date</label>
+                <input id="due_date" type="date">
+            </div>
+
+            <div class="form-group full-width proposal-context" id="proposalContext" hidden>
+                <strong id="proposalOrigin"></strong>
+                <span id="proposalLifecycle"></span>
+            </div>
+
+            <div class="form-group full-width" id="uploadedPlanGroup" hidden>
+                <label>Original Uploaded Treatment Plan</label>
+                <textarea id="uploaded_plan" rows="4" readonly></textarea>
+                <small>Preserved exactly as supplied in the uploaded risk-register template.</small>
+            </div>
+
+            <div class="form-group full-width" id="systemImprovementsGroup" hidden>
+                <label>System-Suggested Improvements</label>
+                <textarea id="system_improvements" rows="5" readonly></textarea>
+                <small>This guidance remains separate from the uploaded plan and Focal Person amendments.</small>
+            </div>
+
+            <section id="controlReassessmentSection" class="form-group full-width control-reassessment" hidden>
+                <div class="control-reassessment-heading">
+                    <div>
+                        <strong>Champion Control Reassessment</strong>
+                        <small>Update the control conclusion as treatment progresses. This changes the linked Consolidated Risk Register but never recalculates the risk score.</small>
+                    </div>
+                </div>
+                <div class="form-grid control-reassessment-grid">
+                    <div class="form-group full-width">
+                        <label>Existing Controls</label>
+                        <textarea id="control_existing_controls" rows="3" readonly></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Control Effectiveness</label>
+                        <select id="control_effectiveness">
+                            <option>Not Assessed</option>
+                            <option>Effective</option>
+                            <option>Partially Effective</option>
+                            <option>Ineffective</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Control Type</label>
+                        <select id="control_type">
+                            <option>Not Assessed</option>
+                            <option>Preventive</option>
+                            <option>Detective</option>
+                            <option>Corrective</option>
+                            <option>Mixed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Control Owner</label>
+                        <input id="control_owner" placeholder="Person or office responsible for the control">
+                    </div>
+                    <div class="form-group">
+                        <label>Design Adequacy</label>
+                        <select id="control_design_adequacy">
+                            <option>Not Assessed</option>
+                            <option>Adequate</option>
+                            <option>Partially Adequate</option>
+                            <option>Inadequate</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Tested Date</label>
+                        <input id="control_last_tested_date" type="date">
+                    </div>
+                    <div class="form-group">
+                        <label>Next Control Review Date</label>
+                        <input id="control_next_review_date" type="date">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Supporting Evidence</label>
+                        <textarea id="control_evidence" rows="3" placeholder="Reference tests, reports, logs or other evidence"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Exceptions or Control Gaps</label>
+                        <textarea id="control_exceptions" rows="3" placeholder="Record unresolved exceptions, weaknesses or gaps"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Reason for the Effectiveness Rating</label>
+                        <textarea id="control_assessment_basis" rows="4" maxlength="2000" placeholder="Explain why this control-effectiveness rating is appropriate" required></textarea>
+                        <small>Required. Previous ratings and reasons remain in the permanent risk history.</small>
+                    </div>
+                </div>
+            </section>
+
+            <div class="form-group full-width">
+                <label>Treatment Objective</label>
+                <textarea id="treatment_objective" rows="3" placeholder="State the intended treatment outcome"></textarea>
+            </div>
+
+            <div class="form-group full-width">
+                <label>Current Treatment Actions</label>
+                <textarea id="treatment_actions" rows="5" placeholder="Record the actions that will be monitored"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select id="status">
+                    <option>Not Started</option>
+                    <option>In Progress</option>
+                    <option>Completed</option>
+                    <option>Overdue</option>
+                </select>
+            </div>
+
+            <div class="form-group full-width">
+                <label>Completion %</label>
+                <div class="range-row">
+                    <input id="progress_percent" type="range" min="0" max="100" step="5" value="0">
+                    <input id="progress_value" type="number" min="0" max="100" value="0">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Monitoring Frequency</label>
+                <select id="monitoring_frequency">
+                    <option value="">Select frequency</option>
+                    <option>Monthly</option>
+                    <option>Quarterly</option>
+                    <option>Six-monthly</option>
+                    <option>Annually</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Next Review Date</label>
+                <input id="review_date" type="date">
+            </div>
+
+            <div class="form-group">
+                <label>Target Residual Likelihood</label>
+                <select id="target_residual_likelihood">
+                    <option value="">Select</option><option value="1">1 - Rare</option><option value="2">2 - Unlikely</option><option value="3">3 - Possible</option><option value="4">4 - Likely</option><option value="5">5 - Almost Certain</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Target Residual Consequence</label>
+                <select id="target_residual_impact">
+                    <option value="">Select</option><option value="1">1 - Insignificant</option><option value="2">2 - Minor</option><option value="3">3 - Moderate</option><option value="4">4 - Major</option><option value="5">5 - Catastrophic</option>
+                </select>
+            </div>
+
+            <div class="form-group full-width">
+                <label>Evidence Required</label>
+                <textarea id="evidence_required" rows="3" placeholder="Describe evidence required to demonstrate completion"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Evidence File Name</label>
+                <input id="evidence_file_name" placeholder="e.g. control-test-report.pdf">
+            </div>
+
+            <div class="form-group">
+                <label>Evidence Reference</label>
+                <input id="evidence_url" placeholder="URL, shared drive path, or document reference">
+            </div>
+
+            <div class="form-group full-width">
+                <label>Evidence Notes</label>
+                <textarea id="evidence_notes" rows="3" placeholder="Summarize evidence submitted or required"></textarea>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button id="closeModalBtn" class="cancel-btn" type="button">Cancel</button>
+            <button id="saveTreatment" class="save-btn" type="button">Save Plan</button>
+        </div>
+    </div>
+</div>
+
+<dialog id="treatmentViewDialog" class="treatment-view-dialog" aria-labelledby="treatmentViewTitle">
+    <div class="treatment-view-accent" aria-hidden="true"></div>
+    <header class="treatment-view-header">
+        <div>
+            <span class="treatment-view-eyebrow">NCA treatment plan record</span>
+            <h2 id="treatmentViewTitle">Treatment plan</h2>
+            <p id="treatmentViewRisk"></p>
+        </div>
+        <button id="closeTreatmentViewIcon" class="treatment-view-close-icon" type="button" aria-label="Close treatment view">&times;</button>
+    </header>
+    <div id="treatmentViewBody" class="treatment-view-body"></div>
+    <footer class="treatment-view-footer">
+        <span>Read-only governed view</span>
+        <button id="closeTreatmentView" type="button">Close</button>
+    </footer>
+</dialog>
+
+<div class="container">
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>NCA GRC</h2>
+        </div>
+
+        <ul>
+            <li><a href="../nca-grc-risk-register.html">Dashboard</a></li>
+            <li><a href="users.html">Users</a></li>
+            <li><a href="risks.html">Risk Register</a></li>
+            <li><a href="assessment.html">Risk Assessment</a></li>
+            <li class="active"><a href="treatment.html">Risk Treatment</a></li>
+            <li><a href="reports.html">Reports</a></li>
+        </ul>
+
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <h1>Risk Treatment</h1>
+                <p>Treatment plans, owners, due dates, progress, and evidence tracking</p>
+            </div>
+            <div class="user-card" id="userInfo"></div>
+        </div>
+
+        <section class="stats">
+            <div class="stat-card">
+                <h4>Total Plans</h4>
+                <h2 id="totalPlans">0</h2>
+            </div>
+            <div class="stat-card">
+                <h4>In Progress</h4>
+                <h2 id="inProgressPlans">0</h2>
+            </div>
+            <div class="stat-card">
+                <h4>Completed</h4>
+                <h2 id="completedPlans">0</h2>
+            </div>
+            <div class="stat-card">
+                <h4>Overdue</h4>
+                <h2 id="overduePlans">0</h2>
+            </div>
+        </section>
+
+        <div class="toolbar">
+            <input id="searchInput" class="search" type="text" placeholder="Search treatment plans...">
+            <div class="filters">
+                <select id="directorateFilter">
+                    <option value="">All Divisions</option>
+                    <option>RIPS</option>
+                    <option>Legal</option>
+                    <option>Regulatory Administration</option>
+                    <option>Consumer Affairs</option>
+                    <option>Corporate Affairs</option>
+                    <option>Finance</option>
+                    <option>Engineering</option>
+                    <option>Information Technology</option>
+                    <option>Procurement and Protocol</option>
+                    <option>Internal Audit</option>
+                    <option>Human Resource</option>
+                    <option>ROD</option>
+                    <option>Administration</option>
+                    <option>Cybersecurity</option>
+                    <option>International Affairs</option>
+                </select>
+
+                <select id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option>Not Started</option>
+                    <option>In Progress</option>
+                    <option>Completed</option>
+                    <option>Overdue</option>
+                </select>
+            </div>
+            <button id="approveAllPlans" class="approve-all-btn" type="button">Approve All</button>
+            <button id="addTreatmentBtn" class="add-btn" type="button">Add Plan</button>
+        </div>
+
+        <div class="table-card">
+            <div id="loadingState" class="loading-state">Loading treatment plans...</div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Risk</th>
+                        <th>Treatment Plan</th>
+                        <th>Lifecycle</th>
+                        <th>Owner</th>
+                        <th>Due Date</th>
+                        <th>Progress</th>
+                        <th>Status</th>
+                        <th>Evidence</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="treatmentTable"></tbody>
+            </table>
+
+            <div id="emptyState" class="empty-state">No treatment plans found.</div>
+
+            <div class="pagination-bar">
+                <div id="paginationSummary" class="pagination-summary">Showing 0 plans</div>
+                <div class="pagination-controls">
+                    <button id="prevPage" class="page-btn" type="button">Previous</button>
+                    <span id="pageInfo" class="page-info">Page 1 of 1</span>
+                    <button id="nextPage" class="page-btn" type="button">Next</button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<dialog id="approveAllDialog" class="nca-approval-dialog">
+    <div class="nca-approval-accent"></div>
+    <div class="nca-approval-body">
+        <div class="nca-approval-icon" aria-hidden="true">✓</div>
+        <span class="nca-approval-eyebrow">NCA treatment governance decision</span>
+        <h2>Approve all eligible treatment plans?</h2>
+        <p id="approveAllDescription" class="nca-approval-risk"></p>
+        <div class="nca-approval-summary">
+            <div><span>Awaiting approval</span><strong id="approveAllCount">0</strong></div>
+            <div><span>Outcome</span><strong>Approved</strong></div>
+        </div>
+        <label class="nca-approval-comment">Approval comment <small>(optional)</small>
+            <textarea id="approveAllComments" rows="4" maxlength="2000" placeholder="Optionally record the basis for this bulk approval."></textarea>
+        </label>
+        <div class="nca-approval-note">Only complete, pending plans within your permitted division scope will be approved. Each approval is retained in the audit trail.</div>
+        <div class="nca-approval-actions">
+            <button id="cancelApproveAll" type="button">Continue Reviewing</button>
+            <button id="confirmApproveAll" class="confirm" type="button">Confirm Approval</button>
+        </div>
+    </div>
+</dialog>
+
+<dialog id="treatmentDecisionDialog" class="nca-approval-dialog">
+    <div class="nca-approval-accent"></div>
+    <div class="nca-approval-body">
+        <div class="nca-approval-icon" aria-hidden="true">✓</div>
+        <span class="nca-approval-eyebrow">Risk Committee treatment decision</span>
+        <h2 id="treatmentDecisionTitle">Approve this treatment plan?</h2>
+        <p id="treatmentDecisionDescription" class="nca-approval-risk"></p>
+        <label class="nca-approval-comment"><span id="treatmentDecisionCommentLabel">Committee comments <small>(optional)</small></span>
+            <textarea id="treatmentDecisionComments" rows="4" maxlength="2000" placeholder="Record the Committee’s decision or directions."></textarea>
+        </label>
+        <div class="nca-approval-note">The Champion’s submitted plan remains preserved in the audit trail. Any Chairman amendment is recorded separately.</div>
+        <div class="nca-approval-actions">
+            <button id="cancelTreatmentDecision" type="button">Continue Reviewing</button>
+            <button id="confirmTreatmentDecision" class="confirm" type="button">Confirm Approval</button>
+        </div>
+    </div>
+</dialog>
+
+<script src="../js/app.js?v=5"></script>
+<script src="../js/authGuard.js"></script>
+<script src="../js/sidebar.js?v=20260725-10"></script>
+<script src="../js/treatment.js?v=20260728-3"></script>
+</body>
+
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>My Approvals | NCA GRC</title>
+    <link rel="stylesheet" href="../css/workflows.css">
+    <link rel="stylesheet" href="../css/approval-dialog.css?v=2">
+    <link rel="stylesheet" href="../css/bulk-approval.css?v=1">
+<link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
+<body>
+<div class="container">
+    <aside class="sidebar"></aside>
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <small>Dashboard</small>
+                <h1>My Approvals</h1>
+                <p>Your cross-module approval inbox. Open each governed assignment in its detailed review workspace.</p>
+            </div>
+            <div class="exports">
+                <button id="csv">CSV</button>
+                <button id="excel">Excel</button>
+                <button onclick="window.print()">PDF</button>
+            </div>
+        </header>
+        <section id="kpis" class="kpis"></section>
+        <section class="card">
+            <div class="toolbar">
+                <input id="search" placeholder="Search item or requester">
+                <select id="type">
+                    <option value="">All pending assignments</option>
+                    <option value="risk">Individual risks</option>
+                    <option value="committee-risk-group">Committee risk groups</option>
+                    <option value="risk-register-batch">Risk register uploads</option>
+                    <option value="workplan-batch">Work plan uploads</option>
+                    <option value="treatment-group">Treatment plans</option>
+                    <option value="legacy-workflow">Other workflows</option>
+                </select>
+                <button id="filter">Search</button>
+                <button id="bulkApprove" class="approve">Bulk Approve</button>
+                <button id="bulkReject" class="reject">Bulk Reject</button>
+            </div>
+            <p id="legacyBulkNote" class="workflow-guidance" hidden>
+                Bulk action is completed inside the governed risk, upload, or treatment workspace so the correct approval rules are retained.
+            </p>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th><input id="selectAll" type="checkbox"></th><th>Approval Type</th><th>Item</th><th>Submitted By</th><th>Current Stage</th><th>Priority</th><th>Submitted</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="rows"></tbody>
+                </table>
+            </div>
+            <div class="pager"><button id="prev">Previous</button><span id="page"></span><button id="next">Next</button></div>
+        </section>
+
+        <dialog id="bulkApprovalDialog" class="nca-approval-dialog">
+            <div class="nca-approval-accent"></div>
+            <div class="nca-approval-body">
+                <div id="bulkApprovalIcon" class="nca-approval-icon" aria-hidden="true">✓</div>
+                <span class="nca-approval-eyebrow">NCA workflow governance decision</span>
+                <h2 id="bulkApprovalTitle">Approve selected items?</h2>
+                <p id="bulkApprovalDescription" class="nca-approval-risk"></p>
+                <div class="nca-approval-summary">
+                    <div><span>Selected approvals</span><strong id="bulkApprovalCount">0</strong></div>
+                    <div><span>Workflow outcome</span><strong id="bulkApprovalOutcome">Approved</strong></div>
+                </div>
+                <label class="nca-approval-comment">
+                    <span id="bulkApprovalCommentLabel">Approval comment <small>(optional)</small></span>
+                    <textarea id="bulkApprovalComments" rows="4" maxlength="2000" placeholder="Optionally record the basis for this approval."></textarea>
+                </label>
+                <p id="bulkApprovalError" class="nca-dialog-error" role="alert" hidden></p>
+                <div id="bulkApprovalNote" class="nca-approval-note">Each decision will be recorded in the workflow history and audit trail.</div>
+                <div class="nca-approval-actions">
+                    <button id="cancelBulkApproval" type="button">Continue Reviewing</button>
+                    <button id="confirmBulkApproval" class="confirm" type="button">Confirm Approval</button>
+                </div>
+            </div>
+        </dialog>
+        <div id="toast"></div>
+    </main>
+</div>
+<script src="../js/app.js?v=5"></script>
+<script src="../js/authGuard.js"></script>
+<script src="../js/sidebar.js?v=20260725-10"></script>
+<script src="../js/my-approvals.js?v=3"></script>
+</body>
+</html>

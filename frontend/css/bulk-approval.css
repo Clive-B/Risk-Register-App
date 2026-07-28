@@ -1,0 +1,14 @@
+.nca-approval-comment small {
+    color: #667085;
+    font-weight: 600;
+}
+
+.nca-dialog-error {
+    margin: 9px 0 0;
+    color: #b42318;
+    font-weight: 700;
+}
+
+#bulkApprovalDialog.is-reject .nca-approval-icon {
+    background: linear-gradient(145deg, #d92d20, #912018);
+}

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Users Management</title>
+
+<link rel="stylesheet" href="../css/users.css?v=20260725-compact-users">
+
+<link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
+
+<body>
+
+<!-- ===========================
+     ADD USER MODAL
+=========================== -->
+
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+<div id="userModal" class="modal" aria-hidden="true">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2 id="modalTitle">Add New User</h2>
+
+            <span id="closeModal" class="close-btn">&times;</span>
+
+        </div>
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label>Staff ID <small>(optional)</small></label>
+
+                <input
+                    id="staff_id"
+                    maxlength="50"
+                    placeholder="Leave blank if not supplied">
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Position</label>
+
+                <input id="position" placeholder="Position / Job Title">
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Full Name</label>
+
+                <input
+                    id="full_name"
+                    placeholder="Grant Emmanuel Dzudzor">
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Email</label>
+
+                <input
+                    id="email"
+                    type="email"
+                    placeholder="linda.amate@nca.org.gh"
+                    autocomplete="email"
+                    pattern="[A-Za-z0-9]+(([.]|_|%|[+]|-)[A-Za-z0-9]+)*@nca[.]org[.]gh"
+                    aria-describedby="emailHelp"
+                    required>
+                <small id="emailHelp" class="form-help">Only official email addresses ending in @nca.org.gh are accepted.</small>
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Phone <small>(optional)</small></label>
+
+                <input
+                    id="phone"
+                    type="tel"
+                    inputmode="numeric"
+                    autocomplete="tel"
+                    minlength="10"
+                    maxlength="10"
+                    pattern="(020|024|025|026|027|050|053|054|055|056|057|059)[0-9]{7}"
+                    placeholder="0241234567"
+                    aria-describedby="phoneHelp">
+                <small id="phoneHelp" class="form-help">Optional. If supplied, enter 10 digits using an approved network prefix.</small>
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Role</label>
+
+                <select id="role">
+
+                    <option value="">Select Role</option>
+
+                    <option value="System Administrator">
+                        System Administrator
+                    </option>
+
+                    <option value="Risk Champion">
+                        Risk Champion
+                    </option>
+
+                    <option value="Risk Committee Chairman">Risk Committee Chairman</option>
+
+                    <option value="Risk Focal Person">
+                        Risk Focal Person
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="form-group" id="divisionGroup">
+
+                <label>Division</label>
+
+                <select id="directorate">
+
+                    <option value="">Select Division</option>
+
+                    <option>RIPS</option>
+                    <option>Legal</option>
+                    <option>Regulatory Administration</option>
+                    <option>Consumer Affairs</option>
+                    <option>Corporate Affairs</option>
+                    <option>Finance</option>
+                    <option>Engineering</option>
+                    <option>Information Technology</option>
+                    <option>Procurement and Protocol</option>
+                    <option>Internal Audit</option>
+                    <option>Human Resource</option>
+                    <option>ROD</option>
+                    <option>Administration</option>
+                    <option>Cybersecurity</option>
+                    <option>International Affairs</option>
+
+                </select>
+
+            </div>
+
+            <div class="form-group" id="globalScopeGroup" hidden>
+                <label>Access Scope</label>
+                <div class="scope-readonly">All Divisions</div>
+                <small class="form-help">System Administrators oversee every NCA division.</small>
+            </div>
+
+            <div class="form-group full-width">
+
+                <label>Temporary Password</label>
+                <div class="scope-readonly">Assigned automatically by the system</div>
+                <small class="form-help">The user must change the default temporary password immediately after first login.</small>
+                <input id="password" type="hidden" value="">
+                <input id="force_password_change" type="hidden" value="true">
+
+            </div>
+
+            <div class="form-group full-width" id="statusGroup">
+
+                <label>Status</label>
+
+                <select id="status">
+
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+        <div class="modal-footer">
+
+            <button
+                id="closeModalBtn"
+                class="cancel-btn">
+
+                Cancel
+
+            </button>
+
+            <button
+                id="saveUser"
+                class="save-btn">
+
+                Save User
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="resetModal" class="modal" aria-hidden="true"><div class="modal-content"><div class="modal-header"><h2>Administrative Password Reset</h2><span id="closeResetModal" class="close-btn">&times;</span></div><div class="form-grid"><div class="form-group full-width"><strong id="resetUserName"></strong><span id="resetUserDetails"></span></div><div class="form-group"><label>New Password</label><input id="adminNewPassword" type="password"></div><div class="form-group"><label>Confirm Password</label><input id="adminConfirmPassword" type="password"></div><div class="form-group full-width"><label><input id="forceChange" type="checkbox" checked> Force user to change password on next login</label></div></div><div class="modal-footer"><button id="cancelAdminReset" class="cancel-btn">Cancel</button><button id="confirmAdminReset" class="save-btn">Reset Password</button></div></div></div>
+
+<div id="bulkUserModal" class="modal" aria-hidden="true">
+    <div class="modal-content bulk-user-content">
+        <div class="modal-header bulk-user-header">
+            <div>
+                <span class="modal-eyebrow">NCA USER ADMINISTRATION</span>
+                <h2>Create Multiple User Accounts</h2>
+                <p>Add users directly or upload the approved workbook. Every account is validated and confirmed before creation.</p>
+            </div>
+            <button id="closeBulkUserModal" class="close-btn close-button" type="button" aria-label="Close">&times;</button>
+        </div>
+
+        <div id="bulkUserSource" class="bulk-user-body">
+            <div class="bulk-education">
+                <strong>How it works</strong>
+                <p>The system detects errors, proposes explainable corrections, shows confidence and validation rules, and keeps an audit record. Staff ID and phone are optional. A blank Staff ID stays blank.</p>
+            </div>
+
+            <div class="bulk-mode-tabs" role="tablist">
+                <button id="manualBulkTab" class="bulk-tab active" type="button">Enter Users</button>
+                <button id="workbookBulkTab" class="bulk-tab" type="button">Upload Excel</button>
+            </div>
+
+            <section id="manualBulkPanel" class="bulk-panel">
+                <div class="section-heading">
+                    <div>
+                        <h3>Manual multi-user form</h3>
+                        <p>Add as many rows as required. Temporary passwords are assigned automatically.</p>
+                    </div>
+                    <button id="addBulkUserRow" class="secondary-btn" type="button">+ Add another user</button>
+                </div>
+                <div class="bulk-entry-scroll">
+                    <table class="bulk-entry-table">
+                        <thead>
+                            <tr>
+                                <th>Full Name</th>
+                                <th>Official Email</th>
+                                <th>Role</th>
+                                <th>Division</th>
+                                <th>Position <small>optional</small></th>
+                                <th>Staff ID <small>optional</small></th>
+                                <th>Phone <small>optional</small></th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="bulkUserRows"></tbody>
+                    </table>
+                </div>
+                <div class="bulk-source-actions">
+                    <button id="reviewManualUsers" class="save-btn" type="button">Review Proposed Accounts</button>
+                </div>
+            </section>
+
+            <section id="workbookBulkPanel" class="bulk-panel" hidden>
+                <div class="workbook-upload-card">
+                    <div class="upload-icon">XLSX</div>
+                    <div>
+                        <h3>Upload bulk-user workbook</h3>
+                        <p>Supported formats: .xlsx and .xls, up to 8 MB and 500 users.</p>
+                        <a class="template-link" href="../templates/NCA_Bulk_User_Account_Upload_Template.xlsx" download>Download the approved workbook template</a>
+                    </div>
+                    <label class="file-picker">
+                        Choose File
+                        <input id="bulkUserWorkbook" type="file" accept=".xlsx,.xls">
+                    </label>
+                </div>
+                <div id="bulkWorkbookFileName" class="selected-file">No workbook selected.</div>
+                <div class="bulk-source-actions">
+                    <button id="reviewWorkbookUsers" class="save-btn" type="button">Analyse Workbook</button>
+                </div>
+            </section>
+        </div>
+
+        <div id="bulkUserReview" class="bulk-user-body" hidden>
+            <div class="review-topbar">
+                <div>
+                    <span class="modal-eyebrow">GOVERNED CORRECTION REVIEW</span>
+                    <h3>Review and confirm every proposed account</h3>
+                    <p id="bulkReviewSource"></p>
+                </div>
+                <button id="returnToBulkSource" class="secondary-btn" type="button">Back to Entry</button>
+            </div>
+            <div id="bulkEducationSteps" class="bulk-education-steps"></div>
+            <div class="bulk-summary">
+                <div><span>Total rows</span><strong id="bulkTotalRows">0</strong></div>
+                <div><span>Initially valid</span><strong id="bulkValidRows">0</strong></div>
+                <div><span>Needs correction</span><strong id="bulkFailedRows">0</strong></div>
+                <div><span>Confirmed</span><strong id="bulkConfirmedRows">0</strong></div>
+            </div>
+            <div id="bulkCorrectionRows" class="bulk-correction-rows"></div>
+            <div class="bulk-review-footer">
+                <p>Accounts will only be created when all rows are valid and confirmed. Welcome emails are sent separately to each user.</p>
+                <div>
+                    <button id="confirmAllBulkUsers" class="secondary-btn" type="button">Confirm All Valid Rows</button>
+                    <button id="createBulkUsers" class="save-btn" type="button" disabled>Create Confirmed Accounts</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            <h2>NCA GRC</h2>
+        </div>
+
+        <ul>
+
+            <li>
+                <a href="../nca-grc-risk-register.html">Dashboard</a>
+            </li>
+
+            <li class="active">
+                <a href="users.html">Users</a>
+            </li>
+
+            <li>
+                <a href="risks.html">Risk Register</a>
+            </li>
+
+            <li>
+                <a href="assessment.html">Risk Assessment</a>
+            </li>
+
+            <li>
+                <a href="treatment.html">Risk Treatment</a>
+            </li>
+
+            <li>
+                <a href="reports.html">Reports</a>
+            </li>
+
+        </ul>
+
+        <button id="logoutBtn" class="logout-btn">
+            Logout
+        </button>
+
+    </aside>
+
+    <main class="main">
+
+        <div class="topbar">
+
+            <h1>Users Management</h1>
+
+            <div class="user-card" id="userInfo"></div>
+
+        </div>
+<section class="stats">
+
+    <div class="stat-card">
+
+        <h4>Total Users</h4>
+
+        <h2 id="totalUsers">0</h2>
+
+    </div>
+
+    <div class="stat-card">
+
+        <h4>System Administrators</h4>
+
+        <h2 id="totalAdmins">0</h2>
+
+    </div>
+
+    <div class="stat-card">
+
+        <h4>Risk Champions</h4>
+
+        <h2 id="totalChampions">0</h2>
+
+    </div>
+
+    <div class="stat-card">
+
+        <h4>Risk Focal Persons</h4>
+
+        <h2 id="totalFocals">0</h2>
+
+    </div>
+
+</section>
+        <div class="toolbar">
+
+            <input
+                type="text"
+                class="search"
+                id="searchInput"
+                placeholder="Search users...">
+
+            <div class="toolbar-actions">
+                <button class="secondary-btn" id="bulkUserBtn" type="button">Enter Multiple Users</button>
+                <button class="add-btn" id="addUserBtn">+ Add User</button>
+            </div>
+
+        </div>
+
+        <div class="table-card">
+
+            <div id="loadingState" class="loading-state">
+                Loading users...
+            </div>
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Staff ID</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Division</th>
+                        <th>Position</th>
+                        <th>Role</th>
+                        <th>Activation Status</th>
+                        <th>Email Status</th>
+                        <th>Last Login</th>
+                        <th>Password Status</th>
+                        <th>Force Change</th>
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="usersTable">
+
+                </tbody>
+
+            </table>
+
+            <div id="emptyState" class="empty-state">
+                No users found.
+            </div>
+
+            <div class="pagination-bar">
+
+                <div id="paginationSummary" class="pagination-summary">
+                    Showing 0 users
+                </div>
+
+                <div class="pagination-controls">
+
+                    <button id="prevPage" class="page-btn" type="button">
+                        Previous
+                    </button>
+
+                    <span id="pageInfo" class="page-info">Page 1 of 1</span>
+
+                    <button id="nextPage" class="page-btn" type="button">
+                        Next
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script src="../js/app.js"></script>
+<script src="../js/authGuard.js"></script>
+<script src="../js/sidebar.js?v=20260725-10"></script>
+<script src="../js/users.js?v=20260725-compact-users"></script>
+
+</body>
+
+</html>

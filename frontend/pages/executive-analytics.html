@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Executive Analytics | NCA GRC</title>
+    <link rel="stylesheet" href="../css/executive-analytics.css?v=4">
+    <link rel="stylesheet" href="../css/executive-analytics-performance.css?v=5" data-executive-performance>
+<link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
+<body>
+<div class="container">
+    <aside class="sidebar"></aside>
+    <main class="main">
+        <header class="hero">
+            <div><small>Enterprise Governance Intelligence</small><h1>Executive Analytics</h1><p>Authority-wide risk, treatment and approval health at a glance.</p></div>
+            <div class="hero-actions"><a href="board-dashboard.html">Board View</a><button id="personalize">Personalize</button><button id="reports">Governed AI Report</button></div>
+        </header>
+        <section class="filters card">
+            <label>From<input id="dateFrom" type="date"></label><label>To<input id="dateTo" type="date"></label>
+            <label>Division<select id="division"><option value="">All</option></select></label>
+            <label>Category<select id="category"><option value="">All</option></select></label>
+            <label>Owner<select id="owner"><option value="">All</option></select></label>
+            <label>Lifecycle Status<select id="status"><option value="">All</option></select></label>
+            <label>Level<select id="level"><option value="">All</option><option>High</option><option>Medium</option><option>Low</option></select></label>
+            <button id="apply" class="primary">Apply Filters</button><button id="clear">Reset</button>
+        </section>
+        <section id="kpis" class="kpis"></section>
+        <section id="widgets" class="widgets">
+            <article class="card widget wide" draggable="true" data-widget="risk-trends"><header><h2>Enterprise Risk Trends</h2><span>12-month movement</span></header><canvas id="trendChart" height="105"></canvas></article>
+            <article class="card widget" draggable="true" data-widget="heatmap"><header><div><h2>Enterprise Risk Heat Map</h2><span>Governed executive preview</span></div><a class="open-full-heatmap" href="assessment.html">Open Full Enterprise Heat Map</a></header><div id="heatmap" class="heatmap" aria-label="Enterprise 5 by 5 risk heat map"></div><div class="axes">Likelihood → · Impact ↑</div></article>
+            <article class="card widget" draggable="true" data-widget="scorecard"><header><h2>Division Scorecard</h2><span>Ranked governance performance</span></header><div class="table-wrap"><table><thead><tr><th>Rank</th><th>Division</th><th>Risks</th><th>High</th><th>Treatment</th><th>Governance</th></tr></thead><tbody id="scorecard"></tbody></table></div></article>
+            <article class="card widget ai" draggable="true" data-widget="ai-insights"><header><h2>Executive Insights</h2><span>AI-ready integration point</span></header><p>Predictive risk, forecasting, emerging-risk and anomaly widgets can connect here without changing the dashboard contract.</p></article>
+        </section>
+        <dialog id="riskDialog"><header><h2 id="riskDialogTitle">Heat Map Risks</h2><button id="closeDialog">×</button></header><div id="riskDialogRows"></div></dialog>
+        <dialog id="personalizeDialog" class="personalization-dialog" aria-labelledby="personalizeTitle">
+            <div class="personalization-accent" aria-hidden="true"></div>
+            <header>
+                <div><span class="dialog-eyebrow">Chairman workspace preferences</span><h2 id="personalizeTitle">Personalize the Executive Dashboard</h2></div>
+                <button id="closePersonalize" class="dialog-close" type="button" aria-label="Close personalization">&times;</button>
+            </header>
+            <p class="personalization-intro">Choose which supporting sections appear on this dashboard. These settings affect only your account and do not alter risk, treatment or compliance data.</p>
+            <section class="personalization-section">
+                <h3>Visible dashboard sections</h3>
+                <p>Checked sections remain visible. You can also drag sections on the dashboard before saving to retain their order.</p>
+                <div id="widgetChoices" class="widget-choices"></div>
+            </section>
+            <section class="personalization-section">
+                <label for="defaultDashboard"><strong>Default dashboard after your next sign-in</strong><span>Executive opens this analytics page; Board opens the governance summary; Operational opens the main work dashboard.</span></label>
+                <select id="defaultDashboard"><option>Executive</option><option>Board</option><option>Operational</option></select>
+            </section>
+            <footer class="personalization-actions">
+                <button id="cancelPersonalize" type="button">Close Without Saving</button>
+                <button id="saveLayout" class="primary" type="button">Save Preferences</button>
+            </footer>
+            <div class="personalization-reset"><div><strong>Restore the standard dashboard</strong><span>Shows every section, restores the default order and returns the landing page to Executive.</span></div><button id="resetLayout" type="button">Reset Dashboard</button></div>
+        </dialog>
+        <div id="toast"></div>
+    </main>
+</div>
+<script src="../js/app.js?v=6"></script><script src="../js/authGuard.js"></script><script src="../js/sidebar.js?v=20260725-10"></script><script src="../js/executive-analytics.js?v=8"></script>
+</body>
+</html>

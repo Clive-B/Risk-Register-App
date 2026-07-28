@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Access Denied</title>
+<link rel="stylesheet" href="../css/dashboard.css">
+<link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
+
+<body>
+<div class="container">
+    <aside class="sidebar"></aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <h1>Access Denied</h1>
+                <p>Your role does not have permission to access this area.</p>
+            </div>
+            <div id="userInfo" class="user-card"></div>
+        </header>
+
+        <section class="panel full">
+            <div class="panel-header">
+                <h2>Protected Enterprise Resource</h2>
+            </div>
+            <p class="empty-state">
+                This attempt has been recorded in the audit log. Use the sidebar to return to an authorized workspace.
+            </p>
+        </section>
+    </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script src="../js/authGuard.js"></script>
+<script src="../js/sidebar.js?v=20260725-10"></script>
+<script>
+    const currentUser = window.NCAGRC.getUser();
+    if (currentUser) {
+        document.getElementById("userInfo").innerHTML = `
+            <strong>${currentUser.full_name}</strong><br>
+            <small>${currentUser.role}</small>
+        `;
+    }
+</script>
+</body>
+
+</html>

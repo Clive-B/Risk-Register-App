@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NCA GRC Executive Dashboard</title>
+<link rel="stylesheet" href="css/dashboard.css?v=20260726-1">
+<link rel="stylesheet" href="css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
+
+<body>
+<div class="container">
+    <aside class="sidebar">
+        <div>
+            <div class="logo">
+                <h2>NCA GRC</h2>
+            </div>
+
+            <ul>
+                <li class="active"><a href="nca-grc-risk-register.html">Dashboard</a></li>
+                <li><a href="pages/users.html">Users</a></li>
+                <li><a href="pages/risks.html">Risk Register</a></li>
+                <li><a href="pages/assessment.html">Risk Assessment</a></li>
+                <li><a href="pages/treatment.html">Risk Treatment</a></li>
+                <li><a href="pages/reports.html">Reports</a></li>
+            </ul>
+        </div>
+
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <h1>Executive Dashboard</h1>
+                <p>Enterprise risk posture, treatment progress, and division-level exposure</p>
+            </div>
+            <div class="header-tools"><button id="notificationBell" class="notification-bell" aria-label="Notifications">🔔 <span id="unreadCount">0</span></button><div id="notificationDropdown" class="notification-dropdown"><div class="panel-header"><h2>Notifications</h2><button id="markAllRead">Mark all read</button></div><div id="notificationList" class="compact-list"></div></div><div id="userInfo" class="user-card"></div></div>
+        </header>
+
+        <section id="announcementArea"></section>
+        <section id="statisticsCards" class="cards loading-skeleton"></section>
+
+        <section class="dashboard-grid">
+            <div class="panel wide">
+                <div class="panel-header">
+                    <h2><a class="action-centre-heading" href="pages/action-centre.html">Action Centre</a></h2><span id="taskSummary"></span>
+                </div>
+                <div id="taskList" class="compact-list loading-skeleton"></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header"><h2>Quick Actions</h2></div><div id="quickActions" class="quick-actions"></div>
+            </div>
+            <div class="panel wide"><div class="panel-header activity-header"><div><h2>Recent Activities</h2><span>Latest governed business events</span></div><a id="allActivityLink" class="view-all-activity" href="pages/action-history.html">View all activity</a></div>
+                <div id="recentActivities" class="activity-list"></div>
+            </div>
+            <div class="panel"><div class="panel-header"><h2>Calendar</h2></div><div id="calendarList" class="compact-list"></div></div>
+            <div class="panel"><div class="panel-header"><h2>Messages</h2><span id="messageCount"></span></div><div id="messageList" class="compact-list"></div></div>
+            <div class="panel wide"><div class="panel-header"><h2>Profile Summary</h2></div><div id="profileCard" class="profile-grid"></div></div>
+        </section>
+
+    </main>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/authGuard.js"></script>
+<script src="js/sidebar.js?v=20260725-10"></script>
+<script src="js/dashboard.js?v=5"></script>
+</body>
+
+</html>

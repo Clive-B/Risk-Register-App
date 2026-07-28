@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Work Plan Risk Assessment | NCA GRC</title>
+    <link rel="stylesheet" href="../css/workplans.css?v=21">
+    <link rel="stylesheet" href="../css/workplans-archive.css?v=10">
+<link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
+<body>
+<div id="toast" role="status" aria-live="polite"></div>
+<div class="container">
+    <aside class="sidebar"></aside>
+    <main class="main">
+        <header class="page-head">
+            <div><span>Strategic assurance</span><h1>Work Plan Risk Assessment</h1><p>Upload divisional work plans, assess every action point and track treatments through closure.</p></div>
+            <button id="assessmentRules" class="assessment-rules-button" type="button">View Assessment Rules</button>
+        </header>
+
+        <section id="uploadPanel" class="card upload-card" hidden>
+            <div>
+                <span class="eyebrow">Risk Focal Person</span>
+                <h2>Upload an Excel work plan</h2>
+                <p>The workbook is validated and converted into programme, action, risk and treatment records.</p>
+                <a class="official-template-download" href="../templates/NCA_Official_Work_Plan_Upload_Template.xlsx" download>
+                    Download Official Work-Plan Template
+                    <small>One action per row · approved schedule dropdowns</small>
+                </a>
+            </div>
+            <form id="uploadForm">
+                <label>Plan year<input id="planYear" type="number" min="2020" max="2100" required></label>
+                <label id="divisionLabel">Division<input id="division" placeholder="Division"></label>
+                <label class="file-field">Excel workbook<input id="workbook" type="file" accept=".xlsx,.xls" required><span id="fileName">Choose an .xlsx or .xls file</span></label>
+                <button id="uploadButton" class="primary" type="submit">Analyse Workbook</button>
+            </form>
+        </section>
+
+        <section class="summary" aria-label="Work plan summary">
+            <article><span>Work Plans</span><strong id="totalPlans">0</strong></article>
+            <article><span>Programmes</span><strong id="totalProgrammes">0</strong></article>
+            <article><span>Action Risks</span><strong id="totalActions">0</strong></article>
+            <article class="danger"><span>High Risks</span><strong id="totalEscalated">0</strong></article>
+        </section>
+
+        <section class="layout">
+            <section class="card plans-panel archive-panel">
+                <div class="section-head"><div><span class="eyebrow">Permanent reference</span><h2>Work Plan Archive</h2></div><button id="refresh" type="button">Refresh</button></div>
+                <p class="archive-intro">Search every retained version. Structured records and compressed JSON remain available after the source workbook retention period ends.</p>
+                <div class="archive-tools">
+                    <input id="archiveSearch" type="search" placeholder="Search file, division or uploader">
+                    <select id="archiveYear" aria-label="Filter archive by year"><option value="">All years</option></select>
+                    <select id="archiveStatus" aria-label="Filter archive by status"><option value="">All statuses</option><option>Draft</option><option>Processed</option><option>Rejected</option></select>
+                </div>
+                <div class="table-wrap archive-wrap"><table class="archive-table"><thead><tr><th>Year / Version</th><th>Division</th><th>Work plan</th><th>Uploaded by</th><th>Records</th><th>Status</th><th>Archive</th><th>Action</th></tr></thead><tbody id="plans"></tbody></table></div>
+                <div id="archiveEmpty" class="empty compact" hidden>No archived work plans match the filters.</div>
+            </section>
+            <section class="card detail-panel">
+                <div id="emptyDetail" class="empty">Select a work plan to inspect its generated assessments.</div>
+                <div id="detail" hidden>
+                    <div class="detail-head"><div><span id="detailMeta" class="eyebrow"></span><h2 id="detailTitle"></h2><p id="detailStatus"></p></div></div>
+                    <div id="warnings" class="warnings" hidden></div>
+                    <div id="submissionBar" class="submission-bar" hidden>
+                        <div><span class="eyebrow">Final focal-person action</span><strong>Ready to submit the assessed work plan?</strong><p id="submissionMessage"></p></div>
+                        <button id="submitPlan" class="primary" type="button">Submit Assessed Work Plan</button>
+                    </div>
+                    <div id="championReviewBar" class="champion-review-bar" hidden>
+                        <div><span class="eyebrow">Risk Champion review</span><strong id="championReviewTitle">Review the submitted work-plan risks</strong><p id="championReviewMessage"></p></div>
+                        <button id="openBatchApproval" class="primary" type="button" hidden>Approve Risk Batch</button>
+                        <a id="individualApprovalLink" href="pending-approvals.html" hidden>Open Individual Approvals</a>
+                    </div>
+                    <section id="focalReviewSummary" class="focal-review-summary" hidden>
+                        <div class="focal-review-summary-head"><div><span class="eyebrow">Assessment decision trail</span><h3>System, Focal Person and Risk Champion review</h3><p id="focalReviewSummaryText"></p></div><strong id="focalReviewCount">0</strong></div>
+                        <div id="focalReviewItems" class="focal-review-items"></div>
+                    </section>
+                    <div class="table-toolbar"><p class="table-help">System, human-review and explanation columns are available. Scroll within the table or use the arrow buttons.</p><div><button id="tableLeft" type="button" aria-label="Scroll assessment table left">← Left</button><button id="tableRight" type="button" aria-label="Scroll assessment table right">Right →</button></div></div>
+                    <div id="assessmentTableWrap" class="table-wrap assessment-table-wrap" tabindex="0" aria-label="Assessed work-plan risks; scroll horizontally and vertically"><table><thead><tr><th>Programme / Action</th><th>Generated Risk</th><th>Risk Category</th><th>L</th><th>I</th><th>Score</th><th>Rating</th><th>Response</th><th>Assessment Explanation</th><th>Treatment</th><th>Intelligent Guidance</th><th>Workflow</th></tr></thead><tbody id="assessmentRows"></tbody></table></div>
+                </div>
+            </section>
+        </section>
+        <dialog id="workplanCorrectionDialog" class="workplan-correction-dialog">
+            <div class="workplan-correction-shell">
+                <header class="workplan-correction-head">
+                    <div><span class="eyebrow">ERM governed workbook admission</span><h2>Review Work-Plan Corrections</h2><p id="workplanCorrectionMeta"></p></div>
+                    <button id="closeWorkplanCorrection" type="button" aria-label="Close correction workspace">×</button>
+                </header>
+                <section class="workplan-correction-education">
+                    <div><h3 id="workplanCorrectionEducationTitle">How governed correction works</h3><ol id="workplanCorrectionEducationSteps"></ol></div>
+                    <div class="workplan-correction-summary">
+                        <div><span>Programmes</span><strong id="workplanCorrectionProgrammes">0</strong></div>
+                        <div><span>Actions</span><strong id="workplanCorrectionTotal">0</strong></div>
+                        <div><span>Confirmed</span><strong id="workplanCorrectionConfirmed">0</strong></div>
+                    </div>
+                </section>
+                <div id="workplanCorrectionWorkspace" class="workplan-correction-workspace"></div>
+                <footer class="workplan-correction-actions">
+                    <button id="cancelWorkplanCorrection" type="button">Cancel Upload</button>
+                    <button id="confirmAllWorkplanCorrections" type="button">Confirm All Valid Actions</button>
+                    <button id="admitCorrectedWorkplan" class="primary" type="button" disabled>Admit Confirmed Work Plan</button>
+                </footer>
+            </div>
+        </dialog>
+        <dialog id="assessmentDialog" class="assessment-dialog">
+            <form id="assessmentEditForm" method="dialog">
+                <div class="dialog-head"><div><span id="editDialogEyebrow" class="eyebrow">Draft assessment review</span><h2>Edit Work-Plan Assessment</h2></div><button id="closeAssessmentDialog" type="button" aria-label="Close edit form">×</button></div>
+                <input id="editAssessmentId" type="hidden">
+                <input id="challengeDecision" type="hidden">
+                <label class="wide">Programme<textarea id="editProgramme" rows="2" required></textarea></label>
+                <label class="wide">Action point<textarea id="editActionPoint" rows="3" required></textarea></label>
+                <div id="systemAssessment" class="system-assessment wide"></div>
+                <div id="focalChallengeContext" class="focal-challenge-context wide" hidden></div>
+                <label>Risk category<select id="editRiskCategory" required></select></label>
+                <span></span>
+                <label>Proposed likelihood<select id="editLikelihood"><option value="">No alternative</option><option value="1">1 - Rare (Very Low)</option><option value="2">2 - Unlikely (Low)</option><option value="3">3 - Possible (Medium)</option><option value="4">4 - Likely (High)</option><option value="5">5 - Almost Certain (Very High)</option></select></label>
+                <label>Proposed impact<select id="editImpact"><option value="">No alternative</option><option value="1">1 - Insignificant (Very Low)</option><option value="2">2 - Minor (Low)</option><option value="3">3 - Moderate (Medium)</option><option value="4">4 - Major (High)</option><option value="5">5 - Catastrophic (Very High)</option></select></label>
+                <div id="reviewerCalculation" class="calculated-fields wide"><span>Reviewer proposal</span><strong>Select likelihood and impact to calculate a proposed score.</strong></div>
+                <label class="wide">Reason for assessment <small id="editAssessmentReasonRequirement">(optional)</small><textarea id="editAssessmentReason" rows="3" maxlength="2000" placeholder="Optionally record the basis for the assessment decision."></textarea></label>
+                <label class="wide">Treatment<textarea id="editTreatment" rows="4" required></textarea></label>
+                <div class="dialog-actions wide"><button id="cancelAssessmentEdit" type="button">Cancel</button><button id="saveAssessmentEdit" class="primary" type="submit">Save Assessment Changes</button></div>
+            </form>
+        </dialog>
+        <dialog id="rulesDialog" class="assessment-dialog rules-dialog" data-erm-rules-dialog>
+            <div class="rules-content"><div class="dialog-head"><div><span class="eyebrow">Governed methodology</span><h2>Assessment Rules</h2></div><button id="closeRulesDialog" type="button" aria-label="Close rules">×</button></div>
+            <div data-erm-assessment-rules></div></div>
+        </dialog>
+        <dialog id="submitConfirmDialog" class="submit-confirm-dialog">
+            <div class="submit-dialog-accent"></div>
+            <div class="submit-dialog-body">
+                <div class="submit-dialog-scroll">
+                <div class="submit-dialog-icon" aria-hidden="true">✓</div>
+                <span class="eyebrow">Official workflow submission</span>
+                <h2>Submit this assessed work plan?</h2>
+                <p id="submitDialogDescription">Confirm that the focal-person review is complete.</p>
+                <div class="submit-dialog-summary" aria-label="Submission summary">
+                    <div><span>Programmes</span><strong id="submitProgrammeCount">0</strong></div>
+                    <div><span>Action risks</span><strong id="submitActionCount">0</strong></div>
+                    <div class="escalated"><span>High Risks</span><strong id="submitEscalatedCount">0</strong></div>
+                </div>
+                <div class="submit-dialog-warning"><strong>Before you continue</strong><p>Official risks and treatment plans will be created, relevant officers will be notified, and this Draft will be locked against further editing.</p></div>
+                </div>
+                <div class="submit-dialog-actions">
+                    <button id="cancelWorkplanSubmit" type="button">Continue Reviewing</button>
+                    <button id="confirmWorkplanSubmit" class="primary" type="button">Confirm and Submit</button>
+                </div>
+            </div>
+        </dialog>
+        <dialog id="approveFocalDialog" class="submit-confirm-dialog">
+            <div class="submit-dialog-accent"></div>
+            <div class="submit-dialog-body">
+                <div class="submit-dialog-scroll">
+                    <div class="submit-dialog-icon" aria-hidden="true">✓</div>
+                    <span class="eyebrow">Risk Champion decision</span>
+                    <h2>Approve the Focal Person proposal?</h2>
+                    <p id="approveFocalRiskTitle"></p>
+                    <div class="submit-dialog-summary" aria-label="Focal Person proposal">
+                        <div><span>Likelihood</span><strong id="approveFocalLikelihood">—</strong></div>
+                        <div><span>Impact</span><strong id="approveFocalImpact">—</strong></div>
+                        <div class="escalated"><span>Risk score</span><strong id="approveFocalScore">—</strong></div>
+                    </div>
+                    <div class="submit-dialog-warning"><strong>Before you approve</strong><p>This accepts the Focal Person’s proposed likelihood and impact as the Champion review. The decision and complete review record will be sent to the Chairman.</p></div>
+                </div>
+                <div class="submit-dialog-actions">
+                    <button id="cancelFocalApproval" type="button">Continue Reviewing</button>
+                    <button id="confirmFocalApproval" class="primary" type="button">Approve Focal Proposal</button>
+                </div>
+            </div>
+        </dialog>
+        <dialog id="championApprovalDialog" class="submit-confirm-dialog champion-approval-dialog">
+            <div class="submit-dialog-accent"></div>
+            <div class="submit-dialog-body">
+                <div class="submit-dialog-scroll">
+                <div class="submit-dialog-icon" aria-hidden="true">✓</div>
+                <span id="batchApprovalEyebrow" class="eyebrow">Risk Champion batch decision</span>
+                <h2 id="batchApprovalTitle">Approve and send this batch?</h2>
+                <p id="championApprovalDescription"></p>
+                <p id="batchFocalReviewSummary" class="batch-focal-review-summary"></p>
+                <div class="submit-dialog-summary"><div><span>Risks in batch</span><strong id="championBatchCount">0</strong></div><div class="escalated"><span>Sent to Chairman</span><strong id="championBatchEscalated">0</strong></div><div><span>Decision</span><strong class="decision-copy">Approve all</strong></div></div>
+                <label id="batchCommentLabel" class="approval-comment-label">Champion review comments <small>(optional)</small><textarea id="championBatchComments" rows="4" maxlength="2000" placeholder="Optionally record the basis for this batch decision."></textarea></label>
+                <label id="chairmanRecommendationsLabel" class="approval-comment-label" hidden>Chairman recommendations<textarea id="chairmanBatchRecommendations" rows="3" maxlength="2000" placeholder="Record executive recommendations for treatment and monitoring."></textarea></label>
+                <div class="submit-dialog-warning"><strong>Single controlled decision</strong><p id="batchApprovalWarning">Every work-plan risk will be approved together and sent to the Chairman as one batch.</p></div>
+                </div>
+                <div class="submit-dialog-actions"><button id="cancelChampionBatch" type="button">Continue Reviewing</button><button id="confirmChampionBatch" class="primary" type="button">Confirm Batch Approval</button></div>
+            </div>
+        </dialog>
+    </main>
+</div>
+<script src="../js/app.js?v=5"></script><script src="../js/authGuard.js"></script><script src="../js/sidebar.js?v=20260725-10"></script><script src="../js/erm-assessment-rules.js?v=1"></script><script src="../js/workplans.js?v=24"></script>
+</body>
+</html>

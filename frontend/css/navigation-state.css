@@ -1,0 +1,53 @@
+/* One governed navigation state across every NCA GRC role and page. */
+body .sidebar .sidebar-nav a {
+    position: relative;
+    border-left: 0 !important;
+    color: rgba(255, 255, 255, .92);
+    font-family: inherit;
+    font-size: 14px !important;
+    font-weight: 600;
+    line-height: 1.35;
+    transition: background-color .18s ease, color .18s ease;
+}
+
+body .sidebar .sidebar-nav {
+    padding-bottom: 48px;
+    scroll-padding-top: 10px;
+    scroll-padding-bottom: 56px;
+}
+
+body .sidebar .sidebar-nav li.active {
+    scroll-margin-bottom: 56px;
+}
+
+html.nca-navigation-departing body .sidebar .sidebar-nav a {
+    transition: none;
+}
+
+body .sidebar .sidebar-nav li:not(.active) a:hover {
+    background: rgba(255, 255, 255, .13);
+    color: #fff;
+}
+
+body .sidebar .sidebar-nav li.active a {
+    border-left: 0 !important;
+    background: #0874c9;
+    color: #fff;
+    box-shadow: none;
+}
+
+body .sidebar .sidebar-nav li.active a::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 0;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: #ffc72c;
+}
+
+body .sidebar .sidebar-nav a:focus-visible {
+    outline: 3px solid #ffc72c;
+    outline-offset: 2px;
+}

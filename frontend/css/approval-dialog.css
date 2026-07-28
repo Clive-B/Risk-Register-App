@@ -1,0 +1,43 @@
+.nca-approval-dialog{width:min(610px,calc(100vw - 30px));padding:0;overflow:hidden;border:0;border-radius:22px;color:#172b4d;box-shadow:0 28px 90px rgba(0,30,60,.34)}.nca-approval-dialog::backdrop{background:rgba(0,34,66,.66);backdrop-filter:blur(5px)}.nca-approval-accent{height:8px;background:linear-gradient(90deg,#0067b9 0 68%,#ffc72c 68% 85%,#00a859 85%)}.nca-approval-body{padding:30px}.nca-approval-icon{display:grid;width:54px;height:54px;margin-bottom:16px;place-items:center;border-radius:16px;background:linear-gradient(145deg,#0067b9,#003a70);color:#fff;font-size:25px;font-weight:900;box-shadow:0 10px 24px rgba(0,103,185,.24)}.nca-approval-eyebrow{color:#0067b9;font-size:11px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}.nca-approval-dialog h2{margin:6px 0 8px;color:#003a70;font-size:26px}.nca-approval-risk{margin:0 0 18px;color:#667085;line-height:1.5}.nca-approval-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}.nca-approval-summary div{padding:13px;border:1px solid #d9e2ef;border-radius:12px;background:#f8fafc}.nca-approval-summary span,.nca-approval-summary strong{display:block}.nca-approval-summary span{color:#667085;font-size:11px;font-weight:700}.nca-approval-summary strong{margin-top:4px;color:#003a70}.nca-approval-comment{display:grid;gap:7px;color:#344054;font-weight:800}.nca-approval-comment textarea{width:100%;padding:12px;border:1px solid #d9e2ef;border-radius:11px;resize:vertical;font:inherit}.nca-approval-comment textarea:focus{outline:3px solid rgba(0,103,185,.15);border-color:#0067b9}.nca-approval-note{margin-top:14px;padding:12px 14px;border-left:4px solid #ffc72c;border-radius:9px;background:#fff9e8;color:#6f5a31;line-height:1.45}.nca-approval-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.nca-approval-actions button{min-width:145px;padding:12px 16px;border:1px solid #d9e2ef;border-radius:10px;background:#fff;font:inherit;font-weight:800;cursor:pointer}.nca-approval-actions .confirm{border-color:#0067b9;background:#0067b9;color:#fff}.nca-approval-actions .confirm.return,.nca-approval-actions .confirm.reject{border-color:#b42318;background:#b42318}.nca-approval-actions button:disabled{cursor:wait;opacity:.65}@media(max-width:560px){.nca-approval-body{padding:22px}.nca-approval-summary{grid-template-columns:1fr}.nca-approval-actions{flex-direction:column-reverse}.nca-approval-actions button{width:100%}}
+
+.nca-approval-dialog.nca-scroll-dialog{
+    max-height:calc(100dvh - 24px);
+}
+.nca-approval-dialog.nca-scroll-dialog[open]{
+    display:flex;
+    flex-direction:column;
+}
+.nca-scroll-dialog .nca-approval-accent{
+    flex:0 0 8px;
+}
+.nca-scroll-dialog .nca-approval-body{
+    display:flex;
+    flex:1 1 auto;
+    flex-direction:column;
+    min-height:0;
+    overflow:hidden;
+    overscroll-behavior:contain;
+}
+.nca-scroll-dialog .nca-scroll-content{
+    min-height:0;
+    overflow-y:auto;
+    padding-right:4px;
+    scrollbar-gutter:stable;
+}
+.nca-scroll-dialog .nca-approval-comment textarea{
+    max-height:140px;
+}
+.nca-scroll-dialog .nca-approval-actions{
+    flex:0 0 auto;
+    margin:18px 0 0;
+    padding:16px 0 0;
+    border-top:1px solid #e4eaf2;
+    background:#fff;
+    box-shadow:0 -10px 22px rgba(0,34,66,.08);
+}
+@media(max-width:560px){
+    .nca-scroll-dialog .nca-approval-actions{
+        margin:16px 0 0;
+        padding:14px 0 0;
+    }
+}
