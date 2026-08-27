@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const crypto = require('crypto');
 const { logAudit } = require('../utils/auditLogger');
 const { parseRiskWorkbook } = require('../utils/riskWorkbook');
 const { startWorkflow } = require('../services/workflowService');
@@ -215,14 +216,17 @@ function recommendImportedRiskCategory(body) {
 function normalizeImportedRisk(body, user, templateType = 'Generic Risk Register') {
     const isTrackingTemplate = templateType === 'Risk Register Tracking Template';
     const isLegalTemplate = templateType === 'Legal Legacy Risk Register';
-    const isGovernedFocalWorkbook = isTrackingTemplate || isLegalTemplate;
+    const isDivisionTracker = templateType === 'Division Risk Register Tracker';
+    const isGovernedFocalWorkbook = isTrackingTemplate || isLegalTemplate || isDivisionTracker;
     const importBody = isGovernedFocalWorkbook ? {
         ...body,
         directorate: user.division || user.directorate,
         risk_category: normalizeRiskCategory(body.risk_category) || recommendImportedRiskCategory(body),
         existing_controls: optionalString(body.existing_controls) || (isLegalTemplate
             ? 'No existing controls were documented in the Legal risk register.'
-            : 'No existing controls were documented in the tracking template.'),
+            : isDivisionTracker
+                ? 'No existing controls were documented in the division tracker.'
+                : 'No existing controls were documented in the tracking template.'),
         responsible_officer: optionalString(body.responsible_officer) || optionalString(body.risk_owner),
         workflow_status: 'Submitted',
         status: null
@@ -278,7 +282,8 @@ function normalizeImportedRisk(body, user, templateType = 'Generic Risk Register
 async function createGovernanceAssessment(client, risk, options = {}) {
     const system = options.system || assessRiskText(risk);
     const source = risk.entry_source || options.entrySource;
-    const isFocalSource = ['Risk Register Tracking Template', 'Legal Legacy Risk Register', 'Manual - Risk Focal Person', 'Work Plan'].includes(source);
+    const forceFocalReview = options.forceFocalReview === true;
+    const isFocalSource = !forceFocalReview && ['Risk Register Tracking Template', 'Legal Legacy Risk Register', 'Division Risk Register Tracker', 'Manual - Risk Focal Person', 'Work Plan'].includes(source);
     const isChampionSource = source === 'Manual - Risk Champion';
     const focal = isFocalSource
         ? deriveInitialFocalAssessment(risk, source, {
@@ -292,7 +297,9 @@ async function createGovernanceAssessment(client, risk, options = {}) {
     const championLikelihood = isChampionSource ? Number(risk.likelihood) : null;
     const championImpact = isChampionSource ? Number(risk.impact) : null;
     const championScore = championLikelihood && championImpact ? championLikelihood * championImpact : null;
-    const reviewStage = isChampionSource
+    const reviewStage = forceFocalReview
+        ? 'Awaiting Focal Review'
+        : isChampionSource
         ? 'Awaiting Chairman Review'
         : (risk.workflow_status === 'Submitted' || source === 'Risk Register Tracking Template' || source === 'Legal Legacy Risk Register' || source === 'Work Plan')
             ? 'Awaiting Champion Review'
@@ -313,7 +320,7 @@ async function createGovernanceAssessment(client, risk, options = {}) {
             risk.id,reviewStage,system.likelihood,system.impact,system.score,system.level,system.response,
             system.explanation,JSON.stringify(system.matched_keywords || []),system.rules_version,
             focalLikelihood,focalImpact,focalScore,
-            options.focalReason || (source === 'Risk Register Tracking Template' || source === 'Legal Legacy Risk Register'
+            options.focalReason || (source === 'Risk Register Tracking Template' || source === 'Legal Legacy Risk Register' || source === 'Division Risk Register Tracker'
                 ? `Assessment imported from the ${source}.`
                 : source === 'Work Plan' ? 'Assessment submitted from the approved work-plan upload.' : 'Assessment submitted during manual risk creation.'),
             isFocalSource ? risk.created_by : null,
@@ -387,7 +394,8 @@ function canAccessDirectorate(user, directorate) {
 function canViewRisk(user, risk) {
     if (!canAccessDirectorate(user, risk.directorate)) return false;
     if (user.role !== 'Risk Focal Person') return true;
-    return Number(risk.created_by) === Number(user.id)
+    return Number(risk.accountable_focal_id) === Number(user.id)
+        || Number(risk.created_by) === Number(user.id)
         || risk.entry_source !== 'Manual - Risk Champion'
         || risk.focal_visibility === true;
 }
@@ -481,7 +489,7 @@ function scopeConditions(req, conditions, params, alias = 'r') {
         params.push(req.user.division || req.user.directorate);
         const scopeIndex=params.length;
         params.push(req.user.id);
-        conditions.push(`${alias}.division = $${scopeIndex} AND (${alias}.created_by = $${params.length} OR ${alias}.entry_source <> 'Manual - Risk Champion' OR ${alias}.focal_visibility = TRUE)`);
+        conditions.push(`${alias}.division = $${scopeIndex} AND (${alias}.accountable_focal_id = $${params.length} OR ${alias}.created_by = $${params.length} OR ${alias}.entry_source <> 'Manual - Risk Champion' OR ${alias}.focal_visibility = TRUE)`);
         return;
     }
     params.push(req.user.directorate); conditions.push(`${alias}.directorate = $${params.length}`);
@@ -1469,6 +1477,24 @@ async function prepareImportedRows(parsed, user) {
     return rows;
 }
 
+async function resolveAdminImportSubject(req, input = req.body) {
+    if (req.user.role !== 'System Administrator') return req.user;
+    const focalId = numberOrNull(input?.focal_user_id);
+    const division = optionalString(input?.division);
+    if (!focalId || !division || !ALLOWED_DIRECTORATES.includes(division)) {
+        throw Object.assign(new Error('Select a valid division and its active Risk Focal Person.'), {statusCode:400});
+    }
+    const focal = (await pool.query(
+        `SELECT id,email,full_name,role,directorate,division,status
+         FROM users WHERE id=$1 AND role='Risk Focal Person' AND status='Active'`,
+        [focalId]
+    )).rows[0];
+    if (!focal || (focal.division || focal.directorate) !== division) {
+        throw Object.assign(new Error('The selected Focal Person is not active in the selected division.'), {statusCode:400});
+    }
+    return {...focal,directorate:division,division};
+}
+
 const CORRECTION_EDITABLE_FIELDS = [
     'risk_id','programme_project','risk_title','risk_description','risk_source','risk_cause','risk_category',
     'date_identified','risk_owner','likelihood','impact','risk_treatment',
@@ -1613,9 +1639,14 @@ function applyConfirmedCorrections(parsed, correctedRows) {
     return parsed;
 }
 
-async function insertImportedRisk(client, risk, req, excelRow, fileName, entrySource = 'Imported Workbook', importBatchId = null, correctionAudit = null) {
+async function insertImportedRisk(client, risk, req, excelRow, fileName, entrySource = 'Imported Workbook', importBatchId = null, correctionAudit = null, options = {}) {
     const inherentRiskScore = risk.impact * risk.likelihood;
-    const workflowStatus = risk.workflow_status === 'Submitted' ? 'Submitted' : 'Draft';
+    const workflowStatus = options.forceFocalReview
+        ? 'Draft'
+        : (risk.workflow_status === 'Submitted' ? 'Submitted' : 'Draft');
+    const admissionStatus = options.forceFocalReview
+        ? 'Draft'
+        : (workflowStatus === 'Submitted' ? 'Pending Champion Approval' : 'Draft');
 
     await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`risk-import:${risk.directorate}`]);
     const riskId = risk.risk_id || await generateRiskId(client, risk.directorate);
@@ -1629,7 +1660,7 @@ async function insertImportedRisk(client, risk, req, excelRow, fileName, entrySo
             submitted_at, treatment_status, created_by, current_impact, current_likelihood,
             current_risk_score, progress_notes, next_review_date, residual_impact, residual_likelihood,
             residual_score, closure_date, closure_comments, assessment_year, entry_source, admission_status,
-            focal_visibility, import_batch_id,
+            focal_visibility, import_batch_id,accountable_focal_id,
             control_type,control_owner,control_design_adequacy,control_evidence,
             control_last_tested_date,control_exceptions,control_next_review_date,
             control_assessment_basis,control_assessment_confidence,control_assessed_by,control_assessed_at
@@ -1637,7 +1668,7 @@ async function insertImportedRisk(client, risk, req, excelRow, fileName, entrySo
         VALUES (
             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
             $21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,
-            $44,$45,$46,$47,$48,$49,$50,$51,$52,$53,NOW()
+            $44,$45,$46,$47,$48,$49,$50,$51,$52,$53,$54,NOW()
         )
         RETURNING *
         `,
@@ -1682,9 +1713,10 @@ async function insertImportedRisk(client, risk, req, excelRow, fileName, entrySo
             risk.closure_comments,
             risk.assessment_year,
             entrySource,
-            workflowStatus === 'Submitted' ? 'Pending Champion Approval' : 'Draft',
+            admissionStatus,
             true,
             importBatchId,
+            options.accountableFocalId || (req.user.role === 'Risk Focal Person' ? req.user.id : null),
             risk.control_type,
             risk.control_owner,
             risk.control_design_adequacy,
@@ -1699,7 +1731,10 @@ async function insertImportedRisk(client, risk, req, excelRow, fileName, entrySo
     );
 
     const importedRisk = result.rows[0];
-    await createGovernanceAssessment(client, importedRisk, { entrySource });
+    await createGovernanceAssessment(client, importedRisk, {
+        entrySource,
+        forceFocalReview:options.forceFocalReview === true
+    });
     const proposal = generateTreatmentProposal(importedRisk);
     const treatment = (await client.query(
         `INSERT INTO treatment_plans(
@@ -1780,8 +1815,9 @@ function workbookErrorResponse(res, error) {
 
 exports.previewRiskImport = async (req, res) => {
     try {
+        const importSubject = await resolveAdminImportSubject(req);
         const parsed = parseRiskWorkbook(req.body.file_name, req.body.file_data);
-        const rows = await prepareImportedRows(parsed, req.user);
+        const rows = await prepareImportedRows(parsed, importSubject);
         const scoreDetails = (impact, likelihood) => {
             if (![impact, likelihood].every(value => Number.isInteger(value) && value >= 1 && value <= 5)) return null;
             const score = impact * likelihood;
@@ -1797,7 +1833,7 @@ exports.previewRiskImport = async (req, res) => {
             proposedRisk._provided_numbers = new Set([
                 ...(row.risk._provided_numbers || [])
             ].filter(field => !['inherent_risk_score','current_risk_score','residual_score'].includes(field)));
-            const proposalErrors = validateImportedRisk(proposedRisk,req.user)
+            const proposalErrors = validateImportedRisk(proposedRisk,importSubject)
                 .filter(error => !(proposal.values.risk_treatment === null && error === 'Select a valid risk response.'));
             const nonCorrectableErrors = row.errors.filter(error => /already exists/i.test(error));
             const errors = [...new Set([...proposalErrors,...nonCorrectableErrors])];
@@ -1855,6 +1891,7 @@ exports.previewRiskImport = async (req, res) => {
     } catch (error) {
         console.error('Risk import preview failed:', error.message);
         await logAudit({ req, action: 'RISK_IMPORT_PREVIEW_FAILED', entityType: 'Risk Import', status: 'Failed', details: { file_name: req.body?.file_name, error: error.message } });
+        if (error.statusCode) return res.status(error.statusCode).json({success:false,message:error.message});
         workbookErrorResponse(res, error);
     }
 };
@@ -1895,7 +1932,7 @@ exports.importRisks = async (req, res) => {
         }
         const validationErrors = [];
         let importedRows = 0;
-        const entrySource = ['Risk Register Tracking Template','Legal Legacy Risk Register'].includes(parsed.template_type)
+        const entrySource = ['Risk Register Tracking Template','Legal Legacy Risk Register','Division Risk Register Tracker'].includes(parsed.template_type)
             ? parsed.template_type
             : 'Imported Workbook';
         const division = req.user.division || req.user.directorate;
@@ -1989,6 +2026,238 @@ exports.importRisks = async (req, res) => {
         }
         workbookErrorResponse(res, error);
     }
+};
+
+exports.getAdminImportOptions = async (req, res) => {
+    try {
+        const focals = (await pool.query(
+            `SELECT id,email,full_name,COALESCE(NULLIF(division,''),directorate) AS division
+             FROM users
+             WHERE role='Risk Focal Person' AND status='Active'
+             ORDER BY COALESCE(NULLIF(division,''),directorate),full_name,email`
+        )).rows.filter(row => ALLOWED_DIRECTORATES.includes(row.division));
+        res.json({success:true,divisions:ALLOWED_DIRECTORATES,focals});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({success:false,message:'Unable to load division upload options.'});
+    }
+};
+
+exports.createAdminImportGroup = async (req, res) => {
+    const items = Array.isArray(req.body?.items) ? req.body.items : [];
+    if (!items.length) return res.status(400).json({success:false,message:'Add at least one division workbook.'});
+    const client = await pool.connect();
+    const prepared = [];
+    try {
+        const divisions = new Set();
+        for (const item of items) {
+            const subject = await resolveAdminImportSubject(req,item);
+            if (divisions.has(subject.division)) {
+                throw Object.assign(new Error(`Only one workbook may be submitted for ${subject.division} in this group.`),{statusCode:400});
+            }
+            divisions.add(subject.division);
+            const parsed = applyConfirmedCorrections(
+                parseRiskWorkbook(item.file_name,item.file_data),item.corrected_rows
+            );
+            const rows = await prepareImportedRows(parsed,subject);
+            rows.forEach(row => {
+                if (!row.user_confirmation) return;
+                const systemRisk = normalizeImportedRisk(row.user_confirmation.system_proposal,subject,parsed.template_type);
+                const proposal = correctionProposal(row,systemRisk);
+                row.user_confirmation.system_proposal = proposal.values;
+                row.user_confirmation.explanations = proposal.corrections;
+            });
+            const invalid = rows.filter(row => row.errors.length);
+            if (invalid.length) {
+                throw Object.assign(new Error(`${subject.division}: ${invalid.length} risk row(s) still require correction.`),{
+                    statusCode:422,
+                    validationErrors:invalid.flatMap(row => row.errors.map(message => ({division:subject.division,excel_row:row.excel_row,message})))
+                });
+            }
+            prepared.push({item,subject,parsed,rows});
+        }
+        const ids = prepared.flatMap(entry => entry.rows.map(row => row.risk.risk_id).filter(Boolean).map(id => id.toLowerCase()));
+        if (new Set(ids).size !== ids.length) {
+            throw Object.assign(new Error('A Risk ID is duplicated across the selected division workbooks.'),{statusCode:422});
+        }
+
+        const groupId = crypto.randomUUID();
+        const batches = [];
+        const stagedRisks = [];
+        await client.query('BEGIN');
+        await client.query(
+            `INSERT INTO risk_register_admin_upload_groups(id,status,division_count,total_risks,created_by)
+             VALUES($1,'Awaiting Focal Review',$2,$3,$4)`,
+            [groupId,prepared.length,prepared.reduce((total,entry) => total + entry.rows.length,0),req.user.id]
+        );
+        for (const entry of prepared) {
+            const batch = (await client.query(
+                `INSERT INTO risk_register_import_batches(
+                    division,file_name,sheet_name,template_type,total_rows,imported_rows,failed_rows,
+                    uploaded_by,status,upload_group_id,accountable_focal_id
+                 ) VALUES($1,$2,$3,$4,$5,$5,0,$6,'Awaiting Focal Review',$7,$8) RETURNING *`,
+                [entry.subject.division,entry.parsed.file_name,entry.parsed.sheet_name,entry.parsed.template_type,
+                    entry.rows.length,req.user.id,groupId,entry.subject.id]
+            )).rows[0];
+            batches.push({...batch,focal_name:entry.subject.full_name,focal_email:entry.subject.email});
+            const entrySource = ['Risk Register Tracking Template','Legal Legacy Risk Register','Division Risk Register Tracker'].includes(entry.parsed.template_type)
+                ? entry.parsed.template_type : 'Imported Workbook';
+            for (const row of entry.rows) {
+                const risk = await insertImportedRisk(
+                    client,row.risk,req,row.excel_row,entry.parsed.file_name,entrySource,batch.id,
+                    row.user_confirmation || null,{forceFocalReview:true,accountableFocalId:entry.subject.id}
+                );
+                stagedRisks.push(risk);
+            }
+        }
+        await client.query('COMMIT');
+
+        for (const batch of batches) {
+            try {
+                await createNotification({actor:req.user,req,userId:batch.accountable_focal_id,
+                    title:'Division Risk Register Awaiting Your Review',
+                    message:`The Administrator staged ${batch.imported_rows} risks for ${batch.division}. Review, correct and submit the full register to your Risk Champion.`,
+                    type:'Risk',category:'Risk Governance',priority:'High',entityType:'Risk Register Import',entityId:batch.id,
+                    createdBy:req.user.id,systemGenerated:true});
+                await createAction({actionKey:`focal-register-review:${batch.id}:${batch.accountable_focal_id}`,module:'Risk',
+                    actionType:'Review Division Risk Register',title:`Review ${batch.division} risk register`,
+                    description:`Review and submit all ${batch.imported_rows} staged risks.`,priority:'High',status:'Pending',
+                    assignedTo:batch.accountable_focal_id,assignedRole:'Risk Focal Person',division:batch.division,assignedBy:req.user.id,
+                    dueAt:new Date(Date.now()+3*86400000),sourceType:'RiskRegisterFocalReview',sourceId:batch.id,
+                    actionUrl:'pages/focal-risk-admissions.html',availableActions:['review','submit','view']},{req});
+            } catch (sideEffectError) {
+                console.error('Admin risk group saved, but Focal notification failed:',sideEffectError.message);
+            }
+        }
+        await logAudit({req,action:'ADMIN_DIVISION_RISK_GROUP_STAGED',entityType:'Risk Register Import Group',entityId:groupId,
+            details:{division_count:batches.length,total_risks:stagedRisks.length,batch_ids:batches.map(batch => batch.id)}});
+        res.status(201).json({success:true,message:`${stagedRisks.length} risks across ${batches.length} division register${batches.length===1?'':'s'} were sent for Focal review.`,group_id:groupId,batches});
+    } catch (error) {
+        await client.query('ROLLBACK').catch(() => {});
+        console.error('Admin division risk upload failed:',error.message);
+        res.status(error.statusCode || 500).json({success:false,message:error.statusCode?error.message:'Unable to stage the division workbooks.',validation_errors:error.validationErrors || []});
+    } finally {
+        client.release();
+    }
+};
+
+exports.getFocalAdmissionBatches = async (req, res) => {
+    try {
+        const params = [];
+        const where = req.user.role === 'System Administrator'
+            ? ''
+            : (params.push(req.user.id),'WHERE batch.accountable_focal_id=$1');
+        const batches = (await pool.query(
+            `SELECT batch.*,u.full_name AS focal_name,u.email AS focal_email,admin.full_name AS uploaded_by_name,
+                    COALESCE(json_agg(json_build_object(
+                        'id',risk.id,'risk_id',risk.risk_id,'risk_title',risk.risk_title,'risk_description',risk.risk_description,
+                        'risk_category',risk.risk_category,'likelihood',risk.likelihood,'impact',risk.impact,
+                        'system_likelihood',gov.system_likelihood,'system_impact',gov.system_impact,'system_score',gov.system_score,
+                        'focal_likelihood',gov.focal_likelihood,'focal_impact',gov.focal_impact,'focal_reason',gov.focal_reason,
+                        'review_stage',gov.review_stage,'updated_at',risk.updated_at
+                    ) ORDER BY risk.id) FILTER(WHERE risk.id IS NOT NULL),'[]') AS risks
+             FROM risk_register_import_batches batch
+             LEFT JOIN users u ON u.id=batch.accountable_focal_id
+             LEFT JOIN users admin ON admin.id=batch.uploaded_by
+             LEFT JOIN risks risk ON risk.import_batch_id=batch.id
+             LEFT JOIN risk_assessment_governance gov ON gov.risk_id=risk.id
+             ${where}
+             GROUP BY batch.id,u.full_name,u.email,admin.full_name
+             ORDER BY batch.created_at DESC`,params
+        )).rows;
+        res.json({success:true,batches});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({success:false,message:'Unable to load Focal admission registers.'});
+    }
+};
+
+exports.submitFocalAdmissionBatch = async (req, res) => {
+    const client = await pool.connect();
+    const submitted = [];
+    try {
+        await client.query('BEGIN');
+        const batch = (await client.query('SELECT * FROM risk_register_import_batches WHERE id=$1 FOR UPDATE',[req.params.id])).rows[0];
+        if (!batch) { await client.query('ROLLBACK'); return res.status(404).json({success:false,message:'Division risk register not found.'}); }
+        if (Number(batch.accountable_focal_id) !== Number(req.user.id)) { await client.query('ROLLBACK'); return res.status(403).json({success:false,message:'Only the assigned Focal Person may submit this division register.'}); }
+        if (!['Awaiting Focal Review','Returned'].includes(batch.status)) { await client.query('ROLLBACK'); return res.status(409).json({success:false,message:'This register is no longer awaiting Focal review.'}); }
+        const risks = (await client.query(
+            `SELECT risk.*,gov.system_score,gov.review_stage FROM risks risk
+             JOIN risk_assessment_governance gov ON gov.risk_id=risk.id
+             WHERE risk.import_batch_id=$1 ORDER BY risk.id FOR UPDATE OF risk,gov`,[batch.id]
+        )).rows;
+        const decisions = new Map((Array.isArray(req.body?.assessments)?req.body.assessments:[]).map(item => [Number(item.risk_id),item]));
+        if (!risks.length || decisions.size !== risks.length) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({success:false,message:'Review and confirm an assessment for every risk in this register.'});
+        }
+        for (const risk of risks) {
+            const decision = decisions.get(Number(risk.id));
+            const likelihood = numberOrNull(decision?.likelihood);
+            const impact = numberOrNull(decision?.impact);
+            if (![likelihood,impact].every(value => Number.isInteger(value) && value>=1 && value<=5)) throw Object.assign(new Error(`Select valid likelihood and impact values for ${risk.risk_id}.`),{statusCode:400});
+            const score = likelihood*impact;
+            const reason = optionalString(decision.reason);
+            if (score !== Number(risk.system_score) && !reason) throw Object.assign(new Error(`Explain the assessment change for ${risk.risk_id}.`),{statusCode:400});
+            const level = calculateRiskLevel(score);
+            const response = responseFor(impact,likelihood,risk.risk_category);
+            await client.query(
+                `UPDATE risk_assessment_governance SET focal_likelihood=$1,focal_impact=$2,focal_score=$3,
+                    focal_reason=$4,focal_by=$5,focal_at=NOW(),review_stage='Awaiting Champion Review',updated_at=NOW()
+                 WHERE risk_id=$6`,[likelihood,impact,score,reason || 'Focal Person accepted the system assessment.',req.user.id,risk.id]
+            );
+            await client.query(
+                `UPDATE risks SET likelihood=$1,impact=$2,inherent_risk_score=$3,risk_level=$4,risk_treatment=$5,
+                    workflow_status='Submitted',status='Submitted',admission_status='Pending Champion Approval',
+                    submitted_at=COALESCE(submitted_at,NOW()),updated_at=NOW() WHERE id=$6`,
+                [likelihood,impact,score,level,response,risk.id]
+            );
+            await addRiskHistory(client,risk.id,'Focal Register Submitted',req.user.id,{fromStatus:risk.review_stage,toStatus:'Awaiting Champion Review',comment:reason,details:{import_batch_id:batch.id,score}});
+            submitted.push({...risk,likelihood,impact,inherent_risk_score:score,risk_level:level,risk_treatment:response});
+        }
+        await client.query(`UPDATE risk_register_import_batches SET status='Champion Review',focal_submitted_by=$1,focal_submitted_at=NOW(),updated_at=NOW() WHERE id=$2`,[req.user.id,batch.id]);
+        if (batch.upload_group_id) {
+            await client.query(
+                `UPDATE risk_register_admin_upload_groups group_row SET status=CASE
+                    WHEN NOT EXISTS(SELECT 1 FROM risk_register_import_batches b WHERE b.upload_group_id=group_row.id AND b.status IN('Awaiting Focal Review','Returned')) THEN 'Submitted to Champion'
+                    ELSE 'Partially Submitted' END,updated_at=NOW() WHERE id=$1`,[batch.upload_group_id]
+            );
+        }
+        await client.query('COMMIT');
+        await completeBySource('RiskRegisterFocalReview',batch.id,{actor:req.user,req,comments:'The complete division register was submitted to the Risk Champion.'}).catch(()=>{});
+        for (const risk of submitted) await notifyRiskSubmitted(req,risk).catch(error => console.error('Champion notification failed:',error.message));
+        await logAudit({req,action:'FOCAL_DIVISION_REGISTER_SUBMITTED',entityType:'Risk Register Import',entityId:batch.id,details:{risk_count:submitted.length,division:batch.division}});
+        res.json({success:true,message:`All ${submitted.length} risks were submitted to the ${batch.division} Risk Champion.`});
+    } catch (error) {
+        await client.query('ROLLBACK').catch(()=>{});
+        console.error(error);
+        res.status(error.statusCode || 500).json({success:false,message:error.statusCode?error.message:'Unable to submit the division risk register.'});
+    } finally { client.release(); }
+};
+
+exports.getAdminFocalSubmissions = async (req,res) => {
+    try {
+        const batches = (await pool.query(
+            `SELECT batch.id,batch.upload_group_id,batch.division,batch.file_name,batch.template_type,batch.status,
+                    batch.total_rows,batch.imported_rows,batch.created_at,batch.focal_submitted_at,
+                    focal.full_name AS focal_name,focal.email AS focal_email,admin.full_name AS uploaded_by_name,
+                    COUNT(risk.id)::int AS risk_count,
+                    COUNT(risk.id) FILTER(WHERE gov.review_stage='Awaiting Focal Review')::int AS awaiting_focal,
+                    COUNT(risk.id) FILTER(WHERE gov.review_stage='Awaiting Champion Review')::int AS awaiting_champion,
+                    COUNT(risk.id) FILTER(WHERE gov.review_stage='Awaiting Chairman Review')::int AS awaiting_chairman,
+                    COUNT(risk.id) FILTER(WHERE gov.review_stage='Finalised')::int AS finalised
+             FROM risk_register_import_batches batch
+             LEFT JOIN users focal ON focal.id=batch.accountable_focal_id
+             LEFT JOIN users admin ON admin.id=batch.uploaded_by
+             LEFT JOIN risks risk ON risk.import_batch_id=batch.id
+             LEFT JOIN risk_assessment_governance gov ON gov.risk_id=risk.id
+             WHERE batch.accountable_focal_id IS NOT NULL
+             GROUP BY batch.id,focal.full_name,focal.email,admin.full_name
+             ORDER BY batch.created_at DESC`
+        )).rows;
+        const summary = {total:batches.length,awaiting_focal:batches.filter(b=>b.status==='Awaiting Focal Review'||b.status==='Returned').length,submitted:batches.filter(b=>!['Awaiting Focal Review','Returned'].includes(b.status)).length,risks:batches.reduce((n,b)=>n+b.risk_count,0)};
+        res.json({success:true,summary,batches});
+    } catch (error) { console.error(error); res.status(500).json({success:false,message:'Unable to load division Focal submissions.'}); }
 };
 
 exports.getImportBatches = async (req, res) => {
@@ -2552,6 +2821,11 @@ exports.recordAssessmentDecision = async (req, res) => {
         if (!canAccessDirectorate(req.user, risk.division || risk.directorate)) {
             await client.query('ROLLBACK');
             return res.status(403).json({success:false,message:'This risk is outside your permitted scope.'});
+        }
+        if (req.user.role === 'Risk Focal Person' && risk.accountable_focal_id
+            && Number(risk.accountable_focal_id) !== Number(req.user.id)) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({success:false,message:'This staged register is assigned to another Focal Person.'});
         }
         const governance = (await client.query('SELECT * FROM risk_assessment_governance WHERE risk_id=$1 FOR UPDATE', [risk.id])).rows[0];
         if (!governance) {

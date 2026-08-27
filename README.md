@@ -40,9 +40,11 @@ from this repository.
 
 - Uploads a work plan or supported risk-register workbook.
 - Reviews and confirms system-proposed workbook corrections.
-- Uses the dedicated **Risk Register** admissions page for both approved
+- Uses the dedicated **Risk Register** admissions page for all three approved
   risk-register templates; admitted risks then move to the Consolidated Risk
   Register.
+- Reviews Administrator-staged division registers, edits the risks and submits
+  the complete register to the assigned Risk Champion.
 - Completes or changes assessment values before submission.
 - Selects an approved ERM response: Terminate, Treat, Transfer or Tolerate.
 - Reviews and updates proposed treatment actions, owners and dates.
@@ -73,6 +75,10 @@ from this repository.
 - Creates and manages individual users.
 - Creates multiple users through an on-screen form or governed Excel upload.
 - Reviews audit logs, system settings, communications and platform health.
+- Selects several divisions, assigns each active Focal Person, corrects one
+  workbook per division and sends all selected registers for Focal review with
+  one atomic submission.
+- Monitors all division Focal submissions from a separate read-only page.
 - Staff ID and phone number are optional and remain blank when omitted.
 
 ## Authoritative ERM assessment
@@ -96,7 +102,8 @@ authoritative assessment source.
 ## Workbook correction engine
 
 The reusable rule-driven correction engine supports work plans, standard
-risk-register workbooks, the tracking template and the Legal legacy register.
+risk-register workbooks, the tracking template, the Legal legacy register and
+the approved Division Risk Register Tracker.
 
 Every detected issue can provide:
 
@@ -132,6 +139,7 @@ The Focal Person can download the templates from the relevant upload interface:
 - `NCA_Official_Work_Plan_Upload_Template.xlsx`
 - `NCA_Official_Risk_Register_Upload_Template.xlsx`
 - `NCA_Official_Risk_Register_Template_2.xlsx`
+- `NCA_Official_Division_Risk_Register_Tracker_Upload_Template.xlsx`
 
 The templates contain, where applicable:
 
@@ -268,7 +276,7 @@ uses the local API. In production it uses the same origin under `/api`, unless
 ## Database
 
 The database is versioned through migrations in `backend/migrations/`.
-The current source includes migrations `000` through `047`, covering identity,
+The current source includes migrations `000` through `049`, covering identity,
 workflow, risk governance, work-plan assessment, treatment approvals, governed
 reports, notification separation, compliance assurance, control assurance and
 Legal legacy risk-register support.
@@ -286,7 +294,7 @@ cd backend
 npm test
 ```
 
-Current regression status: **100 automated tests passing**.
+Current regression status: **105 automated tests passing**.
 
 The test suite covers:
 
@@ -326,14 +334,17 @@ Major completed changes include:
 13. Added NCA corporate mail readiness and deployment instructions.
 14. Reworked notifications, Action Centre and compact recent activity.
 15. Standardised NCA dialogs, navigation, active states and page transitions.
-16. Added database migrations through version `047`.
-17. Expanded regression coverage to 100 passing tests.
+16. Added database migrations through version `049`.
+17. Expanded regression coverage to 105 passing tests.
 18. Added `NCA Official Risk Register Template 2` for the Legal register
     structure while retaining governed ERM fields.
 19. Separated risk-register admission from the Consolidated Risk Register:
     both governed template correction engines now reside on a dedicated
     Focal Person **Risk Register** page, while the consolidated page remains
     the central editing, review and approval workspace.
+20. Added the approved Division Risk Register Tracker as Template 3, an atomic
+    Administrator multi-division staging workspace, accountable Focal review
+    and a read-only Administrator submission monitor.
 
 ## Repository hygiene
 

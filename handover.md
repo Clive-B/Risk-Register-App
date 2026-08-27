@@ -18,7 +18,7 @@ Production secrets, credentials and infrastructure-specific values are intention
 
 - `frontend/` contains the static HTML, CSS, JavaScript, role-aware navigation, browser-based GRC assistant, NCA brand assets, downloadable templates and IIS `web.config`.
 - `backend/` contains the Express API, PostgreSQL access, authentication and authorisation, governed workflows, notifications, reporting, email services and tests.
-- `backend/migrations/` contains migrations `000` through `047`.
+- `backend/migrations/` contains migrations `000` through `049`.
 - `scripts/` contains template generation, local server, Windows service installation, readiness, backup and restore utilities.
 - Root-level Excel and Word files contain source registers, governed upload templates, deployment material and policy/reference documents.
 - `README.md` is the functional overview and local-development guide.
@@ -50,18 +50,34 @@ The current platform includes:
 
 Workbook admission is now separated from the Consolidated Risk Register:
 
-- New `frontend/pages/risk-register.html`, `frontend/js/risk-register.js` and `frontend/css/risk-register.css` provide a Focal-only admissions workspace for both approved register templates.
+- `frontend/pages/risk-register.html`, `frontend/js/risk-register.js` and `frontend/css/risk-register.css` provide a Focal-only admissions workspace for all three approved register templates.
 - Navigation and cache-version references are updated across the shared shell and role pages.
 - The upload action is removed from the Consolidated Risk Register page.
 - New `backend/tests/riskRegisterAdmissionsPage.test.js` covers the page, endpoints and Focal-only navigation.
-- `README.md` describes the new workflow and consistently reports 100 passing tests.
+- `README.md` describes the new workflow and consistently reports 105 passing tests.
+
+### Administrator multi-division risk admission
+
+- Template 3 is a clean upload edition of the approved `Adminstration Risk Register Updated_.xlsx` structure and is downloadable as `NCA_Official_Division_Risk_Register_Tracker_Upload_Template.xlsx`.
+- The Administrator-only **Division Risk Uploads** page selects several divisions and their active Focal Persons, attaches one workbook per division, exposes row-level correction and uses one atomic **Send All to Focal Review** submission.
+- Administrator staging creates draft risks in the Consolidated Risk Register with `Awaiting Focal Review`; it does not impersonate or pre-populate the accountable Focal decision.
+- The assigned Focal Person reviews and edits staged risks, records likelihood and impact for every risk, and submits the complete division register to the Risk Champion.
+- The Administrator-only **Division Focal Submissions** page provides read-only cross-division status and links back to each batch in the Consolidated Risk Register.
+- Migrations `048` and `049` add upload groups, accountable-Focal provenance, Focal submission timestamps and the Template 3 entry source.
 
 ### GRC assistant and voice guidance
 
 - New `frontend/js/assistant.js` and `frontend/css/assistant.css` add an authenticated floating assistant across pages loaded through the shared application shell.
 - The assistant can explain core workflows, open governed pages, present dashboard task and notification counts, run a spoken system tour and confirm sign-out.
 - Voice input uses the browser Speech Recognition API where supported, with `en-GH` selected; spoken output uses browser speech synthesis.
+- Sign-in guidance no longer starts or waits on the microphone automatically. The assistant explicitly tells the user to press **Talk**, and listening begins only from that user action.
+- The assistant close control and the collapsed launcher/Push-to-Talk row use component-scoped sizing and alignment across Executive Analytics, Board Dashboard and Compliance Assurance.
 - `Clone Voice.docx` records options and security/consent considerations for a future custom voice provider. No cloned-voice model, provider API, external voice service, API key or backend integration is included in the application.
+
+### Division role accounts
+
+- The local test environment contains an active Risk Focal Person for each of the 15 governed divisions, enabling the Administrator assignment list used by multi-division staging.
+- Division Focal and Champion account passwords are operational database state and are intentionally not recorded in this repository or handover document.
 
 ### Administrator provisioning documentation
 
@@ -88,20 +104,20 @@ Verification on 28 August 2026:
 
 ```text
 npm.cmd test
-Tests: 100
-Passed: 100
+Tests: 105
+Passed: 105
 Failed: 0
 ```
 
 Additional checks completed successfully:
 
-- JavaScript syntax checks for the admissions page, assistant, security utilities and related test.
+- JavaScript syntax checks for the admissions pages, assistant, security utilities and related tests.
+- Live PostgreSQL migrations `048` and `049` and a disposable full workflow smoke test covering Admin staging, assigned-Focal visibility and submission, and Admin monitoring.
 - DOCX package/XML validation for the voice guidance and administrator provisioning documents.
 - `git diff --check` for tracked working-tree edits.
 
 Not verified during this documentation update:
 
-- Live PostgreSQL migrations or integration flows.
 - Browser-based end-to-end role workflows.
 - Production IIS/HTTPS reverse proxying.
 - Corporate SMTP authentication and message delivery.
@@ -149,7 +165,7 @@ Before go-live, execute the deployment guide in order, require `npm run readines
 
 ## Recommended next actions
 
-1. Review the dedicated Risk Register admissions page in a browser as a Focal Person, including both workbook templates and admission into the Consolidated Risk Register.
+1. Review the dedicated Risk Register admissions pages in a browser, including all three templates, Administrator multi-division staging, Focal correction/submission and Consolidated Risk Register visibility.
 2. Complete browser accessibility and supported-browser testing for the GRC assistant, including microphone permissions, the one-minute listening limit, navigation and sign-out confirmation.
 3. Decide whether browser speech is sufficient or a consented, NCA-approved custom voice service is required; implement any provider only through a protected backend integration.
 4. Integrate the new attachment, workbook and output security utilities into the applicable backend routes and add unit and route-level regression tests.
@@ -164,7 +180,7 @@ Before go-live, execute the deployment guide in order, require `npm run readines
 - [ ] Development environment starts successfully.
 - [ ] Database migrations complete on a clean non-production database.
 - [ ] All automated tests pass.
-- [ ] Both approved workbook admission paths pass Focal Person UAT.
+- [ ] All three approved workbook admission paths pass Focal Person UAT.
 - [ ] GRC assistant keyboard, screen-reader, microphone, voice, navigation and sign-out paths pass supported-browser UAT.
 - [ ] Attachment, workbook and output security helpers are integrated and regression-tested.
 - [ ] Champion and Chairman review/approval paths pass UAT.

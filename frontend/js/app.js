@@ -32,6 +32,9 @@ window.NCAGRC = (() => {
         users: [roles.ADMIN],
         risks: [roles.ADMIN,roles.CHAIRMAN,roles.CHAMPION,roles.FOCAL],
         riskRegister: [roles.FOCAL],
+        adminDivisionRiskUploads: [roles.ADMIN],
+        adminFocalSubmissions: [roles.ADMIN],
+        focalRiskAdmissions: [roles.FOCAL],
         createRisk: [roles.ADMIN, roles.CHAMPION, roles.FOCAL],
         pendingApprovals: [roles.ADMIN,roles.CHAIRMAN,roles.CHAMPION],
         myApprovals: [roles.ADMIN,roles.CHAIRMAN,roles.CHAMPION,roles.FOCAL],
@@ -62,6 +65,8 @@ window.NCAGRC = (() => {
             ["Executive Analytics", "pages/executive-analytics.html", "executiveAnalytics"],
             ["Board Dashboard", "pages/board-dashboard.html", "boardDashboard"],
             ["Consolidated Risk Register", "pages/risks.html", "risks"],
+            ["Division Risk Uploads", "pages/admin-division-risk-uploads.html", "adminDivisionRiskUploads"],
+            ["Division Focal Submissions", "pages/admin-focal-submissions.html", "adminFocalSubmissions"],
             ["Work Plan Risks", "pages/workplans.html", "workplans"],
             ["Create Risk", "pages/create-risk.html", "createRisk"],
             ["Pending Approvals", "pages/pending-approvals.html", "pendingApprovals"],
@@ -89,6 +94,7 @@ window.NCAGRC = (() => {
             ["Action Centre", "pages/action-centre.html", "actionCentre"],
             ["Consolidated Risk Register", "pages/risks.html", "risks"],
             ["Risk Register", "pages/risk-register.html", "riskRegister"],
+            ["Administrator-Staged Risks", "pages/focal-risk-admissions.html", "focalRiskAdmissions"],
             ["Work Plan Upload", "pages/workplans.html", "workplans"],
             ["Create Risk", "pages/create-risk.html", "createRisk"],
             ["My Approvals", "pages/my-approvals.html", "myApprovals"],
@@ -198,6 +204,9 @@ window.NCAGRC = (() => {
         if (file === "users.html") return "users";
         if (file === "risks.html") return "risks";
         if (file === "risk-register.html") return "riskRegister";
+        if (file === "admin-division-risk-uploads.html") return "adminDivisionRiskUploads";
+        if (file === "admin-focal-submissions.html") return "adminFocalSubmissions";
+        if (file === "focal-risk-admissions.html") return "focalRiskAdmissions";
         if (file === "create-risk.html") return "createRisk";
         if (file === "pending-approvals.html") return "pendingApprovals";
         if (file === "my-approvals.html") return "myApprovals";
@@ -317,12 +326,12 @@ window.NCAGRC = (() => {
             const link = document.createElement("link");
             link.id = "ncaAssistantStyles";
             link.rel = "stylesheet";
-            link.href = `${prefix}css/assistant.css?v=6`;
+            link.href = `${prefix}css/assistant.css?v=7`;
             document.head.appendChild(link);
         }
         const script = document.createElement("script");
         script.id = "ncaAssistantScript";
-        script.src = `${prefix}js/assistant.js?v=6`;
+        script.src = `${prefix}js/assistant.js?v=8`;
         script.defer = true;
         document.head.appendChild(script);
     }
@@ -377,11 +386,11 @@ if (window.NCAGRC.getToken()) {
         const link = document.createElement("link");
         link.id = "ncaAssistantStyles";
         link.rel = "stylesheet";
-        link.href = `${prefix}css/assistant.css?v=6`;
+        link.href = `${prefix}css/assistant.css?v=7`;
         document.head.appendChild(link);
         const script = document.createElement("script");
         script.id = "ncaAssistantScript";
-        script.src = `${prefix}js/assistant.js?v=6`;
+        script.src = `${prefix}js/assistant.js?v=8`;
         script.defer = true;
         document.head.appendChild(script);
     }

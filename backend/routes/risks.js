@@ -57,9 +57,15 @@ router.post(
 router.post(
     '/import/preview',
     authMiddleware,
-    roleMiddleware('Risk Focal Person'),
+    roleMiddleware('System Administrator','Risk Focal Person'),
     riskController.previewRiskImport
 );
+
+router.get('/admin-import-options',authMiddleware,roleMiddleware('System Administrator'),riskController.getAdminImportOptions);
+router.post('/admin-import-groups',authMiddleware,roleMiddleware('System Administrator'),riskController.createAdminImportGroup);
+router.get('/focal-admission-batches',authMiddleware,roleMiddleware('System Administrator','Risk Focal Person'),riskController.getFocalAdmissionBatches);
+router.post('/focal-admission-batches/:id/submit',authMiddleware,roleMiddleware('Risk Focal Person'),riskController.submitFocalAdmissionBatch);
+router.get('/admin-focal-submissions',authMiddleware,roleMiddleware('System Administrator'),riskController.getAdminFocalSubmissions);
 
 router.post(
     '/import',

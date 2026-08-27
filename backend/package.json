@@ -12,6 +12,7 @@
     "verify:treatments": "node scripts/verify-treatment-plan-alignment.js",
     "verify:treatment-approve-all": "node scripts/verify-treatment-approve-all.js",
     "verify:controls": "node scripts/verify-control-assurance.js",
+    "verify:division-risk-workflow": "node scripts/verify-admin-division-risk-workflow.js",
     "migrate": "node scripts/migrate.js",
     "seed:test-users": "node scripts/seed-test-users.js",
     "seed:rips-test-users": "node scripts/seed-rips-test-users.js",

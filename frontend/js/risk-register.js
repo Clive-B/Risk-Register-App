@@ -73,6 +73,8 @@
         elements.fileHelp.textContent = "Accepted formats: .xlsx and .xls. Maximum file size: 8 MB.";
         elements.engineLabel.textContent = state.engine === "legal"
             ? "Template 2 correction engine selected"
+            : state.engine === "division"
+                ? "Template 3 correction engine selected"
             : state.engine === "standard"
                 ? "Template 1 correction engine selected"
                 : "Choose a template above to begin";
@@ -170,7 +172,7 @@
 
     function initialiseRows(preview) {
         preview.rows.forEach(row => {
-            row.require_program = ["Risk Register Tracking Template","Legal Legacy Risk Register"].includes(preview.template_type);
+            row.require_program = ["Risk Register Tracking Template","Legal Legacy Risk Register","Division Risk Register Tracker"].includes(preview.template_type);
             row.require_legal_context = preview.template_type === "Legal Legacy Risk Register";
             if (!row.initial_proposed) {
                 row.initial_proposed = {
@@ -284,7 +286,8 @@
             setProgress(true,"Applying the governed correction rules...",65);
             const data = await app.apiRequest("/risks/import/preview",{method:"POST",body:JSON.stringify({file_name:file.name,file_data:state.fileData})});
             state.preview = data.preview;
-            const detectedEngine = data.preview.template_type === "Legal Legacy Risk Register" ? "Template 2" : "Template 1";
+            const detectedEngine = data.preview.template_type === "Legal Legacy Risk Register" ? "Template 2"
+                : data.preview.template_type === "Division Risk Register Tracker" ? "Template 3" : "Template 1";
             elements.engineLabel.textContent = `${detectedEngine} correction engine · Detected ${data.preview.template_type || "risk register"}`;
             setProgress(true,"Correction workspace ready",100);
             renderPreview(data.preview);
@@ -346,7 +349,7 @@
     }));
     elements.choose.addEventListener("click",() => {
         if (!state.engine) {
-            showToast("Select Template 1 or Template 2 above before choosing a workbook.","error");
+            showToast("Select Template 1, Template 2 or Template 3 above before choosing a workbook.","error");
             return;
         }
         elements.input.click();

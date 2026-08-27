@@ -6,7 +6,8 @@ const ALLOWED_EXTENSIONS = new Set(['.xlsx', '.xls']);
 
 const FIELD_ALIASES = {
     risk_id: ['risk id', 'risk identifier', 'risk reference', 'risk reference number', 'risk no', 'risk number', 'reference no', 'reference number', 'ref no', 's/n', 's no', 'sn', 'serial no', 'serial number', 'no'],
-    risk_title: ['risk title', 'risk name', 'identified risk', 'risk', 'risk event'],
+    risk_title: ['risk title', 'risk name', 'identified risk', 'risk'],
+    risk_event_detail: ['risk event'],
     risk_description: ['risk description', 'risk statement', 'description', 'risk event cause and consequence'],
     risk_source: ['risk source', 'source of risk', 'risk origin'],
     risk_cause: ['risk cause', 'root cause', 'cause of risk', 'risk driver'],
@@ -18,7 +19,7 @@ const FIELD_ALIASES = {
     date_identified: ['date identified', 'identification date', 'date risk identified', 'risk identification date', 'date captured'],
     likelihood: ['likelihood', 'risk likelihood', 'inherent likelihood', 'initial likelihood', 'likelihood rating', 'pre mitigation likelihood'],
     impact: ['impact', 'risk impact', 'inherent impact', 'initial impact', 'impact rating', 'pre mitigation impact'],
-    inherent_risk_score: ['inherent risk score', 'inherent score', 'initial risk score', 'inherent rating', 'initial rating', 'pre mitigation score', 'inherent risk rating'],
+    inherent_risk_score: ['inherent risk score', 'inherent score', 'initial risk score', 'inherent rating', 'inherent rating scores', 'initial rating', 'pre mitigation score', 'inherent risk rating'],
     risk_level: ['risk level', 'inherent risk level', 'inherent risk rating', 'initial risk level'],
     existing_controls: ['existing controls', 'existing control', 'controls', 'control measures', 'existing mitigation controls'],
     control_effectiveness: ['control effectiveness', 'controls effectiveness', 'effectiveness of controls', 'control effectiveness rating'],
@@ -30,15 +31,17 @@ const FIELD_ALIASES = {
     control_exceptions: ['control exceptions', 'control exception', 'control weaknesses', 'control gaps'],
     control_next_review_date: ['control next review date', 'next control review date', 'control review date'],
     control_assessment_basis: ['control assessment basis', 'basis for control assessment', 'control assessment rationale'],
-    risk_treatment: ['risk treatment', 'risk response', 'treatment option', 'response strategy', 'risk treatment option'],
+    risk_treatment: ['risk treatment', 'risk response', 'risk response control', 'treatment option', 'response strategy', 'risk treatment option'],
     initial_mitigation_plan: ['initial mitigation plan', 'mitigation plan', 'mitigation plan actions', 'further action', 'further actions', 'additional controls', 'action plan'],
-    responsible_officer: ['responsible officer', 'action owner', 'responsible person', 'responsibility', 'risk action owner lead officer', 'risk action owner/lead officer'],
+    responsible_officer: ['responsible officer', 'action owner', 'responsible person', 'responsibility', 'risk action owner lead', 'risk action owner lead officer', 'risk action owner/lead officer'],
     target_completion_date: ['target completion date', 'completion date', 'target date', 'due date', 'action due date'],
     current_impact: ['current impact', 'current impact rating'],
     current_likelihood: ['current likelihood', 'current likelihood rating'],
     current_risk_score: ['current risk score', 'current score', 'current rating'],
     treatment_status: ['treatment status', 'action status', 'mitigation status', 'current status'],
-    progress_notes: ['progress notes', 'progress update', 'progress', 'historical progress', 'comments remarks', 'remarks'],
+    progress_notes: ['progress notes', 'progress update', 'progress', 'comments remarks', 'remarks'],
+    historical_progress: ['historical progress'],
+    source_notes: ['notes'],
     next_review_date: ['next review date', 'review date', 'date of next review'],
     residual_impact: ['residual impact', 'residual impact rating', 'post mitigation impact'],
     residual_likelihood: ['residual likelihood', 'residual likelihood rating', 'post mitigation likelihood'],
@@ -75,6 +78,12 @@ const LEGAL_TEMPLATE_SIGNATURE = new Set([
     'inherent risk rating'
 ]);
 
+const DIVISION_TRACKER_SIGNATURE = new Set([
+    'no','program project','risk id','risk name','risk description','date captured',
+    'risk action owner lead','likelihood','impact','inherent rating scores',
+    'risk response control','mitigation plan actions','progress','historical progress','notes'
+]);
+
 const TRACKING_REQUIRED_FIELDS = [
     'risk_id',
     'programme_project',
@@ -94,7 +103,7 @@ const LEGAL_REQUIRED_FIELDS = [
     'risk_category',
     'risk_description',
     'risk_source',
-    'risk_title',
+    'risk_event_detail',
     'risk_cause',
     'existing_controls',
     'risk_owner',
@@ -102,6 +111,14 @@ const LEGAL_REQUIRED_FIELDS = [
     'likelihood',
     'impact'
 ];
+
+const DIVISION_TRACKER_REQUIRED_FIELDS = [
+    'risk_id','programme_project','risk_title','risk_description','date_identified',
+    'responsible_officer','likelihood','impact','risk_treatment',
+    'initial_mitigation_plan','target_completion_date'
+];
+
+const DIVISION_TRACKER_IGNORED_HEADERS = new Set(['no','last review date']);
 
 const TRACKING_IGNORED_HEADERS = new Set([
     'risk proximity',
@@ -204,7 +221,8 @@ function detectRegisterSheet(workbook) {
             const normalizedHeaders = new Set(row.map(normalizeHeader).filter(Boolean));
             const trackingTemplate = [...TRACKING_TEMPLATE_SIGNATURE].every(header => normalizedHeaders.has(header));
             const legalTemplate = [...LEGAL_TEMPLATE_SIGNATURE].every(header => normalizedHeaders.has(header));
-            const score = (requiredMatches * 10) + uniqueFields.size + (trackingTemplate ? 1000 : 0) + (legalTemplate ? 900 : 0);
+            const divisionTracker = [...DIVISION_TRACKER_SIGNATURE].every(header => normalizedHeaders.has(header));
+            const score = (requiredMatches * 10) + uniqueFields.size + (trackingTemplate ? 1000 : 0) + (legalTemplate ? 900 : 0) + (divisionTracker ? 1100 : 0);
 
             if ((anchorMatches >= 3 || legalTemplate) && (!best || score > best.score)) {
                 best = {
@@ -214,7 +232,9 @@ function detectRegisterSheet(workbook) {
                     headerRowIndex:rowIndex,
                     mappedFields,
                     score,
-                    templateType:trackingTemplate
+                    templateType:divisionTracker
+                        ? 'Division Risk Register Tracker'
+                        : trackingTemplate
                         ? 'Risk Register Tracking Template'
                         : legalTemplate
                             ? 'Legal Legacy Risk Register'
@@ -303,20 +323,30 @@ function parseRiskWorkbook(fileName, fileData) {
     }
 
     const detected = detectRegisterSheet(workbook);
+    if (detected.templateType === 'Division Risk Register Tracker') {
+        detected.mappedFields = detected.mappedFields.map((field,index) =>
+            normalizeHeader(detected.matrix[detected.headerRowIndex][index]) === 'no' ? null : field
+        );
+    }
     const headers = detected.matrix[detected.headerRowIndex].map(displayValue);
     const nonEmptyHeaderIndexes = headers.reduce((indexes, header, index) => {
         if (cellIsPopulated(header)) indexes.push(index);
         return indexes;
     }, []);
     const ignoredHeaders = nonEmptyHeaderIndexes
-        .filter(index => !detected.mappedFields[index] && detected.templateType === 'Risk Register Tracking Template' && TRACKING_IGNORED_HEADERS.has(normalizeHeader(headers[index])))
+        .filter(index => !detected.mappedFields[index] && (
+            (detected.templateType === 'Risk Register Tracking Template' && TRACKING_IGNORED_HEADERS.has(normalizeHeader(headers[index])))
+            || (detected.templateType === 'Division Risk Register Tracker' && DIVISION_TRACKER_IGNORED_HEADERS.has(normalizeHeader(headers[index])))
+        ))
         .map(index => headers[index]);
     const unmappedHeaders = nonEmptyHeaderIndexes
         .filter(index => !detected.mappedFields[index])
         .filter(index => !ignoredHeaders.includes(headers[index]))
         .map(index => headers[index]);
     const duplicateFields = detected.mappedFields.filter((field, index, fields) => field && fields.indexOf(field) !== index);
-    const requiredFields = detected.templateType === 'Risk Register Tracking Template'
+    const requiredFields = detected.templateType === 'Division Risk Register Tracker'
+        ? DIVISION_TRACKER_REQUIRED_FIELDS
+        : detected.templateType === 'Risk Register Tracking Template'
         ? TRACKING_REQUIRED_FIELDS
         : detected.templateType === 'Legal Legacy Risk Register'
             ? LEGAL_REQUIRED_FIELDS
@@ -355,7 +385,13 @@ function parseRiskWorkbook(fileName, fileData) {
 
         const excelRow = detected.rangeStartRow + detected.headerRowIndex + offset + 2;
         if (detected.templateType === 'Risk Register Tracking Template' && !mappedData.risk_id && !mappedData.risk_title && !mappedData.risk_description) return items;
+        if (detected.templateType === 'Division Risk Register Tracker'
+            && !mappedData.risk_id && !mappedData.risk_title && !mappedData.risk_description && !mappedData.programme_project) return items;
         if (detected.templateType === 'Legal Legacy Risk Register') {
+            if (mappedData.risk_event_detail) {
+                mappedData.risk_title = mappedData.risk_event_detail;
+                delete mappedData.risk_event_detail;
+            }
             const isPrimaryRisk = Boolean(
                 mappedData.risk_id
                 || mappedData.programme_project
@@ -393,6 +429,29 @@ function parseRiskWorkbook(fileName, fileData) {
         }
         const originalData = {...mappedData};
         const corrections = [];
+        if (detected.templateType === 'Division Risk Register Tracker') {
+            if (mappedData.risk_event_detail) {
+                mappedData.risk_description = appendText(
+                    mappedData.risk_description,
+                    `Risk event: ${mappedData.risk_event_detail}`
+                );
+                corrections.push({
+                    field:'risk_description',
+                    original:originalData.risk_description,
+                    proposed:mappedData.risk_description,
+                    reason:'The tracker records Risk Event separately. It was retained within the governed risk description.',
+                    rule:'Every source Risk Event must remain visible after admission.'
+                });
+            }
+            mappedData.risk_owner = mappedData.risk_owner || mappedData.responsible_officer;
+            mappedData.current_likelihood = mappedData.likelihood;
+            mappedData.current_impact = mappedData.impact;
+            mappedData.progress_notes = appendText(mappedData.progress_notes,mappedData.historical_progress);
+            mappedData.progress_notes = appendText(mappedData.progress_notes,mappedData.source_notes);
+            delete mappedData.historical_progress;
+            delete mappedData.source_notes;
+            delete mappedData.risk_event_detail;
+        }
         if (detected.templateType === 'Risk Register Tracking Template') {
             if (mappedData.risk_id) {
                 trackingContext.parentRiskId = String(mappedData.risk_id);
