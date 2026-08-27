@@ -40,6 +40,9 @@ from this repository.
 
 - Uploads a work plan or supported risk-register workbook.
 - Reviews and confirms system-proposed workbook corrections.
+- Uses the dedicated **Risk Register** admissions page for both approved
+  risk-register templates; admitted risks then move to the Consolidated Risk
+  Register.
 - Completes or changes assessment values before submission.
 - Selects an approved ERM response: Terminate, Treat, Transfer or Tolerate.
 - Reviews and updates proposed treatment actions, owners and dates.
@@ -283,7 +286,7 @@ cd backend
 npm test
 ```
 
-Current regression status: **97 automated tests passing**.
+Current regression status: **100 automated tests passing**.
 
 The test suite covers:
 
@@ -324,9 +327,13 @@ Major completed changes include:
 14. Reworked notifications, Action Centre and compact recent activity.
 15. Standardised NCA dialogs, navigation, active states and page transitions.
 16. Added database migrations through version `047`.
-17. Expanded regression coverage to 97 passing tests.
+17. Expanded regression coverage to 100 passing tests.
 18. Added `NCA Official Risk Register Template 2` for the Legal register
     structure while retaining governed ERM fields.
+19. Separated risk-register admission from the Consolidated Risk Register:
+    both governed template correction engines now reside on a dedicated
+    Focal Person **Risk Register** page, while the consolidated page remains
+    the central editing, review and approval workspace.
 
 ## Repository hygiene
 

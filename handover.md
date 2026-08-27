@@ -1,6 +1,6 @@
 # NCA Enterprise GRC Platform Handover
 
-Last updated: 27 August 2026
+Last updated: 28 August 2026
 
 Repository: `Clive-B/Risk-Register-App`
 
@@ -16,7 +16,7 @@ Production secrets, credentials and infrastructure-specific values are intention
 
 ## Repository snapshot
 
-- `frontend/` contains the static HTML, CSS, JavaScript, NCA brand assets, downloadable templates and IIS `web.config`.
+- `frontend/` contains the static HTML, CSS, JavaScript, role-aware navigation, browser-based GRC assistant, NCA brand assets, downloadable templates and IIS `web.config`.
 - `backend/` contains the Express API, PostgreSQL access, authentication and authorisation, governed workflows, notifications, reporting, email services and tests.
 - `backend/migrations/` contains migrations `000` through `047`.
 - `scripts/` contains template generation, local server, Windows service installation, readiness, backup and restore utilities.
@@ -24,7 +24,7 @@ Production secrets, credentials and infrastructure-specific values are intention
 - `README.md` is the functional overview and local-development guide.
 - `DEPLOYMENT.md` is the primary production deployment guide.
 
-The maintained source baseline is commit `85a1373` (`Build governed NCA enterprise GRC platform`). Before this handover update, local `main` was one commit ahead of `origin/main`; pushing this handover also publishes that committed platform baseline.
+The previously published source baseline is commit `49655b2` (`Add project handover documentation`). This update publishes the dedicated Risk Register admissions workspace, browser-based GRC assistant, administrator provisioning material and supporting security utilities described below.
 
 ## Implemented capability
 
@@ -42,36 +42,49 @@ The current platform includes:
 - Compliance assurance and governed AI-assisted reports based on recorded evidence.
 - Individual and bulk user onboarding with password, session, lockout and mail-safety controls.
 - IIS reverse-proxy configuration and Windows deployment, readiness, backup and restore scripts.
+- A browser-based GRC assistant with typed help, system tours, role-aware task briefings, page navigation, sign-out confirmation, browser speech synthesis and supported-browser speech recognition.
 
-## Current local work in progress
-
-The working tree contained pre-existing edits when this handover was prepared. They have deliberately not been staged or included in the handover commit.
+## Updates included in this handover
 
 ### Dedicated Risk Register admissions page
 
-An in-progress change separates workbook admission from the Consolidated Risk Register:
+Workbook admission is now separated from the Consolidated Risk Register:
 
 - New `frontend/pages/risk-register.html`, `frontend/js/risk-register.js` and `frontend/css/risk-register.css` provide a Focal-only admissions workspace for both approved register templates.
 - Navigation and cache-version references are updated across the shared shell and role pages.
 - The upload action is removed from the Consolidated Risk Register page.
 - New `backend/tests/riskRegisterAdmissionsPage.test.js` covers the page, endpoints and Focal-only navigation.
-- `README.md` is partly updated to describe the change and report 100 tests.
+- `README.md` describes the new workflow and consistently reports 100 passing tests.
 
-This work passes the current automated suite, but remains uncommitted and is therefore not backed up on GitHub by the handover push.
+### GRC assistant and voice guidance
+
+- New `frontend/js/assistant.js` and `frontend/css/assistant.css` add an authenticated floating assistant across pages loaded through the shared application shell.
+- The assistant can explain core workflows, open governed pages, present dashboard task and notification counts, run a spoken system tour and confirm sign-out.
+- Voice input uses the browser Speech Recognition API where supported, with `en-GH` selected; spoken output uses browser speech synthesis.
+- `Clone Voice.docx` records options and security/consent considerations for a future custom voice provider. No cloned-voice model, provider API, external voice service, API key or backend integration is included in the application.
 
 ### Administrator provisioning documentation
 
-The following locally generated, untracked artifacts also remain outside the handover commit:
+The following reproducible provisioning material is included:
 
 - `NCA_GRC_Administrator_User_Account_Provisioning_Requirements.docx`
-- `NCA_GRC_Administrator_User_Account_Provisioning_Requirements_CORRECTED.docx`
 - `scripts/generate-user-account-provisioning-requirements.ps1`
 
-Review the corrected document and generator, decide which document is authoritative, and avoid committing duplicate or superseded output.
+The document records the current individual and bulk account rules, production dependencies, SMTP requirements, security controls and acceptance checklist. The generator uses the corrected deployment information request as its document template.
+
+### Security utility foundations
+
+Three backend utility modules have been added for follow-on integration:
+
+- `backend/utils/attachmentSecurity.js` validates attachment names, allowed file types, MIME consistency, magic bytes, base64 data and size limits.
+- `backend/utils/workbookSecurity.js` checks workbook ZIP structure, entry counts, expanded sizes, compression ratios and unsupported encryption/ZIP64 features.
+- `backend/utils/outputSecurity.js` provides HTML escaping, CSV serialization and spreadsheet-formula neutralisation.
+
+These helpers are present in source but are not yet imported by the existing upload, attachment or export routes. They must be integrated and covered by focused tests before they can be treated as active security controls.
 
 ## Verification performed
 
-Verification on 27 August 2026:
+Verification on 28 August 2026:
 
 ```text
 npm.cmd test
@@ -82,7 +95,8 @@ Failed: 0
 
 Additional checks completed successfully:
 
-- JavaScript syntax checks for the new admissions script and modified shared scripts.
+- JavaScript syntax checks for the admissions page, assistant, security utilities and related test.
+- DOCX package/XML validation for the voice guidance and administrator provisioning documents.
 - `git diff --check` for tracked working-tree edits.
 
 Not verified during this documentation update:
@@ -127,8 +141,8 @@ Before go-live, execute the deployment guide in order, require `npm run readines
 ## Important safeguards
 
 - Never commit a populated `.env`, database dump, private key, certificate private key, JWT secret, encryption key, SMTP credential, generated temporary password or production credential.
+- Never place a cloned-voice provider API key or protected voice model identifier in frontend JavaScript or Git; require documented voice-owner consent and NCA approval before any custom voice integration.
 - Do not copy the test database into production.
-- Do not reset or discard the current working tree without first reviewing and preserving the in-progress admissions and provisioning work listed above.
 - Treat `Rev_ERM Policy and Framework_05_05_26.docx` as the authoritative assessment source unless formally superseded by NCA.
 - Keep audit records technically separate from user-facing notifications.
 - Do not mark treatments or related actions complete unless progress, status and required evidence meet the governed completion rules.
@@ -136,11 +150,12 @@ Before go-live, execute the deployment guide in order, require `npm run readines
 ## Recommended next actions
 
 1. Review the dedicated Risk Register admissions page in a browser as a Focal Person, including both workbook templates and admission into the Consolidated Risk Register.
-2. Resolve the `README.md` test-count inconsistency: its Testing section still says 97 while the change record says 100.
-3. Commit the complete admissions-page work as one reviewed change after browser validation.
-4. Review and consolidate the administrator provisioning documents, then commit only the approved artifact and its reproducible generator if required.
-5. Obtain the outstanding NCA ICT deployment inputs and run the readiness checks in a representative staging environment.
-6. Complete role-based UAT, security scanning, SMTP acceptance, backup/restore validation and formal production approval.
+2. Complete browser accessibility and supported-browser testing for the GRC assistant, including microphone permissions, the one-minute listening limit, navigation and sign-out confirmation.
+3. Decide whether browser speech is sufficient or a consented, NCA-approved custom voice service is required; implement any provider only through a protected backend integration.
+4. Integrate the new attachment, workbook and output security utilities into the applicable backend routes and add unit and route-level regression tests.
+5. Review and formally approve the administrator provisioning requirements and the controlled method for creating the first production System Administrator.
+6. Obtain the outstanding NCA ICT deployment inputs and run the readiness checks in a representative staging environment.
+7. Complete role-based UAT, security scanning, SMTP acceptance, backup/restore validation and formal production approval.
 
 ## Handover acceptance checklist
 
@@ -150,6 +165,8 @@ Before go-live, execute the deployment guide in order, require `npm run readines
 - [ ] Database migrations complete on a clean non-production database.
 - [ ] All automated tests pass.
 - [ ] Both approved workbook admission paths pass Focal Person UAT.
+- [ ] GRC assistant keyboard, screen-reader, microphone, voice, navigation and sign-out paths pass supported-browser UAT.
+- [ ] Attachment, workbook and output security helpers are integrated and regression-tested.
 - [ ] Champion and Chairman review/approval paths pass UAT.
 - [ ] Treatment, evidence, compliance, reporting and audit paths pass UAT.
 - [ ] IIS, HTTPS, PostgreSQL TLS and SMTP are verified in staging.

@@ -292,7 +292,7 @@ function setLoggedInUser() {
         }
     }
 
-    elements.importRiskBtn.hidden = normalizedRole !== "risk focal person";
+    if (elements.importRiskBtn) elements.importRiskBtn.hidden = true;
 }
 
 function showToast(message, type = "success") {
@@ -795,7 +795,7 @@ function setLoading(isLoading) {
     state.isLoading = isLoading;
     elements.loadingState.style.display = isLoading ? "block" : "none";
     elements.saveRisk.disabled = isLoading;
-    elements.importRiskBtn.disabled = isLoading;
+    if (elements.importRiskBtn) elements.importRiskBtn.disabled = isLoading;
 }
 
 function buildQueryString() {
@@ -1801,10 +1801,12 @@ function bindEvents() {
         window.location.href = "../index.html";
     });
 
-    elements.importRiskBtn.addEventListener("click", () => {
-        openImportDialog();
-        elements.riskWorkbookInput.click();
-    });
+    if (elements.importRiskBtn) {
+        elements.importRiskBtn.addEventListener("click", () => {
+            openImportDialog();
+            elements.riskWorkbookInput.click();
+        });
+    }
     elements.chooseWorkbookBtn.addEventListener("click", () => elements.riskWorkbookInput.click());
     elements.riskWorkbookInput.addEventListener("change", event => {
         const file = event.target.files && event.target.files[0];

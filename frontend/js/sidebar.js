@@ -56,7 +56,7 @@
         }, {once:true});
     }
 
-    if (['communication','auditLogs','systemSettings','compliance','myApprovals','approvalDetails','executiveAnalytics','boardDashboard','actionCentre','actionHistory','workplans','reports'].includes(currentPage) && !document.querySelector('link[data-communication-sidebar-styles]')) {
+    if (['communication','auditLogs','systemSettings','compliance','myApprovals','approvalDetails','executiveAnalytics','boardDashboard','actionCentre','actionHistory','workplans','riskRegister','reports'].includes(currentPage) && !document.querySelector('link[data-communication-sidebar-styles]')) {
         appendNavigationStylesheet('css/communication-sidebar.css','communicationSidebarStyles');
     }
 

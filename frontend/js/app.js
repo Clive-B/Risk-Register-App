@@ -31,6 +31,7 @@ window.NCAGRC = (() => {
         dashboard: [roles.ADMIN,roles.CHAIRMAN,roles.CHAMPION,roles.FOCAL],
         users: [roles.ADMIN],
         risks: [roles.ADMIN,roles.CHAIRMAN,roles.CHAMPION,roles.FOCAL],
+        riskRegister: [roles.FOCAL],
         createRisk: [roles.ADMIN, roles.CHAMPION, roles.FOCAL],
         pendingApprovals: [roles.ADMIN,roles.CHAIRMAN,roles.CHAMPION],
         myApprovals: [roles.ADMIN,roles.CHAIRMAN,roles.CHAMPION,roles.FOCAL],
@@ -87,6 +88,7 @@ window.NCAGRC = (() => {
             ["Dashboard", "nca-grc-risk-register.html", "dashboard"],
             ["Action Centre", "pages/action-centre.html", "actionCentre"],
             ["Consolidated Risk Register", "pages/risks.html", "risks"],
+            ["Risk Register", "pages/risk-register.html", "riskRegister"],
             ["Work Plan Upload", "pages/workplans.html", "workplans"],
             ["Create Risk", "pages/create-risk.html", "createRisk"],
             ["My Approvals", "pages/my-approvals.html", "myApprovals"],
@@ -195,6 +197,7 @@ window.NCAGRC = (() => {
         if (file === "nca-grc-risk-register.html") return "dashboard";
         if (file === "users.html") return "users";
         if (file === "risks.html") return "risks";
+        if (file === "risk-register.html") return "riskRegister";
         if (file === "create-risk.html") return "createRisk";
         if (file === "pending-approvals.html") return "pendingApprovals";
         if (file === "my-approvals.html") return "myApprovals";
@@ -307,6 +310,23 @@ window.NCAGRC = (() => {
 
     scheduleSessionWarning();
 
+    function loadAssistant() {
+        if (!getToken() || document.getElementById("ncaAssistantScript")) return;
+        const prefix = getPathPrefix();
+        if (!document.getElementById("ncaAssistantStyles")) {
+            const link = document.createElement("link");
+            link.id = "ncaAssistantStyles";
+            link.rel = "stylesheet";
+            link.href = `${prefix}css/assistant.css?v=6`;
+            document.head.appendChild(link);
+        }
+        const script = document.createElement("script");
+        script.id = "ncaAssistantScript";
+        script.src = `${prefix}js/assistant.js?v=6`;
+        script.defer = true;
+        document.head.appendChild(script);
+    }
+
     async function auditClientEvent(payload) {
         const token = getToken();
 
@@ -349,3 +369,20 @@ window.NCAGRC = (() => {
         auditClientEvent
     };
 })();
+
+window.NCAGRC.loadAssistant = window.NCAGRC.loadAssistant || (() => {});
+if (window.NCAGRC.getToken()) {
+    const prefix = window.NCAGRC.getPathPrefix();
+    if (!document.getElementById("ncaAssistantScript")) {
+        const link = document.createElement("link");
+        link.id = "ncaAssistantStyles";
+        link.rel = "stylesheet";
+        link.href = `${prefix}css/assistant.css?v=6`;
+        document.head.appendChild(link);
+        const script = document.createElement("script");
+        script.id = "ncaAssistantScript";
+        script.src = `${prefix}js/assistant.js?v=6`;
+        script.defer = true;
+        document.head.appendChild(script);
+    }
+}

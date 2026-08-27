@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Risk Register Admissions | NCA GRC</title>
+    <link rel="stylesheet" href="../css/risks.css?v=13">
+    <link rel="stylesheet" href="../css/risk-register.css?v=2">
+    <link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true">
+    <link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true">
+    <link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true">
+    <link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true">
+</head>
+<body>
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
+<div class="container">
+    <aside class="sidebar"></aside>
+    <main class="main">
+        <header class="admission-hero">
+            <div>
+                <span>Governed risk admissions</span>
+                <h1>Risk Register</h1>
+                <p>Download, validate, correct and admit either approved NCA risk-register workbook.</p>
+            </div>
+            <a class="consolidated-link" href="risks.html">Open Consolidated Risk Register</a>
+        </header>
+
+        <section class="admission-guidance">
+            <strong>How this page works</strong>
+            <p>Select the template that matches your register. The appropriate rule-driven correction engine will preserve the original values, explain every proposed correction and require your confirmation before any risk is admitted.</p>
+            <ol>
+                <li>Download and complete one of the two governed templates.</li>
+                <li>Upload it under the matching template card.</li>
+                <li>Review and edit the proposed corrections, then confirm each risk.</li>
+                <li>Admit the corrected risks. They will appear on the Consolidated Risk Register for all subsequent editing and review.</li>
+            </ol>
+        </section>
+
+        <section class="template-grid" aria-label="Supported risk-register templates">
+            <article class="template-card" data-template-card="standard">
+                <span class="template-number">01</span>
+                <div>
+                    <h2>NCA Official Risk Register Template</h2>
+                    <p>The governed tracking format with ERM dropdowns, protected score calculations, controls and treatment fields.</p>
+                </div>
+                <div class="template-actions">
+                    <a href="../templates/NCA_Official_Risk_Register_Upload_Template.xlsx" download>Download Template 1</a>
+                    <button type="button" data-upload-engine="standard">Upload Template 1</button>
+                </div>
+            </article>
+            <article class="template-card" data-template-card="legal">
+                <span class="template-number">02</span>
+                <div>
+                    <h2>NCA Official Risk Register Template 2</h2>
+                    <p>The second governed format, retaining Objective/Process, Risk Source, Risk Event and Risk Cause with ERM controls and treatments.</p>
+                </div>
+                <div class="template-actions">
+                    <a href="../templates/NCA_Official_Risk_Register_Template_2.xlsx" download>Download Template 2</a>
+                    <button type="button" data-upload-engine="legal">Upload Template 2</button>
+                </div>
+            </article>
+        </section>
+
+        <section id="admissionWorkspace" class="admission-workspace">
+            <input id="riskWorkbookInput" class="visually-hidden" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+            <div class="workspace-heading">
+                <div>
+                    <span id="selectedEngineLabel">Choose a template above to begin</span>
+                    <h2>Workbook correction and admission workspace</h2>
+                </div>
+                <button id="resetImportBtn" type="button">Reset Workspace</button>
+            </div>
+
+            <div id="importDropZone" class="import-file-panel">
+                <div>
+                    <strong id="importFileName">No workbook selected</strong>
+                    <p id="importFileHelp">Accepted formats: .xlsx and .xls. Maximum file size: 8 MB.</p>
+                </div>
+                <button id="chooseWorkbookBtn" class="cancel-btn" type="button">Choose File</button>
+            </div>
+
+            <div id="importProgress" class="import-progress" hidden>
+                <div class="progress-label">
+                    <span id="importProgressLabel">Reading workbook...</span>
+                    <span id="importProgressValue">0%</span>
+                </div>
+                <div class="progress-track"><span id="importProgressBar"></span></div>
+            </div>
+
+            <div id="importPreview" class="import-preview" hidden>
+                <div class="preview-heading">
+                    <div><h3>Import Preview</h3><p id="importSheetMeta"></p></div>
+                    <div class="import-summary" aria-label="Import validation summary">
+                        <span>Total <strong id="previewTotal">0</strong></span>
+                        <span class="summary-valid">Valid <strong id="previewValid">0</strong></span>
+                        <span class="summary-invalid">Failed <strong id="previewFailed">0</strong></span>
+                    </div>
+                </div>
+                <section id="correctionEducation" class="correction-education" hidden>
+                    <div>
+                        <span>Guided correction workspace</span>
+                        <h4 id="correctionEducationTitle">How guided correction works</h4>
+                        <ol id="correctionEducationSteps"></ol>
+                    </div>
+                    <button id="confirmAllCorrections" type="button">Confirm All Valid Corrections</button>
+                </section>
+                <div id="correctionWorkspace" class="correction-workspace" hidden></div>
+                <div id="previewTableWrap" class="preview-table-wrap">
+                    <table class="preview-table"><thead id="importPreviewHead"></thead><tbody id="importPreviewBody"></tbody></table>
+                </div>
+                <div id="importValidationErrors" class="validation-errors" hidden>
+                    <h4>Validation errors</h4><ul id="importErrorList"></ul>
+                </div>
+            </div>
+            <div id="importResult" class="import-result" hidden></div>
+            <div class="admission-actions">
+                <button id="confirmImportBtn" class="save-btn" type="button" disabled>Confirm Corrections and Admit Risks</button>
+            </div>
+        </section>
+    </main>
+</div>
+<script src="../js/app.js?v=7"></script>
+<script src="../js/authGuard.js"></script>
+<script src="../js/sidebar.js?v=20260728-1"></script>
+<script src="../js/risk-register.js?v=3"></script>
+</body>
+</html>
