@@ -183,6 +183,55 @@ body{
     display:none;
 }
 
+/* Division workflow pages use the same fixed-sidebar content boundary. */
+.main.workflow-main{
+    width:auto;
+    min-width:0;
+}
+
+.workflow-hero .hero-actions a{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:44px;
+    border:1px solid rgba(255,255,255,.7);
+    background:#fff;
+    color:#064a82;
+}
+
+.workflow-hero .hero-actions{
+    flex:0 0 320px;
+    width:320px;
+    max-width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:12px;
+}
+
+.workflow-hero .hero-actions a{
+    width:100%;
+    padding:13px 18px;
+    border-radius:11px;
+    font-size:15px;
+    font-weight:800;
+    line-height:1.25;
+    text-align:center;
+    box-shadow:0 8px 20px rgba(0,35,68,.14);
+}
+
+.workflow-hero .hero-actions a:hover,
+.workflow-hero .hero-actions a:focus-visible{
+    background:#ffc52f;
+    color:#153758;
+}
+
+@media (min-width:992px){
+    .workflow-main .submit-bar{
+        padding-right:250px;
+    }
+}
+
 @media (max-width:991px){
     body{
         overflow:auto;
@@ -222,6 +271,20 @@ body{
         margin-left:0;
         overflow:visible;
         padding-top:78px;
+    }
+
+    .main.workflow-main{
+        width:100%;
+        margin-left:0;
+    }
+
+    .workflow-main .submit-bar{
+        padding-right:22px;
+    }
+
+    .workflow-hero .hero-actions{
+        flex-basis:auto;
+        width:100%;
     }
 
     .nca-workspace-visual{

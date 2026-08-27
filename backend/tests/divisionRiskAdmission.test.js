@@ -46,10 +46,16 @@ test('role-specific pages expose one Admin submit-all and a read-only submission
     const focal = read('frontend/pages/focal-risk-admissions.html');
     const monitor = read('frontend/pages/admin-focal-submissions.html');
     const app = read('frontend/js/app.js');
+    const sidebar = read('frontend/css/sidebar.css');
     assert.match(upload,/Send All to Focal Review/);
     assert.match(upload,/NCA_Official_Division_Risk_Register_Tracker_Upload_Template\.xlsx/);
     assert.match(focal,/Submit the complete division register/i);
     assert.match(monitor,/read-only oversight/i);
     assert.match(app,/adminDivisionRiskUploads: \[roles\.ADMIN\]/);
     assert.match(app,/focalRiskAdmissions: \[roles\.FOCAL\]/);
+    assert.match(upload,/<main class="main workflow-main">/);
+    assert.match(focal,/<main class="main workflow-main">/);
+    assert.match(monitor,/<main class="main workflow-main">/);
+    assert.match(sidebar,/\.main\.workflow-main\s*\{/);
+    assert.match(sidebar,/\.workflow-main \.submit-bar/);
 });
