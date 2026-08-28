@@ -26,6 +26,9 @@ router.post(
 );
 router.post('/bulk/preview', authMiddleware, roleMiddleware('System Administrator'), userController.previewBulkUsers);
 router.post('/bulk', authMiddleware, roleMiddleware('System Administrator'), userController.createBulkUsers);
+router.get('/role-slots', authMiddleware, roleMiddleware('System Administrator'), userController.getRoleSlots);
+router.get('/role-slots/:id/history', authMiddleware, roleMiddleware('System Administrator'), userController.getRoleSlotHistory);
+router.post('/role-slots/:id/map', authMiddleware, roleMiddleware('System Administrator'), userController.mapRoleSlot);
 
 router.put('/change-password', authMiddleware, authController.changePassword);
 

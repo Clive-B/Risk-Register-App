@@ -217,6 +217,7 @@ function renderUsers() {
             <td>${escapeHtml(user.staff_id || "—")}</td>
             <td>${escapeHtml(user.full_name)}</td>
             <td>${escapeHtml(user.email)}</td>
+            <td>${escapeHtml(user.role_email || "—")}<br><small>${escapeHtml(user.identity_type || "Named Employee")}</small></td>
             <td>${escapeHtml(divisionLabel)}</td>
             <td>${escapeHtml(user.position || "—")}</td>
             <td><span class="role-badge ${roleClass}">${escapeHtml(user.role)}</span></td>

@@ -285,7 +285,10 @@ async function createGovernanceAssessment(client, risk, options = {}) {
     const forceFocalReview = options.forceFocalReview === true;
     const isFocalSource = !forceFocalReview && ['Risk Register Tracking Template', 'Legal Legacy Risk Register', 'Division Risk Register Tracker', 'Manual - Risk Focal Person', 'Work Plan'].includes(source);
     const isChampionSource = source === 'Manual - Risk Champion';
-    const focal = isFocalSource
+    const hasProvisionalFocalAssessment = forceFocalReview
+        && Number.isInteger(Number(options.focalLikelihood))
+        && Number.isInteger(Number(options.focalImpact));
+    const focal = (isFocalSource || hasProvisionalFocalAssessment)
         ? deriveInitialFocalAssessment(risk, source, {
             likelihood: options.focalLikelihood,
             impact: options.focalImpact
@@ -310,11 +313,13 @@ async function createGovernanceAssessment(client, risk, options = {}) {
             risk_id,review_stage,system_likelihood,system_impact,system_score,system_level,system_response,
             system_explanation,matched_keywords,rules_version,
             focal_likelihood,focal_impact,focal_score,focal_reason,focal_by,focal_at,
+            focal_assessment_status,focal_source,focal_source_file,
             champion_likelihood,champion_impact,champion_score,champion_decision,champion_reason,champion_by,champion_at
         ) VALUES(
             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
-            $11,$12,$13,$14,$15,CASE WHEN $13::int IS NULL THEN NULL ELSE NOW() END,
-            $16,$17,$18,$19,$20,$21,CASE WHEN $18::int IS NULL THEN NULL ELSE NOW() END
+            $11,$12,$13,$14,$15,CASE WHEN $13::int IS NULL OR $16::text='Pending Confirmation' THEN NULL ELSE NOW() END,
+            $16,$17,$18,
+            $19,$20,$21,$22,$23,$24,CASE WHEN $21::int IS NULL THEN NULL ELSE NOW() END
         ) ON CONFLICT(risk_id) DO NOTHING`,
         [
             risk.id,reviewStage,system.likelihood,system.impact,system.score,system.level,system.response,
@@ -323,7 +328,10 @@ async function createGovernanceAssessment(client, risk, options = {}) {
             options.focalReason || (source === 'Risk Register Tracking Template' || source === 'Legal Legacy Risk Register' || source === 'Division Risk Register Tracker'
                 ? `Assessment imported from the ${source}.`
                 : source === 'Work Plan' ? 'Assessment submitted from the approved work-plan upload.' : 'Assessment submitted during manual risk creation.'),
-            isFocalSource ? risk.created_by : null,
+            hasProvisionalFocalAssessment ? options.accountableFocalId : (isFocalSource ? risk.created_by : null),
+            hasProvisionalFocalAssessment ? 'Pending Confirmation' : (focalScore ? 'Confirmed' : 'Not Supplied'),
+            hasProvisionalFocalAssessment ? 'Focal-supplied Admin upload' : (focalScore ? source : null),
+            options.sourceFileName || null,
             championLikelihood,championImpact,championScore,isChampionSource ? 'Adjusted' : null,
             isChampionSource ? 'Assessment entered directly by the Risk Champion.' : null,
             isChampionSource ? risk.created_by : null
@@ -561,6 +569,7 @@ exports.getRisks = async (req, res) => {
                    g.review_stage,g.system_explanation AS assessment_explanation,g.matched_keywords,g.rules_version,
                    g.system_likelihood,g.system_impact,g.system_score,g.system_level,g.system_response,
                    g.focal_likelihood,g.focal_impact,g.focal_score,g.focal_reason,g.focal_at,
+                   g.focal_assessment_status,g.focal_source,g.focal_source_file,
                    g.champion_likelihood,g.champion_impact,g.champion_score,g.champion_decision,g.champion_reason,g.champion_at,
                    g.chairman_likelihood,g.chairman_impact,g.chairman_score,g.chairman_decision,g.chairman_reason,g.chairman_at,
                    treatment.plan_count AS treatment_plan_count,treatment.plan_status AS treatment_plan_status,
@@ -1733,7 +1742,14 @@ async function insertImportedRisk(client, risk, req, excelRow, fileName, entrySo
     const importedRisk = result.rows[0];
     await createGovernanceAssessment(client, importedRisk, {
         entrySource,
-        forceFocalReview:options.forceFocalReview === true
+        forceFocalReview:options.forceFocalReview === true,
+        focalLikelihood:risk.likelihood,
+        focalImpact:risk.impact,
+        accountableFocalId:options.accountableFocalId,
+        sourceFileName:fileName,
+        focalReason:options.forceFocalReview
+            ? 'Assessment supplied by the assigned Focal Person in the workbook and awaiting their confirmation.'
+            : undefined
     });
     const proposal = generateTreatmentProposal(importedRisk);
     const treatment = (await client.query(
@@ -2203,7 +2219,8 @@ exports.submitFocalAdmissionBatch = async (req, res) => {
             const response = responseFor(impact,likelihood,risk.risk_category);
             await client.query(
                 `UPDATE risk_assessment_governance SET focal_likelihood=$1,focal_impact=$2,focal_score=$3,
-                    focal_reason=$4,focal_by=$5,focal_at=NOW(),review_stage='Awaiting Champion Review',updated_at=NOW()
+                    focal_reason=$4,focal_by=$5,focal_at=NOW(),focal_assessment_status='Confirmed',
+                    review_stage='Awaiting Champion Review',updated_at=NOW()
                  WHERE risk_id=$6`,[likelihood,impact,score,reason || 'Focal Person accepted the system assessment.',req.user.id,risk.id]
             );
             await client.query(
@@ -2861,6 +2878,7 @@ exports.recordAssessmentDecision = async (req, res) => {
             await client.query(
                 `UPDATE risk_assessment_governance SET
                     focal_likelihood=$1,focal_impact=$2,focal_score=$3,focal_reason=$4,focal_by=$5,focal_at=NOW(),
+                    focal_assessment_status='Confirmed',
                     champion_likelihood=NULL,champion_impact=NULL,champion_score=NULL,champion_decision=NULL,champion_reason=NULL,champion_by=NULL,champion_at=NULL,
                     chairman_likelihood=NULL,chairman_impact=NULL,chairman_score=NULL,chairman_decision=NULL,chairman_reason=NULL,chairman_by=NULL,chairman_at=NULL,
                     review_stage='Awaiting Champion Review',updated_at=NOW()

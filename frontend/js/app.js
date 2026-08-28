@@ -30,6 +30,8 @@ window.NCAGRC = (() => {
     const pageAccess = {
         dashboard: [roles.ADMIN,roles.CHAIRMAN,roles.CHAMPION,roles.FOCAL],
         users: [roles.ADMIN],
+        accountMapping: [roles.ADMIN],
+        systemManual: [roles.ADMIN,roles.CHAIRMAN,roles.CHAMPION,roles.FOCAL],
         risks: [roles.ADMIN,roles.CHAIRMAN,roles.CHAMPION,roles.FOCAL],
         riskRegister: [roles.FOCAL],
         adminDivisionRiskUploads: [roles.ADMIN],
@@ -59,8 +61,10 @@ window.NCAGRC = (() => {
             ["Dashboard", "nca-grc-risk-register.html", "dashboard"],
             ["Action Centre", "pages/action-centre.html", "actionCentre"],
             ["User Management", "pages/users.html", "users"],
+            ["Account Mapping", "pages/account-mapping.html", "accountMapping"],
             ["Audit Logs", "pages/audit-logs.html", "auditLogs"],
             ["System Settings", "pages/system-settings.html", "systemSettings"],
+            ["System Manual", "pages/system-manual.html", "systemManual"],
             ["Administration · Communication Centre", "pages/communication-centre.html", "communication"],
             ["Executive Analytics", "pages/executive-analytics.html", "executiveAnalytics"],
             ["Board Dashboard", "pages/board-dashboard.html", "boardDashboard"],
@@ -75,6 +79,7 @@ window.NCAGRC = (() => {
             ["Treatment Plans", "pages/treatment.html", "treatment"],
             ["Compliance Assurance", "pages/compliance.html", "compliance"],
             ["Reports", "pages/reports.html", "reports"]
+            ,["System Manual", "pages/system-manual.html", "systemManual"]
         ],
         [roles.CHAMPION]: [
             ["Dashboard", "nca-grc-risk-register.html", "dashboard"],
@@ -100,8 +105,9 @@ window.NCAGRC = (() => {
             ["My Approvals", "pages/my-approvals.html", "myApprovals"],
             ["Treatment Plans", "pages/treatment.html", "treatment"]
             ,["Compliance Assurance", "pages/compliance.html", "compliance"]
+            ,["System Manual", "pages/system-manual.html", "systemManual"]
         ],
-        [roles.CHAIRMAN]: [["Enterprise Dashboard","pages/executive-analytics.html","executiveAnalytics"],["Board Dashboard","pages/board-dashboard.html","boardDashboard"],["Action Centre","pages/action-centre.html","actionCentre"],["Consolidated Risk Register","pages/risks.html","risks"],["Work Plan Risk Escalations","pages/workplans.html","workplans"],["High Risk Reviews","pages/pending-approvals.html","pendingApprovals"],["Treatment Plans","pages/treatment.html","treatment"],["Compliance Assurance","pages/compliance.html","compliance"],["Enterprise Heat Map","pages/assessment.html","assessment"],["Executive Reports","pages/reports.html","reports"]]
+        [roles.CHAIRMAN]: [["Enterprise Dashboard","pages/executive-analytics.html","executiveAnalytics"],["Board Dashboard","pages/board-dashboard.html","boardDashboard"],["Action Centre","pages/action-centre.html","actionCentre"],["Consolidated Risk Register","pages/risks.html","risks"],["Work Plan Risk Escalations","pages/workplans.html","workplans"],["High Risk Reviews","pages/pending-approvals.html","pendingApprovals"],["Treatment Plans","pages/treatment.html","treatment"],["Compliance Assurance","pages/compliance.html","compliance"],["Enterprise Heat Map","pages/assessment.html","assessment"],["Executive Reports","pages/reports.html","reports"],["System Manual","pages/system-manual.html","systemManual"]]
     };
 
     function getToken() {
@@ -202,6 +208,8 @@ window.NCAGRC = (() => {
 
         if (file === "nca-grc-risk-register.html") return "dashboard";
         if (file === "users.html") return "users";
+        if (file === "account-mapping.html") return "accountMapping";
+        if (file === "system-manual.html") return "systemManual";
         if (file === "risks.html") return "risks";
         if (file === "risk-register.html") return "riskRegister";
         if (file === "admin-division-risk-uploads.html") return "adminDivisionRiskUploads";
@@ -331,7 +339,7 @@ window.NCAGRC = (() => {
         }
         const script = document.createElement("script");
         script.id = "ncaAssistantScript";
-        script.src = `${prefix}js/assistant.js?v=8`;
+        script.src = `${prefix}js/assistant.js?v=9`;
         script.defer = true;
         document.head.appendChild(script);
     }
@@ -390,7 +398,7 @@ if (window.NCAGRC.getToken()) {
         document.head.appendChild(link);
         const script = document.createElement("script");
         script.id = "ncaAssistantScript";
-        script.src = `${prefix}js/assistant.js?v=8`;
+        script.src = `${prefix}js/assistant.js?v=9`;
         script.defer = true;
         document.head.appendChild(script);
     }

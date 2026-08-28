@@ -5,36 +5,36 @@ const pool = require('../config/db');
 
 const users = [
     {
-        staffId: 'NCA-TEST-ADMIN',
-        fullName: 'Test System Administrator',
-        email: 'test.admin@nca.org.gh',
+        staffId: 'NCA-GRC-ADMIN',
+        fullName: 'System Administrator',
+        email: 'admin@nca.org.gh',
         role: 'System Administrator',
         division: null,
         position: 'System Administrator',
         phone: '0240000001'
     },
     {
-        staffId: 'NCA-TEST-CHAIR',
-        fullName: 'Test Risk Committee Chairman',
-        email: 'test.chairman@nca.org.gh',
+        staffId: 'NCA-GRC-CHAIR',
+        fullName: 'Risk Committee Chairman',
+        email: 'chairman@nca.org.gh',
         role: 'Risk Committee Chairman',
         division: null,
         position: 'Risk Committee Chairman',
         phone: '0240000002'
     },
     {
-        staffId: 'NCA-TEST-CHAMPION',
-        fullName: 'Test Risk Champion',
-        email: 'test.champion@nca.org.gh',
+        staffId: 'NCA-GRC-IT-CHAMPION',
+        fullName: 'Information Technology Risk Champion',
+        email: 'information.technology.champion@nca.org.gh',
         role: 'Risk Champion',
         division: 'Information Technology',
         position: 'Risk Champion',
         phone: '0240000003'
     },
     {
-        staffId: 'NCA-TEST-FOCAL',
-        fullName: 'Test Risk Focal Person',
-        email: 'test.focal@nca.org.gh',
+        staffId: 'NCA-GRC-IT-FOCAL',
+        fullName: 'Information Technology Risk Focal Person',
+        email: 'information.technology.focal@nca.org.gh',
         role: 'Risk Focal Person',
         division: 'Information Technology',
         position: 'Risk Focal Person',

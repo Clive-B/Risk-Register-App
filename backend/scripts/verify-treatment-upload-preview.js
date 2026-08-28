@@ -11,7 +11,7 @@ async function main() {
     const loginResponse = await fetch('http://127.0.0.1:3000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'test.rips.focal@nca.org.gh', password })
+        body: JSON.stringify({ email: 'rips.focal@nca.org.gh', password })
     });
     const login = await loginResponse.json();
     if (!loginResponse.ok || !login.token) throw new Error(login.message || 'Test login failed.');

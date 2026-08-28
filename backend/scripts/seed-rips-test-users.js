@@ -3,8 +3,8 @@ const bcrypt = require('bcrypt');
 const pool = require('../config/db');
 
 const users = [
-    ['NCA-TEST-RIPS-FOCAL','Test RIPS Risk Focal Person','test.rips.focal@nca.org.gh','Risk Focal Person','Risk Focal Person','0240000014'],
-    ['NCA-TEST-RIPS-CHAMPION','Test RIPS Risk Champion','test.rips.champion@nca.org.gh','Risk Champion','Risk Champion','0240000013']
+    ['NCA-GRC-RIPS-FOCAL','RIPS Risk Focal Person','rips.focal@nca.org.gh','Risk Focal Person','Risk Focal Person','0240000014'],
+    ['NCA-GRC-RIPS-CHAMPION','RIPS Risk Champion','rips.champion@nca.org.gh','Risk Champion','Risk Champion','0240000013']
 ];
 
 (async()=>{

@@ -422,25 +422,29 @@ exports.getUsers = async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT
-                id,
-                staff_id,
-                full_name,
-                email,
-                role,
-                directorate,
-                position,
-                division,
-                phone,
-                status,
-                created_at,
-                last_login,
-                locked_until,
-                must_change_password,
-                password_changed_at, activation_status, email_status,
-                CASE WHEN must_change_password THEN 'Temporary' ELSE 'Changed' END AS password_status,
-                CASE WHEN must_change_password THEN 'Yes' ELSE 'No' END AS force_password_change
+                users.id,
+                users.staff_id,
+                users.full_name,
+                users.email,
+                users.role,
+                users.directorate,
+                users.position,
+                users.division,
+                users.phone,
+                users.status,
+                users.created_at,
+                users.last_login,
+                users.locked_until,
+                users.must_change_password,
+                users.password_changed_at, users.activation_status, users.email_status,
+                CASE WHEN users.must_change_password THEN 'Temporary' ELSE 'Changed' END AS password_status,
+                CASE WHEN users.must_change_password THEN 'Yes' ELSE 'No' END AS force_password_change,
+                users.identity_type,users.assignment_status,users.role_email,users.role_slot_id,
+                slot.display_name AS role_slot_name,
+                CASE WHEN slot.current_holder_user_id=users.id THEN TRUE ELSE FALSE END AS is_current_role_holder
             FROM users
-            ORDER BY full_name
+            LEFT JOIN organizational_role_slots slot ON slot.id=users.role_slot_id
+            ORDER BY users.full_name
         `);
 
         res.json({
@@ -455,6 +459,141 @@ exports.getUsers = async (req, res) => {
             message: 'Unable to load users.'
         });
     }
+};
+
+exports.getRoleSlots = async (req,res) => {
+    try {
+        const result=await pool.query(`
+            SELECT slot.id,slot.slot_key,slot.role_email,slot.role,slot.division,slot.display_name,slot.status,
+                   holder.id AS holder_user_id,holder.full_name AS holder_name,holder.email AS holder_email,
+                   holder.staff_id,holder.position,holder.identity_type,holder.activation_status,
+                   assignment.id AS assignment_id,assignment.effective_from,assignment.replacement_reason
+            FROM organizational_role_slots slot
+            LEFT JOIN users holder ON holder.id=slot.current_holder_user_id
+            LEFT JOIN role_slot_assignments assignment
+              ON assignment.slot_id=slot.id AND assignment.status='Current'
+            ORDER BY COALESCE(slot.division,''),slot.role,slot.display_name
+        `);
+        res.json({success:true,role_slots:result.rows});
+    } catch(error) {
+        console.error(error);
+        res.status(500).json({success:false,message:'Unable to load organizational account mappings.'});
+    }
+};
+
+exports.getRoleSlotHistory = async (req,res) => {
+    try {
+        const slot=(await pool.query('SELECT * FROM organizational_role_slots WHERE id=$1',[req.params.id])).rows[0];
+        if(!slot)return res.status(404).json({success:false,message:'Organizational role account not found.'});
+        const history=(await pool.query(`
+            SELECT assignment.*,administrator.full_name AS assigned_by_name,ender.full_name AS ended_by_name
+            FROM role_slot_assignments assignment
+            LEFT JOIN users administrator ON administrator.id=assignment.assigned_by
+            LEFT JOIN users ender ON ender.id=assignment.ended_by
+            WHERE assignment.slot_id=$1
+            ORDER BY assignment.effective_from DESC,assignment.created_at DESC`,[slot.id])).rows;
+        res.json({success:true,slot,history});
+    } catch(error) {
+        console.error(error);
+        res.status(500).json({success:false,message:'Unable to load role-holder history.'});
+    }
+};
+
+exports.mapRoleSlot = async (req,res) => {
+    const fullName=String(req.body.full_name||'').trim();
+    const email=String(req.body.email||'').trim().toLowerCase();
+    const staffId=String(req.body.staff_id||'').trim()||null;
+    const position=String(req.body.position||'').trim()||null;
+    const reason=String(req.body.replacement_reason||'').trim();
+    const effectiveFrom=String(req.body.effective_from||'').trim()||new Date().toISOString().slice(0,10);
+    if(!fullName)return res.status(400).json({success:false,message:'The new role holder\'s full name is required.'});
+    if(!isValidNcaEmail(email))return res.status(400).json({success:false,message:'Enter the employee\'s official @nca.org.gh email address.'});
+    if(!reason)return res.status(400).json({success:false,message:'Record the reason for this personnel assignment.'});
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(effectiveFrom))return res.status(400).json({success:false,message:'Select a valid effective date.'});
+
+    const temporaryPassword=generateTemporaryPassword();
+    const passwordHash=await bcrypt.hash(temporaryPassword,12);
+    const client=await pool.connect();
+    let createdUser;
+    let slot;
+    let formerHolder;
+    try {
+        await client.query('BEGIN');
+        slot=(await client.query('SELECT * FROM organizational_role_slots WHERE id=$1 AND status=\'Active\' FOR UPDATE',[req.params.id])).rows[0];
+        if(!slot)throw Object.assign(new Error('Organizational role account not found.'),{statusCode:404});
+        const existingUser=(await client.query('SELECT * FROM users WHERE LOWER(email)=LOWER($1) FOR UPDATE',[email])).rows[0];
+        if(existingUser?.identity_type==='Role Placeholder')throw Object.assign(new Error('That address is a permanent organizational role account and cannot be assigned as a named employee.'),{statusCode:409});
+        if(existingUser?.assignment_status==='Current'&&Number(existingUser.role_slot_id)!==Number(slot.id))throw Object.assign(new Error('This employee currently holds another organizational role. Map their successor in that role first, then assign this promotion or transfer.'),{statusCode:409});
+        if(existingUser&&Number(existingUser.id)===Number(slot.current_holder_user_id))throw Object.assign(new Error('This employee is already the current holder of this role.'),{statusCode:409});
+        if(staffId){
+            const staffDuplicate=(await client.query('SELECT id FROM users WHERE LOWER(staff_id)=LOWER($1)',[staffId])).rows[0];
+            if(staffDuplicate&&Number(staffDuplicate.id)!==Number(existingUser?.id))throw Object.assign(new Error('That Staff ID already belongs to a system account.'),{statusCode:409});
+        }
+        formerHolder=slot.current_holder_user_id
+            ? (await client.query('SELECT id,full_name,email FROM users WHERE id=$1 FOR UPDATE',[slot.current_holder_user_id])).rows[0]
+            : null;
+        if(existingUser){
+            createdUser=(await client.query(`UPDATE users SET staff_id=$1,full_name=$2,password_hash=$3,role=$4,
+                directorate=$5,division=$5,position=$6,status='Active',must_change_password=TRUE,password_changed_at=NOW(),
+                activation_status='Pending Activation',email_status='Queued',role_slot_id=$7,identity_type='Named Employee',
+                role_email=$8,assignment_status='Current',failed_login_attempts=0,locked_until=NULL,
+                token_version=token_version+1,updated_by=$9,updated_at=NOW() WHERE id=$10
+                RETURNING id,staff_id,full_name,email,role,directorate,division,position,status,
+                          activation_status,email_status,must_change_password,role_slot_id,identity_type,role_email`,
+                [staffId,fullName,passwordHash,slot.role,slot.division,position,slot.id,slot.role_email,req.user.id,existingUser.id])).rows[0];
+            await client.query('UPDATE user_sessions SET revoked_at=NOW() WHERE user_id=$1 AND revoked_at IS NULL',[existingUser.id]);
+        }else{
+            createdUser=(await client.query(`
+                INSERT INTO users(
+                    staff_id,full_name,email,password_hash,role,directorate,position,division,status,
+                    must_change_password,password_changed_at,created_by,activation_status,email_status,
+                    role_slot_id,identity_type,role_email,assignment_status
+                ) VALUES($1,$2,$3,$4,$5,$6,$7,$6,'Active',TRUE,NOW(),$8,'Pending Activation','Queued',$9,'Named Employee',$10,'Current')
+                RETURNING id,staff_id,full_name,email,role,directorate,division,position,status,
+                          activation_status,email_status,must_change_password,role_slot_id,identity_type,role_email`,
+                [staffId,fullName,email,passwordHash,slot.role,slot.division,position,req.user.id,slot.id,slot.role_email]
+            )).rows[0];
+        }
+        await client.query(`UPDATE role_slot_assignments SET status='Ended',effective_to=$2::date,ended_at=NOW(),ended_by=$3
+                            WHERE slot_id=$1 AND status='Current'`,[slot.id,effectiveFrom,req.user.id]);
+        if(formerHolder&&Number(formerHolder.id)!==Number(createdUser.id)){
+            await client.query(`UPDATE users SET status='Inactive',activation_status='Disabled',assignment_status='Former',
+                                token_version=token_version+1,updated_by=$2,updated_at=NOW() WHERE id=$1`,[formerHolder.id,req.user.id]);
+            await client.query('UPDATE user_sessions SET revoked_at=NOW() WHERE user_id=$1 AND revoked_at IS NULL',[formerHolder.id]);
+            await client.query(`UPDATE actions SET assigned_to=$2,updated_at=NOW()
+                                WHERE assigned_to=$1 AND status NOT IN ('Completed','Cancelled')`,[formerHolder.id,createdUser.id]);
+            if(slot.role==='Risk Focal Person'){
+                await client.query(`UPDATE risk_register_import_batches SET accountable_focal_id=$2,updated_at=NOW()
+                                    WHERE accountable_focal_id=$1 AND status IN ('Awaiting Focal Review','Returned')`,[formerHolder.id,createdUser.id]);
+                await client.query(`UPDATE risks SET accountable_focal_id=$2,updated_at=NOW()
+                                    WHERE accountable_focal_id=$1 AND admission_status<>'Admitted'`,[formerHolder.id,createdUser.id]);
+            }
+        }
+        await client.query(`INSERT INTO role_slot_assignments(
+            slot_id,user_id,employee_email,employee_name,staff_id,position,effective_from,replacement_reason,status,assigned_by,metadata
+        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,'Current',$9,$10::jsonb)`,[
+            slot.id,createdUser.id,email,fullName,staffId,position,effectiveFrom,reason,req.user.id,
+            JSON.stringify({role_email:slot.role_email,former_holder_user_id:formerHolder?.id||null})
+        ]);
+        await client.query('UPDATE organizational_role_slots SET current_holder_user_id=$1,updated_at=NOW() WHERE id=$2',[createdUser.id,slot.id]);
+        await client.query('COMMIT');
+    } catch(error) {
+        await client.query('ROLLBACK').catch(()=>{});
+        client.release();
+        console.error(error);
+        return res.status(error.statusCode||(error.code==='23505'?409:500)).json({success:false,message:error.statusCode?error.message:'Unable to map the organizational account. No changes were saved.'});
+    }
+    client.release();
+
+    await logAudit({req,action:'ROLE_HOLDER_ASSIGNED',entityType:'Organizational Role',entityId:slot.id,details:{role_email:slot.role_email,new_user_id:createdUser.id,former_user_id:formerHolder?.id||null,effective_from:effectiveFrom,replacement_reason:reason}});
+    const delivery=await deliverWelcomeEmail({req,user:createdUser,temporaryPassword,auditAction:'ROLE_HOLDER_WELCOME_EMAIL'});
+    res.status(201).json({
+        success:true,
+        message:delivery.sent
+            ? 'The new role holder was mapped, prior access was revoked, and onboarding email delivery was queued.'
+            : 'The new role holder was mapped and prior access was revoked, but the onboarding email could not be queued. Generate a new temporary password from User Management to retry.',
+        user:{...createdUser,email_status:delivery.status},role_slot:{id:slot.id,role_email:slot.role_email}
+    });
 };
 
 async function notifyAdministrators(req, title, message, entityId) {

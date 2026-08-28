@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Organizational Account Mapping | NCA GRC</title>
+  <link rel="stylesheet" href="../css/account-mapping.css?v=1">
+  <link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true">
+  <link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true">
+  <link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true">
+  <link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true">
+</head>
+<body>
+<div id="mappingToast" class="mapping-toast" aria-live="polite"></div>
+<div class="container"><aside class="sidebar"></aside><main class="main mapping-main">
+  <header class="mapping-hero">
+    <div><span>IDENTITY LIFECYCLE · AUDIT-PRESERVING</span><h1>Organizational Account Mapping</h1><p>Map permanent NCA GRC role accounts to current employees without rewriting the history of former role holders.</p></div>
+    <a href="users.html">Back to User Management</a>
+  </header>
+  <section class="mapping-guidance">
+    <div><strong>1 · Select the role</strong><p>The organizational address and access scope remain permanent.</p></div>
+    <div><strong>2 · Assign the current holder</strong><p>Enter the employee's official NCA identity and effective date.</p></div>
+    <div><strong>3 · Governed onboarding</strong><p>Prior sessions are revoked; the new holder receives a temporary password and must change it.</p></div>
+  </section>
+  <section class="mapping-card">
+    <div class="mapping-toolbar"><div><h2>Current role holders</h2><p id="mappingSummary">Loading organizational accounts…</p></div><input id="mappingSearch" type="search" placeholder="Search division, role or holder"></div>
+    <div class="mapping-table-wrap"><table><thead><tr><th>Division</th><th>Organizational role account</th><th>Role</th><th>Current holder</th><th>Official login email</th><th>Effective from</th><th>State</th><th>Action</th></tr></thead><tbody id="mappingRows"></tbody></table></div>
+  </section>
+</main></div>
+
+<dialog id="mappingDialog">
+  <form id="mappingForm" method="dialog">
+    <header><div><span>PERSONNEL ASSIGNMENT</span><h2 id="mappingDialogTitle">Map current holder</h2><p id="mappingRoleDetails"></p></div><button type="button" id="mappingClose" aria-label="Close">×</button></header>
+    <div class="mapping-warning"><strong>This replaces access, not history.</strong> The former holder will be deactivated, active sessions revoked, and unfinished Action Centre items transferred.</div>
+    <div class="mapping-form-grid">
+      <label>Full name<input name="full_name" required autocomplete="name"></label>
+      <label>Official NCA email<input name="email" type="email" required placeholder="firstname.lastname@nca.org.gh" autocomplete="email"></label>
+      <label>Staff ID <small>(optional)</small><input name="staff_id" maxlength="50"></label>
+      <label>Position <small>(optional)</small><input name="position"></label>
+      <label>Effective date<input name="effective_from" type="date" required></label>
+      <label class="wide">Assignment / replacement reason<textarea name="replacement_reason" required placeholder="Promotion, transfer, retirement, new appointment…"></textarea></label>
+    </div>
+    <footer><button type="button" id="mappingCancel">Cancel</button><button type="submit" id="mappingSubmit">Map Holder &amp; Send Onboarding</button></footer>
+  </form>
+</dialog>
+<dialog id="historyDialog"><section><header><h2 id="historyTitle">Assignment history</h2><button type="button" id="historyClose" aria-label="Close">×</button></header><div id="historyRows"></div></section></dialog>
+
+<script src="../js/app.js?v=9"></script><script src="../js/authGuard.js"></script><script src="../js/sidebar.js?v=20260728-1"></script><script src="../js/account-mapping.js?v=1"></script>
+</body></html>

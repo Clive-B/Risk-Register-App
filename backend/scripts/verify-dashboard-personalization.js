@@ -3,7 +3,7 @@ const bcrypt=require('bcrypt');
 const pool=require('../config/db');
 
 const apiBase='http://127.0.0.1:3000/api';
-const email='test.admin@nca.org.gh';
+const email='admin@nca.org.gh';
 
 async function request(path,{token,method='GET',body}={}) {
     const response=await fetch(`${apiBase}${path}`,{

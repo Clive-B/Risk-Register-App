@@ -8,7 +8,7 @@ async function main() {
     let riskId;
     try {
         const user = (await pool.query(
-            "SELECT id FROM users WHERE email='test.rips.champion@nca.org.gh' AND status='Active'"
+            "SELECT id FROM users WHERE email='rips.champion@nca.org.gh' AND status='Active'"
         )).rows[0];
         if (!user) throw new Error('The RIPS Champion test user is unavailable.');
         const code = `TEST-TP-${Date.now()}`;
@@ -41,7 +41,7 @@ async function main() {
         const loginResponse = await fetch('http://127.0.0.1:3000/api/auth/login', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({email:'test.rips.champion@nca.org.gh',password})
+            body:JSON.stringify({email:'rips.champion@nca.org.gh',password})
         });
         const login = await loginResponse.json();
         if (!loginResponse.ok || !login.token) throw new Error(login.message || 'Champion login failed.');

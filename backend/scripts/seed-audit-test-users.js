@@ -6,7 +6,7 @@ const pool = require('../config/db');
 const users = [
     {
         staffId:'NCA-TEST-AUDIT-FOCAL',
-        name:'Test Internal Audit Risk Focal Person',
+        name:'Internal Audit Risk Focal Person',
         email:'audit.focal@nca.org.gh',
         role:'Risk Focal Person',
         position:'Risk Focal Person',
@@ -14,7 +14,7 @@ const users = [
     },
     {
         staffId:'NCA-TEST-AUDIT-CHAMPION',
-        name:'Test Internal Audit Risk Champion',
+        name:'Internal Audit Risk Champion',
         email:'audit.champion@nca.org.gh',
         role:'Risk Champion',
         position:'Risk Champion',

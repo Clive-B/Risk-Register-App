@@ -25,6 +25,7 @@ const workplanRoutes = require('./routes/workplans');
 const reportRoutes = require('./routes/reportRoutes');
 const complianceRoutes = require('./routes/complianceRoutes');
 const systemSettingsRoutes = require('./routes/systemSettingsRoutes');
+const assistantRoutes = require('./routes/assistantRoutes');
 const authMiddleware = require('./middleware/authMiddleware');
 const roleMiddleware = require('./middleware/roleMiddleware');
 
@@ -100,6 +101,7 @@ app.use('/api/workplans', workplanRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/compliance-obligations', complianceRoutes);
 app.use('/api/system-settings', systemSettingsRoutes);
+app.use('/api/assistant', assistantRoutes);
 
 app.get('/', (req, res) => {
     res.send('NCA Risk Register API is running');

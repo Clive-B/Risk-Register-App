@@ -28,7 +28,7 @@ function workbookData() {
 
 async function run() {
     if (!password) throw new Error('WORKFLOW_TEST_PASSWORD is required.');
-    const admin = await request('/auth/login',{method:'POST',body:{email:'test.admin@nca.org.gh',password}});
+    const admin = await request('/auth/login',{method:'POST',body:{email:'admin@nca.org.gh',password}});
     const options = await request('/risks/admin-import-options',{token:admin.token});
     const focal = options.focals.find(item=>item.division==='Information Technology');
     if (!focal) throw new Error('No active Information Technology Focal Person is available.');

@@ -1172,7 +1172,7 @@ function sourcePresentation(source) {
 function assessmentValues(risk) {
     return [
         ["System", risk.system_score],
-        ...(currentUser.role === "Risk Committee Chairman" ? [] : [["Focal", risk.focal_score]]),
+        ...(currentUser.role === "Risk Committee Chairman" ? [] : [[risk.focal_assessment_status === "Pending Confirmation" ? "Focal · Pending" : "Focal", risk.focal_score]]),
         ["Champion", risk.champion_score],
         ...(risk.chairman_score ? [["Chairman", risk.chairman_score]] : [])
     ];

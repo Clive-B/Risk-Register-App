@@ -79,7 +79,26 @@ from this repository.
   workbook per division and sends all selected registers for Focal review with
   one atomic submission.
 - Monitors all division Focal submissions from a separate read-only page.
+- Maps permanent organizational role accounts to current NCA employees using
+  effective-dated assignments, with former-session revocation and preserved
+  holder history.
 - Staff ID and phone number are optional and remain blank when omitted.
+
+## Deployment identity and onboarding
+
+- Seeded organizational login addresses no longer use a `test.` prefix; for
+  example, `legal.focal@nca.org.gh` and `legal.champion@nca.org.gh`.
+- A permanent role slot is stored separately from the named employee currently
+  holding it, so promotions, transfers and retirement do not rewrite historic
+  audit attribution.
+- **User Management → Map NCA Accounts** assigns a current holder using an
+  official NCA email, effective date and reason.
+- Reassignment deactivates the former holder, revokes active sessions,
+  transfers unfinished assigned Action Centre work and queues a temporary
+  password for the new holder to change at first login.
+- The in-system **System Manual** and the maintained source manual are available
+  at `frontend/pages/system-manual.html` and
+  `docs/NCA_GRC_SYSTEM_USER_MANUAL.md`.
 
 ## Authoritative ERM assessment
 
@@ -94,6 +113,9 @@ authoritative assessment source.
 - High: 17-25.
 - System, Focal Person, Champion and Committee decisions are retained
   separately for governance and audit.
+- Figures supplied in an Administrator-uploaded workbook are recorded as a
+  provisional Focal assessment pending confirmation, never relabelled as a
+  System assessment.
 - The Chairman view withholds the Focal assessment and presents the governed
   System and Champion values.
 - Challenges and approvals do not require a comment unless a workflow rule
@@ -198,6 +220,10 @@ scores.
 - The Board Dashboard reports live enterprise risk, treatment and approval
   information.
 - Governed AI reports are evidence-linked and do not invent unrecorded claims.
+- The GRC Assistant is grounded in the system manual, signed-in role, division
+  and current page. It can provide permission-filtered live risk summaries and
+  advisory, evidence-linked priorities; authorised NCA officers retain final
+  decision authority.
 - Reports support versioning, commentary, Word/PDF output and governed scope.
 - Champion reports cover divisional risks, treatments and treatment progress.
 - Chairman reports cover all risks occupying the 25/20/20 critical positions,
