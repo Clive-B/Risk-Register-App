@@ -339,7 +339,7 @@ window.NCAGRC = (() => {
         }
         const script = document.createElement("script");
         script.id = "ncaAssistantScript";
-        script.src = `${prefix}js/assistant.js?v=9`;
+        script.src = `${prefix}js/assistant.js?v=10`;
         script.defer = true;
         document.head.appendChild(script);
     }
@@ -398,7 +398,7 @@ if (window.NCAGRC.getToken()) {
         document.head.appendChild(link);
         const script = document.createElement("script");
         script.id = "ncaAssistantScript";
-        script.src = `${prefix}js/assistant.js?v=9`;
+        script.src = `${prefix}js/assistant.js?v=10`;
         script.defer = true;
         document.head.appendChild(script);
     }

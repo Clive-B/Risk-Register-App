@@ -27,13 +27,52 @@
     let pendingLogout = false;
     let keepListening = false;
     let listeningTimer = null;
+    let listeningDeadline = 0;
+    let isSpeaking = false;
+    let awaitingResponse = false;
+    let recognitionActive = false;
+    let speechGeneration = 0;
     let governedContext = null;
-    const say = (text, onend) => { messages.insertAdjacentHTML("beforeend", `<div class="nca-message assistant">${esc(text)}</div>`); messages.scrollTop = messages.scrollHeight; if ("speechSynthesis" in window) { window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.onend = () => onend && onend(); utterance.onerror = () => onend && onend(); window.speechSynthesis.speak(utterance); } else if (onend) onend(); };
+    const say = (text, onend) => {
+        const generation = ++speechGeneration;
+        isSpeaking = true;
+        if (recognition && recognitionActive) { try { recognition.abort(); } catch (_) {} }
+        messages.insertAdjacentHTML("beforeend", `<div class="nca-message assistant">${esc(text)}</div>`);
+        messages.scrollTop = messages.scrollHeight;
+        const finish = () => {
+            if (generation !== speechGeneration) return;
+            isSpeaking = false;
+            if (onend) onend();
+            else if (keepListening && !awaitingResponse) startListening(false);
+        };
+        if ("speechSynthesis" in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.onend = finish;
+            utterance.onerror = finish;
+            window.speechSynthesis.speak(utterance);
+        } else finish();
+    };
     const addUser = text => { messages.insertAdjacentHTML("beforeend", `<div class="nca-message user">${esc(text)}</div>`); messages.scrollTop = messages.scrollHeight; };
     const open = () => { panel.classList.add("is-open"); root.querySelector("#ncaAssistantToggle").setAttribute("aria-expanded", "true"); };
     const linkFor = key => `${prefix}${routes[key] || routes.dashboard}`;
-    function stopListening() { keepListening = false; if (listeningTimer) { window.clearTimeout(listeningTimer); listeningTimer = null; } if (recognition) { try { recognition.stop(); } catch (_) {} } mic.classList.remove("is-listening"); mic.querySelector("span").textContent = "Talk"; conversationButton.textContent = "Start conversation"; quickTalkButton.classList.remove("is-listening"); quickTalkButton.querySelector("span").textContent = "Talk"; }
-    function startListening() { if (!recognition) return; keepListening = true; conversationButton.textContent = "Stop listening"; quickTalkButton.classList.add("is-listening"); quickTalkButton.querySelector("span").textContent = "Listening…"; if (listeningTimer) window.clearTimeout(listeningTimer); listeningTimer = window.setTimeout(() => { stopListening(); say("One minute is up. I’m now muted. Click Start conversation whenever you want to speak again."); }, 60000); try { recognition.start(); } catch (_) {} }
+    function expireListeningWindow() { listeningTimer = null; if (!keepListening) return; if (isSpeaking || awaitingResponse) { listeningTimer = window.setTimeout(expireListeningWindow, 250); return; } stopListening(); say("One minute is up. I’m now muted. Click Start conversation whenever you want to speak again."); }
+    function stopListening() { keepListening = false; listeningDeadline = 0; awaitingResponse = false; if (listeningTimer) { window.clearTimeout(listeningTimer); listeningTimer = null; } if (recognition) { try { recognition.abort(); } catch (_) {} } recognitionActive = false; mic.classList.remove("is-listening"); mic.querySelector("span").textContent = "Talk"; conversationButton.textContent = "Start conversation"; quickTalkButton.classList.remove("is-listening"); quickTalkButton.querySelector("span").textContent = "Talk"; }
+    function startListening(startNewWindow = true) {
+        if (!recognition) return;
+        if (startNewWindow || !listeningDeadline) {
+            listeningDeadline = Date.now() + 60000;
+            if (listeningTimer) window.clearTimeout(listeningTimer);
+            listeningTimer = window.setTimeout(expireListeningWindow, 60000);
+        }
+        if (Date.now() >= listeningDeadline) { stopListening(); return; }
+        keepListening = true;
+        conversationButton.textContent = "Stop listening";
+        quickTalkButton.classList.add("is-listening");
+        quickTalkButton.querySelector("span").textContent = "Listening…";
+        if (isSpeaking || awaitingResponse || recognitionActive) return;
+        try { recognition.start(); } catch (_) {}
+    }
     function navigateTo(key, label) { stopListening(); say(`Opening ${label}.`, () => { window.location.href = linkFor(key); }); }
     async function answer(question) {
         const q = question.toLowerCase();
@@ -70,6 +109,6 @@
     root.querySelector("#ncaAssistantToggle").addEventListener("click", () => { open(); input.focus(); }); quickTalkButton.addEventListener("click", () => { open(); if (keepListening) stopListening(); else startConversation(); }); root.querySelector(".nca-assistant-close").addEventListener("click", () => { panel.classList.remove("is-open"); stopListening(); if ("speechSynthesis" in window) window.speechSynthesis.cancel(); }); root.querySelector("[data-command=tour]").addEventListener("click", tour); root.querySelector("[data-command=manual]").addEventListener("click",()=>navigateTo("manual","the System Manual")); conversationButton.addEventListener("click", () => keepListening ? stopListening() : startConversation()); root.querySelector("[data-command=logout]").addEventListener("click", requestLogoutConfirmation); root.querySelector("[data-logout=confirm]").addEventListener("click", confirmLogout); root.querySelector("[data-logout=cancel]").addEventListener("click", cancelLogout); root.querySelector("[data-command=tasks]").addEventListener("click", () => loadBriefing(true)); root.querySelector("#ncaAssistantForm").addEventListener("submit", e => { e.preventDefault(); const q=input.value.trim(); if(!q)return; addUser(q); input.value=""; answer(q); });
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition;
-    if (Recognition) { recognition = new Recognition(); recognition.lang = "en-GH"; recognition.interimResults = false; recognition.continuous = false; recognition.onstart = () => { mic.classList.add("is-listening"); mic.querySelector("span").textContent = "Listening…"; }; recognition.onend = () => { mic.classList.remove("is-listening"); mic.querySelector("span").textContent = "Talk"; if (keepListening) window.setTimeout(startListening, 300); }; recognition.onerror = event => { mic.classList.remove("is-listening"); mic.querySelector("span").textContent = "Talk"; const reason = event.error === "not-allowed" || event.error === "service-not-allowed" ? "Microphone access was blocked. Allow microphone access for this site and try again." : event.error === "no-speech" ? "I didn’t hear anything. Listening will continue; try speaking again." : "Voice recognition could not complete. Listening will continue, or you can type your question."; say(reason); }; recognition.onnomatch = () => say("I couldn’t understand that. Listening will continue; please try again."); recognition.onresult = event => { const transcript = event.results[0][0].transcript.trim(); if (!transcript) return say("I didn’t hear a question. Please try again."); addUser(transcript); answer(transcript); }; mic.addEventListener("click", () => { if (keepListening) return stopListening(); startConversation(); }); } else { mic.disabled = true; mic.title = "Voice input is not supported by this browser"; }
+    if (Recognition) { recognition = new Recognition(); recognition.lang = "en-GH"; recognition.interimResults = false; recognition.continuous = false; recognition.onstart = () => { recognitionActive = true; mic.classList.add("is-listening"); mic.querySelector("span").textContent = "Listening…"; }; recognition.onend = () => { recognitionActive = false; mic.classList.remove("is-listening"); mic.querySelector("span").textContent = "Talk"; if (keepListening && !isSpeaking && !awaitingResponse) window.setTimeout(() => startListening(false), 300); }; recognition.onerror = event => { recognitionActive = false; mic.classList.remove("is-listening"); mic.querySelector("span").textContent = "Talk"; const blocked = event.error === "not-allowed" || event.error === "service-not-allowed"; const reason = blocked ? "Microphone access was blocked. Allow microphone access for this site and try again." : event.error === "no-speech" ? "I didn’t hear anything. Listening will continue; try speaking again." : "Voice recognition could not complete. Listening will continue, or you can type your question."; if (blocked) stopListening(); say(reason); }; recognition.onnomatch = () => say("I couldn’t understand that. Listening will continue; please try again."); recognition.onresult = event => { const transcript = event.results[0][0].transcript.trim(); if (!transcript) return say("I didn’t hear a question. Please try again."); awaitingResponse = true; addUser(transcript); Promise.resolve(answer(transcript)).finally(() => { awaitingResponse = false; if (keepListening && !isSpeaking) startListening(false); }); }; mic.addEventListener("click", () => { if (keepListening) return stopListening(); startConversation(); }); } else { mic.disabled = true; mic.title = "Voice input is not supported by this browser"; }
     loadBriefing(false);
 })();

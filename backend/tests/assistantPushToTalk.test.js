@@ -27,3 +27,16 @@ test('assistant launchers and close control resist page-wide button sizing', () 
     assert.match(styles, /#ncaAssistantToggle\{[^}]*width:58px[^}]*height:58px/);
     assert.match(styles, /\.nca-assistant-close\{[^}]*flex:0 0 36px[^}]*width:36px[^}]*height:36px/);
 });
+
+test('assistant pauses recognition while speaking and does not reset the conversation timeout', () => {
+    const script = fs.readFileSync(path.join(root, 'frontend/js/assistant.js'), 'utf8');
+
+    assert.match(script, /let isSpeaking = false/);
+    assert.match(script, /let awaitingResponse = false/);
+    assert.match(script, /recognition\.abort\(\)/);
+    assert.match(script, /keepListening && !isSpeaking && !awaitingResponse/);
+    assert.match(script, /startListening\(false\)/);
+    assert.match(script, /if \(startNewWindow \|\| !listeningDeadline\)/);
+    assert.match(script, /generation !== speechGeneration/);
+    assert.match(script, /if \(isSpeaking \|\| awaitingResponse\)/);
+});
