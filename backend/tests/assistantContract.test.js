@@ -95,6 +95,17 @@ test('assistant audit stores metadata, not raw question or full answer', () => {
     assert.doesNotMatch(auditBlock, /answer\s*:/);
 });
 
+test('assistant captures bounded visible page structure and routes it locally', () => {
+    const client = read('frontend/js/assistant.js');
+    const controller = read('backend/controllers/assistantController.js');
+    assert.match(client, /collectVisibleContent\(contentScope\)/);
+    assert.match(client, /\['password', 'hidden', 'file'\]\.includes\(kind\)/);
+    assert.match(client, /#ncaAssistantRoot,\[data-assistant-exclude\],\[data-sensitive\]/);
+    assert.match(controller, /pageAwareness\.answer\(request\.prompt, key, user, request\.screenContext\)/);
+    assert.match(controller, /provenance = pageInsight \? 'visible-page-context'/);
+    assert.match(controller, /source: 'rendered-role-authorised-dom'/);
+});
+
 test('briefing calls an item overdue only when an explicit due date is in the past', () => {
     const controller = read('backend/controllers/assistantController.js');
     assert.match(controller, /item\.due_at && new Date\(item\.due_at\)\.getTime\(\) < Date\.now\(\)/);
@@ -111,8 +122,8 @@ test('briefing reconciles dashboard tasks with Action Centre work', () => {
 
 test('briefing follow-up queries reload the same authorised live work context locally', () => {
     const controller = read('backend/controllers/assistantController.js');
-    assert.match(controller, /let workflowGuidance = repeatedAssistantSpeech \|\| navigationCommand \? null/);
-    assert.match(controller, /const briefingQuestion = !repeatedAssistantSpeech && !navigationCommand && !workflowGuidance/);
+    assert.match(controller, /let workflowGuidance = repeatedAssistantSpeech \|\| navigationCommand \|\| pageInsight \? null/);
+    assert.match(controller, /const briefingQuestion = !repeatedAssistantSpeech && !navigationCommand && !pageInsight && !workflowGuidance/);
     assert.match(controller, /&& isBriefingQuestion\(request\.prompt, request\.history\)/);
     assert.match(controller, /briefingContext = await loadBriefing\(user, req\)/);
     assert.match(controller, /const mayCallProvider = !providerResult && !repeatedAssistantSpeech/);

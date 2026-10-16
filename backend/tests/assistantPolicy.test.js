@@ -28,14 +28,18 @@ test('screen context accepts bounded visible values but rejects unsupported prop
         pageTitle: 'Create Risk',
         activeField: { id: 'risk_title', label: 'Risk Title', kind: 'text', required: true, empty: true, invalid: false, disabled: false },
         fields: [{ id: 'target_completion_date', label: 'Target Completion Date', kind: 'date', required: true, empty: false, invalid: true, validationMessage: 'Target Completion Date must not be in the past.', disabled: false, value: '2026-12-06' }],
-        controls: [{ id: 'saveDraftBtn', label: 'Save Draft', disabled: false }]
+        controls: [{ id: 'saveDraftBtn', label: 'Save Draft', disabled: false }],
+        content: [{ kind: 'table', title: 'Risks', text: 'Columns: Risk | Owner. 4 rendered rows.' }]
     });
     assert.equal(context.fields[0].invalid, true);
     assert.equal(context.fields[0].value, '2026-12-06');
     assert.equal(context.controls[0].id, 'saveDraftBtn');
+    assert.equal(context.content[0].kind, 'table');
     assert.equal(validateScreenContext({ fields: [{ id: 'password', kind: 'password', value: 'secret' }] }).fields[0].value, '');
     assert.throws(() => validateScreenContext({ fields: [{ id: 'risk_title', unsupportedValue: 'entry' }] }), /unsupported property/);
     assert.throws(() => validateScreenContext({ fields: Array(41).fill({ id: 'field' }) }), /at most 40 fields/);
+    assert.throws(() => validateScreenContext({ content: [{ kind: 'script', text: 'hidden' }] }), /unsupported kind/);
+    assert.throws(() => validateScreenContext({ content: Array(31).fill({ kind: 'text', text: 'entry' }) }), /at most 30 content items/);
 });
 
 test('private modes require explicit context consent', () => {

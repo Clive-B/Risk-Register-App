@@ -9,7 +9,9 @@
     const SERIALISED_LIMIT = 24000;
     const SCREEN_FIELD_LIMIT = 40;
     const SCREEN_CONTROL_LIMIT = 40;
+    const SCREEN_CONTENT_LIMIT = 30;
     const SCREEN_VALUE_LIMIT = 500;
+    const SCREEN_CONTENT_TEXT_LIMIT = 600;
     const POST_SPEECH_ECHO_MS = 2200;
     const MAX_SPEECH_CHUNK_LENGTH = 240;
     const MAX_RECOGNITION_RETRIES = 3;
@@ -382,6 +384,58 @@
         };
     }
 
+    function normalisedScreenText(value, limit = SCREEN_CONTENT_TEXT_LIMIT) {
+        return String(value || '').replace(/\s+/g, ' ').trim().slice(0, limit);
+    }
+
+    function screenContentItem(element) {
+        if (!element || !isVisible(element) || element.closest('nav,aside,#ncaAssistantRoot,[data-assistant-exclude],[data-sensitive]')) return null;
+        const tag = element.tagName;
+        if (tag === 'TABLE') {
+            const title = normalisedScreenText(
+                element.caption?.textContent || element.getAttribute('aria-label') ||
+                element.closest('section,.card,.panel')?.querySelector('h1,h2,h3,h4')?.textContent || 'Visible table',
+                160
+            );
+            const headers = [...element.querySelectorAll('thead th')].filter(isVisible)
+                .slice(0, 10).map(cell => normalisedScreenText(cell.textContent, 80)).filter(Boolean);
+            const visibleRows = [...element.querySelectorAll('tbody tr')].filter(isVisible);
+            const rows = visibleRows.slice(0, 6).map(row => [...row.querySelectorAll('th,td')].filter(isVisible)
+                .slice(0, 10).map(cell => normalisedScreenText(cell.textContent, 100)).filter(Boolean).join(' | ')).filter(Boolean);
+            const parts = [];
+            if (headers.length) parts.push(`Columns: ${headers.join(' | ')}`);
+            if (rows.length) parts.push(`Rows: ${rows.join(' ; ')}`);
+            parts.push(`${visibleRows.length} rendered row${visibleRows.length === 1 ? '' : 's'}.`);
+            return { kind: 'table', title, text: normalisedScreenText(parts.join(' ')) };
+        }
+        const role = element.getAttribute('role');
+        const kind = /^H[1-4]$/.test(tag) || role === 'heading' ? 'heading'
+            : role === 'alert' || role === 'status' || element.matches('.alert,.notice,.empty-state,.validation-summary') ? 'notice'
+                : element.matches('.card,.panel,.summary-card,.metric-card,.stat-card,.kpi-card,[data-widget]') ? 'summary' : 'text';
+        const text = normalisedScreenText(element.textContent);
+        if (!text) return null;
+        const title = kind === 'heading' ? text.slice(0, 160) : normalisedScreenText(
+            element.getAttribute('aria-label') || element.querySelector('h1,h2,h3,h4,[role="heading"]')?.textContent || '', 160
+        );
+        return { kind, title, text };
+    }
+
+    function collectVisibleContent(scope) {
+        const selector = [
+            'h1', 'h2', 'h3', 'h4', '[role="heading"]', '[role="alert"]', '[role="status"]',
+            '.alert', '.notice', '.empty-state', '.validation-summary',
+            '.card', '.panel', '.summary-card', '.metric-card', '.stat-card', '.kpi-card', '[data-widget]', 'table'
+        ].join(',');
+        const seen = new Set();
+        return [...scope.querySelectorAll(selector)].map(screenContentItem).filter(item => {
+            if (!item) return false;
+            const key = `${item.kind}|${item.title}|${item.text}`.toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        }).slice(0, SCREEN_CONTENT_LIMIT);
+    }
+
     function collectScreenContext() {
         const file = window.location.pathname.split('/').pop() || '';
         const requiredIds = REQUIRED_FIELDS[file] || new Set();
@@ -399,12 +453,14 @@
             }))
             .filter(control => control.id || control.label)
             .slice(0, SCREEN_CONTROL_LIMIT);
+        const contentScope = overlay || document.querySelector('main,[role="main"],.main-content,.page-content') || document;
         return {
             pageTitle: String(document.querySelector('main h1,h1')?.textContent || document.title || '').replace(/\s+/g, ' ').trim().slice(0, 160),
             dialogTitle: String(overlay?.querySelector('h1,h2,h3')?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 160),
             activeField: screenField(document.activeElement, requiredIds),
             fields,
-            controls
+            controls,
+            content: collectVisibleContent(contentScope)
         };
     }
 

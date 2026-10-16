@@ -9,13 +9,28 @@ const LIMITS = Object.freeze({
     page: 500,
     screenFields: 40,
     screenControls: 40,
+    screenContent: 30,
     screenText: 160,
     screenValue: 500,
+    screenContentText: 600,
     validationMessage: 240
 });
 
 function boundedText(value, limit) {
     return String(value || '').replace(/\s+/g, ' ').trim().slice(0, limit);
+}
+
+function validateScreenContentItem(item) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) throw invalid('Each screen content item must be an object.');
+    const allowed = new Set(['kind', 'title', 'text']);
+    if (Object.keys(item).some(key => !allowed.has(key))) throw invalid('Screen content contains an unsupported property.');
+    const kind = boundedText(item.kind, 20).toLowerCase();
+    if (!['heading', 'notice', 'summary', 'table', 'text'].includes(kind)) throw invalid('Screen content contains an unsupported kind.');
+    return {
+        kind,
+        title: boundedText(item.title, LIMITS.screenText),
+        text: boundedText(item.text, LIMITS.screenContentText)
+    };
 }
 
 function validateScreenItem(item, kind) {
@@ -42,20 +57,23 @@ function validateScreenItem(item, kind) {
 }
 
 function validateScreenContext(value) {
-    if (value === undefined) return { pageTitle: '', dialogTitle: '', activeField: null, fields: [], controls: [] };
+    if (value === undefined) return { pageTitle: '', dialogTitle: '', activeField: null, fields: [], controls: [], content: [] };
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw invalid('Screen context must be an object.');
-    const allowed = new Set(['pageTitle', 'dialogTitle', 'activeField', 'fields', 'controls']);
+    const allowed = new Set(['pageTitle', 'dialogTitle', 'activeField', 'fields', 'controls', 'content']);
     if (Object.keys(value).some(key => !allowed.has(key))) throw invalid('Screen context contains an unsupported property.');
     const fields = value.fields === undefined ? [] : value.fields;
     const controls = value.controls === undefined ? [] : value.controls;
+    const content = value.content === undefined ? [] : value.content;
     if (!Array.isArray(fields) || fields.length > LIMITS.screenFields) throw invalid(`Screen context may contain at most ${LIMITS.screenFields} fields.`);
     if (!Array.isArray(controls) || controls.length > LIMITS.screenControls) throw invalid(`Screen context may contain at most ${LIMITS.screenControls} controls.`);
+    if (!Array.isArray(content) || content.length > LIMITS.screenContent) throw invalid(`Screen context may contain at most ${LIMITS.screenContent} content items.`);
     return {
         pageTitle: boundedText(value.pageTitle, LIMITS.screenText),
         dialogTitle: boundedText(value.dialogTitle, LIMITS.screenText),
         activeField: value.activeField == null ? null : validateScreenItem(value.activeField, 'field'),
         fields: fields.map(item => validateScreenItem(item, 'field')),
-        controls: controls.map(item => validateScreenItem(item, 'control'))
+        controls: controls.map(item => validateScreenItem(item, 'control')),
+        content: content.map(validateScreenContentItem)
     };
 }
 

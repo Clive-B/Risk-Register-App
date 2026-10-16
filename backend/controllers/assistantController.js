@@ -2,6 +2,7 @@ const crypto = require('node:crypto');
 const pool = require('../config/db');
 const manual = require('../knowledge/systemManual');
 const workflowGuide = require('../knowledge/workflowGuide');
+const pageAwareness = require('../knowledge/pageAwareness');
 const navigationCatalog = require('../knowledge/navigationCatalog');
 const dashboardRepository = require('../repositories/dashboardRepository');
 const { logAudit } = require('../utils/auditLogger');
@@ -577,14 +578,16 @@ exports.query = async (req, res) => {
         const explicitGeneralRequest = request.mode === 'general'
             && (isExplicitGeneralKnowledgeRequest(request.prompt) || isClearGeneralTopicRequest(request.prompt));
         const navigationCommand = repeatedAssistantSpeech ? null : navigationCatalog.resolveNavigationCommand(request.prompt, user.role);
-        let workflowGuidance = repeatedAssistantSpeech || navigationCommand ? null
+        const pageInsight = repeatedAssistantSpeech || navigationCommand ? null
+            : pageAwareness.answer(request.prompt, key, user, request.screenContext);
+        let workflowGuidance = repeatedAssistantSpeech || navigationCommand || pageInsight ? null
             : workflowGuide.guide(request.prompt, key, request.history, user, request.screenContext);
-        const briefingQuestion = !repeatedAssistantSpeech && !navigationCommand && !workflowGuidance
+        const briefingQuestion = !repeatedAssistantSpeech && !navigationCommand && !pageInsight && !workflowGuidance
             && isBriefingQuestion(request.prompt, request.history);
         const briefingOpenCommand = briefingQuestion && isBriefingOpenCommand(request.prompt);
         let semanticResult = null;
         let semanticError = null;
-        if (!explicitGeneralRequest && !repeatedAssistantSpeech && !navigationCommand && !workflowGuidance && !briefingQuestion
+        if (!explicitGeneralRequest && !repeatedAssistantSpeech && !navigationCommand && !pageInsight && !workflowGuidance && !briefingQuestion
             && request.mode === 'general' && config.configured && ['ollama', 'llamacpp'].includes(config.provider)) {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), config.routingTimeoutMs);
@@ -608,10 +611,14 @@ exports.query = async (req, res) => {
             }
         }
         const systemQuestion = !explicitGeneralRequest && !repeatedAssistantSpeech && request.mode === 'general'
-            && (Boolean(navigationCommand) || Boolean(workflowGuidance) || ['system', 'current_screen'].includes(semanticResult?.route)
+            && (Boolean(navigationCommand) || Boolean(pageInsight) || Boolean(workflowGuidance) || ['system', 'current_screen'].includes(semanticResult?.route)
                 || (!semanticResult && (hasCurrentScreenIntent(request.prompt) || hasSystemDomainIntent(request.prompt, request.history))));
         const scope = repeatedAssistantSpeech ? 'system_help' : briefingQuestion ? 'personal_context' : systemQuestion ? 'system_help' : requestedScope;
-        const help = request.mode !== 'general' || systemQuestion
+        const help = pageInsight ? {
+            text: pageInsight.answer,
+            source: safeSource('visible-page-context', `page:${key}`, pageInsight.pageTitle, pageInsight.dialogTitle || 'Rendered page snapshot'),
+            suggestedActions: [], uiGuidance: null
+        } : request.mode !== 'general' || systemQuestion
             ? knowledgeContext(request.prompt, key, request.history, user, request.screenContext, workflowGuidance)
             : null;
         const guidedNavigation = !repeatedAssistantSpeech && !navigationCommand && isGuidedNavigationCommand(request.prompt)
@@ -708,8 +715,8 @@ exports.query = async (req, res) => {
             provenance = 'live-user-data';
         } else if (help) {
             answer = help.text;
-            deliveryMode = 'local-fallback';
-            provenance = 'system-guidance';
+            deliveryMode = pageInsight ? 'local-context' : 'local-fallback';
+            provenance = pageInsight ? 'visible-page-context' : 'system-guidance';
             const destination = safeClientDestination(guidedNavigation?.destination);
             if (destination) clientAction = { type: 'navigate', destination, label: guidedNavigation.label || 'guided page' };
         } else {
@@ -729,6 +736,10 @@ exports.query = async (req, res) => {
                 ? briefingContext.items.slice(0, 3).map(item => ({ label: `Open ${item.title}`, destination: item.destination }))
                 : help?.suggestedActions?.length ? help.suggestedActions : help ? [{ label: 'Open System Manual', destination: 'pages/system-manual.html' }] : [],
             uiGuidance: help?.uiGuidance || null,
+            pageContext: pageInsight ? {
+                used: true, source: 'rendered-role-authorised-dom', page: key,
+                contentItems: pageInsight.capturedContentCount, matchedItems: pageInsight.matchedContentCount
+            } : { used: false },
             clientAction,
             suppressSpeech: repeatedAssistantSpeech,
             workContextSharedExternally, requestId
@@ -739,7 +750,11 @@ exports.query = async (req, res) => {
             model: providerResult?.model || semanticResult?.model || null, delivery_mode: deliveryMode, provenance,
             source_references: sources.map(source => source.sourceId), outcome: repeatedAssistantSpeech ? 'IgnoredEcho' : providerError ? 'Fallback' : 'Success',
             client_action: clientAction?.type || null,
-            screen_context: { page: key, dialog_present: Boolean(request.screenContext.dialogTitle), field_count: request.screenContext.fields.length },
+            screen_context: {
+                page: key, dialog_present: Boolean(request.screenContext.dialogTitle),
+                field_count: request.screenContext.fields.length, content_count: request.screenContext.content.length,
+                page_awareness_used: Boolean(pageInsight)
+            },
             latency_ms: Date.now() - startedAt, input_tokens: providerResult?.usage?.input_tokens || semanticResult?.usage?.input_tokens || null,
             output_tokens: providerResult?.usage?.output_tokens || semanticResult?.usage?.output_tokens || null, question_length: request.prompt.length
         } });
