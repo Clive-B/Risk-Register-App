@@ -6,7 +6,7 @@ services:
     network_mode: container:dev-postgres
     command: ["-m", "/models/qwen2.5-0.5b-instruct-q4_k_m.gguf", "--host", "127.0.0.1", "--port", "8080", "-c", "2048", "-np", "1", "-t", "5", "-n", "64", "--no-webui"]
     volumes:
-      - /development/playground/nca-grc-test/models:/models:ro
+      - /docker-apps/playground/nca-grc-test/models:/models:ro
     mem_limit: 6g
     cpus: 5.0
     pids_limit: 256
@@ -26,7 +26,7 @@ services:
     network_mode: container:dev-postgres
     command: ["-m", "/models/all-MiniLM-L6-v2-Q4_K_M.gguf", "--host", "127.0.0.1", "--port", "8081", "--embeddings", "--pooling", "mean", "-c", "512", "-b", "512", "-ub", "512", "-t", "2", "--no-webui"]
     volumes:
-      - /development/playground/nca-grc-test/models:/models:ro
+      - /docker-apps/playground/nca-grc-test/models:/models:ro
     mem_limit: 1g
     cpus: 2.0
     pids_limit: 128
@@ -48,7 +48,7 @@ services:
     restart: unless-stopped
     network_mode: container:dev-postgres
     env_file:
-      - /development/playground/nca-grc-test/.env
+      - /docker-apps/playground/nca-grc-test/.env
     depends_on:
       local-ai:
         condition: service_healthy
@@ -73,11 +73,12 @@ services:
     volumes:
       - ./frontend:/usr/share/nginx/html:ro
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - /development/base_containers/npm/data/custom_ssl/npm-1/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
-      - /development/base_containers/npm/data/custom_ssl/npm-1/privkey.pem:/etc/nginx/certs/privkey.pem:ro
+      - /docker-apps/base_containers/configs/ssl/wildcard-corp-nca-fullchain.crt:/etc/nginx/certs/fullchain.pem:ro
+      - /docker-apps/base_containers/configs/ssl/wildcard-corp-nca.key:/etc/nginx/certs/privkey.pem:ro
     networks:
       - dev-network
 
 networks:
   dev-network:
+    name: base_containers_default
     external: true

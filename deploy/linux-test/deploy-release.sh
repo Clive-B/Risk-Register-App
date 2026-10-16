@@ -9,7 +9,7 @@ fi
 release_id="$1"
 package_tgz="$2"
 seed_dump="$3"
-root="/development/playground/nca-grc-test"
+root="/docker-apps/playground/nca-grc-test"
 release_dir="$root/releases/$release_id"
 env_file="$root/.env"
 db_name="nca_grc_live_test"
@@ -74,7 +74,7 @@ REFRESH_TOKEN_DAYS=7
 WORKPLAN_ORIGINAL_RETENTION_DAYS=365
 DEFAULT_TEMP_PASSWORD=
 TEST_USER_PASSWORD=
-SMTP_HOST=dev-mailpit
+SMTP_HOST=mailpit
 SMTP_PORT=1025
 SMTP_USER=
 SMTP_PASSWORD=
