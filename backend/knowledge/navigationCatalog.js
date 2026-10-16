@@ -159,8 +159,8 @@ const ITEMS = Object.freeze({
     },
     riskRegister: {
         title: 'Risk Register', aliases: ['risk register admissions', 'official risk register template'],
-        description: 'Allows a Risk Focal Person to download approved register templates, upload a division register, review explainable corrections and admit only confirmed valid rows into governance.',
-        actions: ['Download the appropriate official template.', 'Review and confirm every proposed correction before submitting the register.']
+        description: 'Allows a Risk Focal Person to download the official Template 3 Division Risk Register Tracker, upload a division register, review explainable corrections and admit only confirmed valid rows into governance.',
+        actions: ['Download and use only the official Template 3 workbook.', 'Review and confirm every proposed correction before submitting the register.']
     },
     focalRiskAdmissions: {
         title: 'Administrator-Staged Risks', aliases: ['division register admissions', 'staged risks', 'administrator staged risks'],

@@ -625,8 +625,8 @@ function renderCorrectionWorkspace(preview,{preserveView=false}={}) {
     const view = preserveView ? captureCorrectionView() : null;
     const rows = preview.rows;
     rows.forEach(row => {
-        row.require_program = ["Risk Register Tracking Template","Legal Legacy Risk Register"].includes(preview.template_type);
-        row.require_legal_context = preview.template_type === "Legal Legacy Risk Register";
+        row.require_program = preview.template_type === "Division Risk Register Tracker";
+        row.require_legal_context = false;
         if (!row.initial_proposed) {
             row.initial_proposed = {
                 control_type:"Not Assessed",

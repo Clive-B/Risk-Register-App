@@ -123,9 +123,10 @@ authoritative assessment source.
 
 ## Workbook correction engine
 
-The reusable rule-driven correction engine supports work plans, standard
-risk-register workbooks, the tracking template, the Legal legacy register and
-the approved Division Risk Register Tracker.
+The reusable rule-driven correction engine supports work plans and the approved
+Division Risk Register Tracker. Historical parsers remain available only to
+preserve and interpret earlier import provenance; every new risk-register
+admission is restricted server-side to official Template 3.
 
 Every detected issue can provide:
 
@@ -156,12 +157,11 @@ The engine:
 
 ## Downloadable governed templates
 
-The Focal Person can download the templates from the relevant upload interface:
+The Focal Person can download the governed templates from the relevant upload interface:
 
 - `NCA_Official_Work_Plan_Upload_Template.xlsx`
-- `NCA_Official_Risk_Register_Upload_Template.xlsx`
-- `NCA_Official_Risk_Register_Template_2.xlsx`
-- `NCA_Official_Division_Risk_Register_Tracker_Upload_Template.xlsx`
+- `NCA_Official_Division_Risk_Register_Tracker_Upload_Template.xlsx` — the sole
+  official risk-register workbook (Template 3)
 
 The templates contain, where applicable:
 
@@ -371,6 +371,9 @@ Major completed changes include:
 20. Added the approved Division Risk Register Tracker as Template 3, an atomic
     Administrator multi-division staging workspace, accountable Focal review
     and a read-only Administrator submission monitor.
+21. Retired risk-register Templates 1 and 2 from download and new admission;
+    Template 3 is now the sole official risk-register workbook, enforced on the
+    server for both Focal and Administrator upload paths.
 
 ## Repository hygiene
 

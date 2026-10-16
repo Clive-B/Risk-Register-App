@@ -50,7 +50,7 @@ Onboarding and password messages are restricted to official `@nca.org.gh` recipi
 
 ## Risk intake and assessment workflow
 
-A Risk Focal Person keeps direct access to **Risk Register** and **Work Plan Upload**. The Administrator may also use **Division Risk Uploads** when Focal Persons have supplied approved Excel workbooks for centralized loading.
+A Risk Focal Person keeps direct access to **Risk Register** and **Work Plan Upload**. For risk-register admissions, download and use only the **NCA Official Division Risk Register Tracker (Template 3)**; Templates 1 and 2 are retired and cannot be admitted. The Administrator may also use **Division Risk Uploads** when Focal Persons have supplied the official Template 3 workbook for centralized loading.
 
 For an Administrator-assisted upload, the workbook likelihood, impact and score belong to the assigned Focal Person. They are displayed as **Focal — Pending Confirmation**, not as System figures. The platform's rule-based assessment remains separately identified as **System**.
 

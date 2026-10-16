@@ -6,20 +6,21 @@ const XLSX = require('xlsx');
 
 const root = path.resolve(__dirname, '..', '..');
 
-test('official risk-register template exposes governed control-assurance fields', () => {
-    const workbook = XLSX.readFile(path.join(root, 'frontend', 'templates', 'NCA_Official_Risk_Register_Upload_Template.xlsx'));
+test('official Template 3 exposes the approved risk-register admission fields', () => {
+    const workbook = XLSX.readFile(path.join(root, 'frontend', 'templates', 'NCA_Official_Division_Risk_Register_Tracker_Upload_Template.xlsx'));
     const sheet = workbook.Sheets['Risk Register'];
-    const headers = XLSX.utils.sheet_to_json(sheet, { header: 1, range: 0 })[0];
+    const headers = XLSX.utils.sheet_to_json(sheet, { header: 1, range: 11 })[0];
     [
-        'Control Effectiveness',
-        'Control Type',
-        'Control Owner',
-        'Control Design Adequacy',
-        'Control Evidence',
-        'Control Last Tested Date',
-        'Control Exceptions',
-        'Control Next Review Date',
-        'Control Assessment Basis'
+        'Program/Project',
+        'Risk ID',
+        'Risk Name',
+        'Risk Description',
+        'Risk Category',
+        'Risk Source',
+        'Risk Event',
+        'Risk Cause',
+        'Risk Response (Control)',
+        'Mitigation Plan / Actions'
     ].forEach(header => assert.ok(headers.includes(header), `${header} is missing`));
 });
 

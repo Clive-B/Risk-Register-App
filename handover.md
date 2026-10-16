@@ -58,7 +58,7 @@ Workbook admission is now separated from the Consolidated Risk Register:
 
 ### Administrator multi-division risk admission
 
-- Template 3 is a clean upload edition of the approved `Adminstration Risk Register Updated_.xlsx` structure and is downloadable as `NCA_Official_Division_Risk_Register_Tracker_Upload_Template.xlsx`.
+- Template 3 is the sole official risk-register workbook, a clean upload edition of the approved `Adminstration Risk Register Updated_.xlsx` structure, downloadable as `NCA_Official_Division_Risk_Register_Tracker_Upload_Template.xlsx`. Templates 1 and 2 are retired from download and new admissions.
 - The Administrator-only **Division Risk Uploads** page selects several divisions and their active Focal Persons, attaches one workbook per division, exposes row-level correction and uses one atomic **Send All to Focal Review** submission.
 - Administrator staging creates draft risks in the Consolidated Risk Register with `Awaiting Focal Review`; it does not impersonate or pre-populate the accountable Focal decision.
 - The assigned Focal Person reviews and edits staged risks, records likelihood and impact for every risk, and submits the complete division register to the Risk Champion.
@@ -165,7 +165,7 @@ Before go-live, execute the deployment guide in order, require `npm run readines
 
 ## Recommended next actions
 
-1. Review the dedicated Risk Register admissions pages in a browser, including all three templates, Administrator multi-division staging, Focal correction/submission and Consolidated Risk Register visibility.
+1. Review the dedicated Risk Register admissions pages in a browser, including the sole official Template 3 workbook, Administrator multi-division staging, Focal correction/submission and Consolidated Risk Register visibility.
 2. Complete browser accessibility and supported-browser testing for the GRC assistant, including microphone permissions, the one-minute listening limit, navigation and sign-out confirmation.
 3. Decide whether browser speech is sufficient or a consented, NCA-approved custom voice service is required; implement any provider only through a protected backend integration.
 4. Integrate the new attachment, workbook and output security utilities into the applicable backend routes and add unit and route-level regression tests.
@@ -180,7 +180,7 @@ Before go-live, execute the deployment guide in order, require `npm run readines
 - [ ] Development environment starts successfully.
 - [ ] Database migrations complete on a clean non-production database.
 - [ ] All automated tests pass.
-- [ ] All three approved workbook admission paths pass Focal Person UAT.
+- [ ] The official Template 3 workbook admission paths pass Focal Person and Administrator UAT, and retired templates are rejected.
 - [ ] GRC assistant keyboard, screen-reader, microphone, voice, navigation and sign-out paths pass supported-browser UAT.
 - [ ] Attachment, workbook and output security helpers are integrated and regression-tested.
 - [ ] Champion and Chairman review/approval paths pass UAT.

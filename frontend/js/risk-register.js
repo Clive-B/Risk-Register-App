@@ -71,13 +71,9 @@
         elements.input.value = "";
         elements.fileName.textContent = "No workbook selected";
         elements.fileHelp.textContent = "Accepted formats: .xlsx and .xls. Maximum file size: 8 MB.";
-        elements.engineLabel.textContent = state.engine === "legal"
-            ? "Template 2 correction engine selected"
-            : state.engine === "division"
-                ? "Template 3 correction engine selected"
-            : state.engine === "standard"
-                ? "Template 1 correction engine selected"
-                : "Choose a template above to begin";
+        elements.engineLabel.textContent = state.engine === "division"
+            ? "Official Template 3 correction engine selected"
+            : "Choose the official Template 3 workbook above to begin";
         document.querySelectorAll("[data-template-card]").forEach(card => card.classList.toggle("is-selected",card.dataset.templateCard === state.engine));
         setProgress(false);
         elements.preview.hidden = true;
@@ -203,8 +199,8 @@
 
     function initialiseRows(preview) {
         preview.rows.forEach(row => {
-            row.require_program = ["Risk Register Tracking Template","Legal Legacy Risk Register","Division Risk Register Tracker"].includes(preview.template_type);
-            row.require_legal_context = preview.template_type === "Legal Legacy Risk Register";
+            row.require_program = preview.template_type === "Division Risk Register Tracker";
+            row.require_legal_context = false;
             if (!row.initial_proposed) {
                 row.initial_proposed = {
                     control_type:"Not Assessed",control_owner:"",control_design_adequacy:"Not Assessed",
@@ -349,9 +345,7 @@
             setProgress(true,"Applying the governed correction rules...",65);
             const data = await app.apiRequest("/risks/import/preview",{method:"POST",body:JSON.stringify({file_name:file.name,file_data:state.fileData})});
             state.preview = data.preview;
-            const detectedEngine = data.preview.template_type === "Legal Legacy Risk Register" ? "Template 2"
-                : data.preview.template_type === "Division Risk Register Tracker" ? "Template 3" : "Template 1";
-            elements.engineLabel.textContent = `${detectedEngine} correction engine · Detected ${data.preview.template_type || "risk register"}`;
+            elements.engineLabel.textContent = `Official Template 3 correction engine · Detected ${data.preview.template_type || "risk register"}`;
             setProgress(true,"Correction workspace ready",100);
             renderPreview(data.preview);
             window.setTimeout(() => setProgress(false),350);
@@ -412,7 +406,7 @@
     }));
     elements.choose.addEventListener("click",() => {
         if (!state.engine) {
-            showToast("Select Template 1, Template 2 or Template 3 above before choosing a workbook.","error");
+            showToast("Select the official Template 3 workbook above before choosing a file.","error");
             return;
         }
         elements.input.click();

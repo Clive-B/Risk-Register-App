@@ -6,14 +6,15 @@ const path = require('node:path');
 const root = path.resolve(__dirname,'../..');
 const read = relative => fs.readFileSync(path.join(root,relative),'utf8');
 
-test('dedicated Risk Register page exposes both governed templates and correction workspace',() => {
+test('dedicated Risk Register page exposes Template 3 as the sole official workbook',() => {
     const page = read('frontend/pages/risk-register.html');
-    assert.match(page,/NCA Official Risk Register Template<\/h2>/);
-    assert.match(page,/NCA Official Risk Register Template 2/);
-    assert.match(page,/NCA_Official_Risk_Register_Upload_Template\.xlsx/);
-    assert.match(page,/NCA_Official_Risk_Register_Template_2\.xlsx/);
-    assert.match(page,/data-upload-engine="standard"/);
-    assert.match(page,/data-upload-engine="legal"/);
+    assert.match(page,/NCA Official Division Risk Register Tracker/);
+    assert.match(page,/sole official/);
+    assert.match(page,/NCA_Official_Division_Risk_Register_Tracker_Upload_Template\.xlsx/);
+    assert.match(page,/data-upload-engine="division"/);
+    assert.doesNotMatch(page,/NCA_Official_Risk_Register_Upload_Template\.xlsx/);
+    assert.doesNotMatch(page,/NCA_Official_Risk_Register_Template_2\.xlsx/);
+    assert.doesNotMatch(page,/data-upload-engine="(?:standard|legal)"/);
     assert.match(page,/id="correctionWorkspace"/);
     assert.match(page,/id="confirmAllCorrections"/);
     assert.match(page,/Open Consolidated Risk Register/);
@@ -36,6 +37,7 @@ test('risk admission engine previews, corrects and imports through governed endp
     assert.match(script,/renderCorrectionWorkspace\(state\.preview,\{preserveView:true\}\)/);
     assert.match(script,/focus\(\{preventScroll:true\}\)/);
     assert.match(script,/System suggested/);
+    assert.doesNotMatch(script,/Template 1 correction engine|Template 2 correction engine/);
 });
 
 test('Risk Register navigation is focal-only and consolidated upload button is absent',() => {

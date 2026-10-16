@@ -2,14 +2,12 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const XLSX = require('xlsx');
 
 const { parseRiskWorkbook } = require('../utils/riskWorkbook');
 const { buildWorkbookCorrectionProposal } = require('../utils/workbookCorrectionEngine');
 
 const projectRoot = path.resolve(__dirname, '..', '..');
 const sourcePath = path.join(projectRoot, 'RISK REGISTER LEGAL July 2026.xlsx');
-const templatePath = path.join(projectRoot, 'frontend', 'templates', 'NCA_Official_Risk_Register_Template_2.xlsx');
 
 function parseFile(filePath) {
     return parseRiskWorkbook(path.basename(filePath), fs.readFileSync(filePath).toString('base64'));
@@ -66,36 +64,11 @@ test('Legal register correction proposal generates editable assessment and treat
     assert.ok(responseRule.audit_record);
 });
 
-test('downloadable governed Legal template contains formulas and parses through the same profile', () => {
-    assert.equal(fs.existsSync(templatePath), true);
-    const workbook = XLSX.readFile(templatePath, { cellFormula:true });
-    assert.deepEqual(workbook.SheetNames, ['Approved Values', 'Instructions', 'Legal Risk Register']);
-
-    const sheet = workbook.Sheets['Legal Risk Register'];
-    assert.equal(sheet.N2.f, 'IF(OR(L2="",M2=""),"",L2*M2)');
-    assert.equal(sheet.Q2.f, 'IF(OR(O2="",P2=""),"",O2*P2)');
-    assert.equal(sheet.T2.f, 'IF(OR(R2="",S2=""),"",R2*S2)');
-
-    sheet.B2 = { t:'s', v:'Review Legal agreements' };
-    sheet.C2 = { t:'s', v:'Operational' };
-    sheet.D2 = { t:'s', v:'Legal advice may be delayed and affect regulatory decisions.' };
-    sheet.E2 = { t:'s', v:'Late submission of requests' };
-    sheet.F2 = { t:'s', v:'Delayed legal advice' };
-    sheet.G2 = { t:'s', v:'Incomplete supporting documents' };
-    sheet.H2 = { t:'s', v:'Legal review checklist' };
-    sheet.I2 = { t:'s', v:'Director Legal' };
-    sheet.J2 = { t:'s', v:'Head, Legal Advisory' };
-    sheet.K2 = { t:'n', v:3 };
-    sheet.L2 = { t:'n', v:3 };
-    const sample = XLSX.write(workbook, { type:'buffer', bookType:'xlsx' });
-    const parsed = parseRiskWorkbook(path.basename(templatePath), sample.toString('base64'));
-    assert.equal(parsed.template_type, 'Legal Legacy Risk Register');
-    assert.equal(parsed.rows.length, 1);
-});
-
-test('Focal Person page exposes the governed Legal template download', () => {
+test('retired Legal template remains parseable for historical provenance but is not offered for new admission', () => {
     const html = fs.readFileSync(path.join(projectRoot, 'frontend', 'pages', 'risks.html'), 'utf8');
-    assert.match(html, /NCA_Official_Risk_Register_Template_2\.xlsx/);
-    assert.match(html, /NCA Official Risk Register Template 2/i);
+    const admissions = fs.readFileSync(path.join(projectRoot, 'frontend', 'pages', 'risk-register.html'), 'utf8');
+    assert.doesNotMatch(html, /NCA_Official_Risk_Register_Template_2\.xlsx/);
+    assert.doesNotMatch(admissions, /NCA_Official_Risk_Register_Template_2\.xlsx/);
+    assert.match(html, /NCA_Official_Division_Risk_Register_Tracker_Upload_Template\.xlsx/);
     assert.match(html, />Upload Risk Register</i);
 });

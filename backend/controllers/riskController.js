@@ -16,6 +16,7 @@ const {
 const { isChampionReviewComplete, canApproveImportBatch } = require('../utils/riskImportBatch');
 const { deriveInitialFocalAssessment } = require('../utils/initialFocalAssessment');
 const { divisionRiskCode } = require('../utils/divisionRiskCode');
+const { requireOfficialRiskRegisterTemplate } = require('../utils/officialRiskRegisterTemplate');
 const {
     CONTROL_EFFECTIVENESS,
     CONTROL_TYPES,
@@ -1837,7 +1838,9 @@ function workbookErrorResponse(res, error) {
 exports.previewRiskImport = async (req, res) => {
     try {
         const importSubject = await resolveAdminImportSubject(req);
-        const parsed = parseRiskWorkbook(req.body.file_name, req.body.file_data,{division:importSubject.division || importSubject.directorate});
+        const parsed = requireOfficialRiskRegisterTemplate(
+            parseRiskWorkbook(req.body.file_name, req.body.file_data,{division:importSubject.division || importSubject.directorate})
+        );
         const rows = await prepareImportedRows(parsed, importSubject);
         const scoreDetails = (impact, likelihood) => {
             if (![impact, likelihood].every(value => Number.isInteger(value) && value >= 1 && value <= 5)) return null;
@@ -1921,7 +1924,9 @@ exports.importRisks = async (req, res) => {
     let importBatchId = null;
     try {
         const parsed = applyConfirmedCorrections(
-            parseRiskWorkbook(req.body.file_name, req.body.file_data,{division:req.user.division || req.user.directorate}),
+            requireOfficialRiskRegisterTemplate(
+                parseRiskWorkbook(req.body.file_name, req.body.file_data,{division:req.user.division || req.user.directorate})
+            ),
             req.body.corrected_rows
         );
         const rows = await prepareImportedRows(parsed, req.user);
@@ -2078,7 +2083,9 @@ exports.createAdminImportGroup = async (req, res) => {
             }
             divisions.add(subject.division);
             const parsed = applyConfirmedCorrections(
-                parseRiskWorkbook(item.file_name,item.file_data,{division:subject.division || subject.directorate}),item.corrected_rows
+                requireOfficialRiskRegisterTemplate(
+                    parseRiskWorkbook(item.file_name,item.file_data,{division:subject.division || subject.directorate})
+                ),item.corrected_rows
             );
             const rows = await prepareImportedRows(parsed,subject);
             rows.forEach(row => {
