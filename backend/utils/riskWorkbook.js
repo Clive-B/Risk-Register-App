@@ -1,4 +1,5 @@
 const XLSX = require('xlsx');
+const { divisionRiskCode } = require('./divisionRiskCode');
 
 const MAX_WORKBOOK_BYTES = 8 * 1024 * 1024;
 const MAX_DATA_ROWS = 10000;
@@ -323,14 +324,6 @@ function eventSignature(row) {
     ].map(value => displayValue(value).replace(/\s+/g,' ').trim().toLowerCase()).filter(Boolean).join('|');
 }
 
-function trackerDivisionCode(value) {
-    const words = String(value || 'NCA').trim().split(/\s+/).filter(Boolean);
-    const code = words.length === 1
-        ? words[0].replace(/[^a-zA-Z0-9]/g,'').slice(0,3)
-        : words.map(word => word[0]).join('').replace(/[^a-zA-Z0-9]/g,'').slice(0,6);
-    return (code || 'NCA').toUpperCase();
-}
-
 function applyDivisionChildRiskIds(rows,{division,fileName} = {}) {
     const groups = new Map();
     const year = String(fileName || '').match(/\b(20\d{2})\b/)?.[1] || String(new Date().getFullYear());
@@ -362,7 +355,7 @@ function applyDivisionChildRiskIds(rows,{division,fileName} = {}) {
             generatedGroupSequence += 1;
             const programmeKey = activeProgramme?.key || `row-${row.excel_row}`;
             const key = `programme:${generatedGroupSequence}:${programmeKey}`;
-            const parentId = `${trackerDivisionCode(division)}-RSK-${year}-${String(generatedGroupSequence).padStart(3,'0')}`;
+            const parentId = `${divisionRiskCode(division)}-RSK-${year}-${String(generatedGroupSequence).padStart(3,'0')}`;
             activeGroup = {parentId,rows:new Set(),generated:true};
             groups.set(key,activeGroup);
         }

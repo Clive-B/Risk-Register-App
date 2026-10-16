@@ -15,6 +15,7 @@ const {
 } = require('../utils/workbookCorrectionEngine');
 const { isChampionReviewComplete, canApproveImportBatch } = require('../utils/riskImportBatch');
 const { deriveInitialFocalAssessment } = require('../utils/initialFocalAssessment');
+const { divisionRiskCode } = require('../utils/divisionRiskCode');
 const {
     CONTROL_EFFECTIVENESS,
     CONTROL_TYPES,
@@ -469,8 +470,7 @@ async function notifyRiskSubmitted(req,risk){const users=(await pool.query(`SELE
 
 async function generateRiskId(client, directorate) {
     const year = new Date().getFullYear();
-    const rawCode = String(directorate || 'NCA').split(/\s+/).map(word => word[0]).join('').toUpperCase();
-    const code = rawCode.replace(/[^A-Z]/g, '').slice(0, 6) || 'NCA';
+    const code = divisionRiskCode(directorate);
     const prefix = `${code}-RSK-${year}-`;
     const result = await client.query(
         `

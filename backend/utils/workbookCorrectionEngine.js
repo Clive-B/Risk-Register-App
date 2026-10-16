@@ -1,5 +1,6 @@
 const { assessRiskText } = require('./riskAssessmentEngine');
 const { generateTreatmentProposal } = require('./treatmentProposalEngine');
+const { divisionRiskCode } = require('./divisionRiskCode');
 
 const CORRECTION_RULES_VERSION = 'ERM-WORKBOOK-CORRECTIONS-1.1';
 const APPROVED_RESPONSES = ['Terminate','Treat','Transfer','Tolerate'];
@@ -81,11 +82,6 @@ function stableCode(value) {
     return (hash >>> 0).toString(36).toUpperCase().padStart(6,'0').slice(0,6);
 }
 
-function divisionCode(value) {
-    const code = String(value || 'NCA').split(/\s+/).map(word => word[0]).join('').replace(/[^A-Z0-9]/gi,'').toUpperCase();
-    return code.slice(0,6) || 'NCA';
-}
-
 function futureDate(days) {
     return new Date(Date.now() + days * 86400000).toISOString().slice(0,10);
 }
@@ -120,7 +116,7 @@ function buildWorkbookCorrectionProposal({row,risk,baseCorrections = [],template
     const contextualControls = CATEGORY_CONTROLS[system.category] || CATEGORY_CONTROLS.Operational;
     const contextualKey = [division,programme,contextualTitle,contextualDescription,row.excel_row].join('|');
 
-    addMissingSuggestion({corrections,values,original,field:'risk_id',value:`${divisionCode(division)}-RSK-${stableCode(contextualKey)}`,ruleId:'CONTEXT-RISK-ID',
+    addMissingSuggestion({corrections,values,original,field:'risk_id',value:`${divisionRiskCode(division)}-RSK-${stableCode(contextualKey)}`,ruleId:'CONTEXT-RISK-ID',
         explanation:'A provisional unique Risk ID was generated from the division, programme, risk event and Excel row. It remains editable and is checked against the enterprise register before admission.',confidence:'Medium',
         validation:'Confirm a unique Risk ID no longer than 30 characters.'});
     addMissingSuggestion({corrections,values,original,field:'programme_project',value:programme,ruleId:'CONTEXT-PROGRAMME',

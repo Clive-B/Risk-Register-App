@@ -96,7 +96,7 @@ test('Template 3 proposes contextual values or governed review prompts for every
 
     const missingFields = Object.entries(original).filter(([,value]) => value === null).map(([field]) => field);
     missingFields.forEach(field => assert.ok(result.corrections.some(rule => rule.field === field),`${field} should have a governed suggestion`));
-    assert.match(result.values.risk_id,/^IT-RSK-/);
+    assert.match(result.values.risk_id,/^INFO-RSK-/);
     assert.equal(result.values.risk_treatment,'Treat');
     assert.equal(result.values.control_effectiveness,'Not Assessed');
     assert.equal(result.values.control_last_tested_date,null);

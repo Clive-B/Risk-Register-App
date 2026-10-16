@@ -78,10 +78,10 @@ test('Template 3 creates division parent and child IDs for a merged programme wi
     const parsed = parseRiskWorkbook('Engineering Updated.xlsx',XLSX.write(workbook,{type:'buffer',bookType:'xlsx'}).toString('base64'),{division:'Engineering'});
 
     assert.deepEqual(parsed.rows.map(row => row.data.risk_id),[
-        'ENG-RSK-2026-001-01','ENG-RSK-2026-001-02','ENG-RSK-2026-001-03','ENG-RSK-2026-001-04'
+        'ENGI-RSK-2026-001-01','ENGI-RSK-2026-001-02','ENGI-RSK-2026-001-03','ENGI-RSK-2026-001-04'
     ]);
     parsed.rows.forEach((row,index) => {
-        assert.equal(row.data.parent_risk_id,'ENG-RSK-2026-001');
+        assert.equal(row.data.parent_risk_id,'ENGI-RSK-2026-001');
         assert.equal(row.data.programme_project,'Automated Spectrum Management System expansion');
         assert.equal(row.original_data.risk_id,null);
         assert.ok(row.corrections.some(correction => correction.field === 'risk_id' && correction.proposed.endsWith(`-0${index + 1}`)));
