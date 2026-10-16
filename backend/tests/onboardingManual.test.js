@@ -41,6 +41,18 @@ test('successful sign-in presents a one-time route to the current user manual', 
     assert.match(sidebar, /pages\/system-manual\.html/);
 });
 
+test('password change cannot be reported as failed by post-commit activation work', () => {
+    const controller = read('backend/controllers/authController.js');
+    const actions = read('backend/services/actionService.js');
+
+    assert.match(controller, /systemGenerated:true/);
+    assert.match(controller, /try\s*{\s*await completeBySource\('UserActivation'/);
+    assert.match(controller, /User activation action completion failed/);
+    assert.match(actions, /sourceVerified=false/);
+    assert.match(actions, /const allowed=sourceVerified\|\|actor\.role/);
+    assert.match(actions, /sourceVerified:true/);
+});
+
 test('welcome delivery includes only the fixed packaged manual attachment and current guide link', () => {
     const email = read('backend/services/emailService.js');
     const queue = read('backend/services/communicationService.js');

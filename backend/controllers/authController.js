@@ -146,8 +146,12 @@ exports.changePassword = async (req,res) => {
         const session=await issueSession(client,{...user,token_version:Number(user.token_version)+1},req);
         await client.query('COMMIT');await logAudit({req,user,action:'PASSWORD_CHANGED',entityType:'User',entityId:user.id});
         const admins=await pool.query("SELECT id FROM users WHERE role='System Administrator' AND status='Active'");
-        await Promise.allSettled(admins.rows.map(admin=>createNotification({actor:req.user,req,userId:admin.id,title:'Password Changed',message:`${user.full_name} completed the required password change.`,type:'Security',category:'User Management',entityType:'User',entityId:user.id,createdBy:req.user.id})));
-        await completeBySource('UserActivation',user.id,{actor:req.user,req,comments:'First-login password change completed.'});
+        await Promise.allSettled(admins.rows.map(admin=>createNotification({actor:req.user,req,userId:admin.id,title:'Password Changed',message:`${user.full_name} completed the required password change.`,type:'Security',category:'User Management',priority:'High',entityType:'User',entityId:user.id,createdBy:req.user.id,systemGenerated:true})));
+        try {
+            await completeBySource('UserActivation',user.id,{actor:req.user,req,comments:'First-login password change completed.'});
+        } catch(actionError) {
+            console.error('User activation action completion failed:',actionError.message);
+        }
         try { await sendPasswordChangedEmail({email:user.email,fullName:user.full_name,userId:user.id,role:user.role,directorate:user.division||user.directorate,sentBy:user.id}); await logAudit({req,user,action:'PASSWORD_CHANGED_EMAIL_QUEUED',entityType:'User',entityId:user.id}); } catch(emailError) { console.error('Password confirmation email failed:',emailError.message); await logAudit({req,user,action:'PASSWORD_CHANGED_EMAIL_FAILED',entityType:'User',entityId:user.id,status:'Failed'}); }
         res.json({success:true,message:'Password changed successfully.',...session,redirectTo:`${process.env.FRONTEND_URL || 'http://localhost:5500'}/nca-grc-risk-register.html`});
     }catch(e){await client.query('ROLLBACK');console.error(e);res.status(500).json({success:false,message:'Unable to change password.'});}finally{client.release();}
