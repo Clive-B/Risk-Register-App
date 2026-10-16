@@ -12,6 +12,9 @@ test('dedicated Risk Register page exposes Template 3 as the sole official workb
     assert.match(page,/sole official/);
     assert.match(page,/NCA_Official_Division_Risk_Register_Tracker_Upload_Template\.xlsx/);
     assert.match(page,/data-upload-engine="division"/);
+    assert.match(page,/>Download Template<\/a>/);
+    assert.match(page,/>Upload Template<\/button>/);
+    assert.doesNotMatch(page,/>Download Template 3<|>Upload Template 3</);
     assert.doesNotMatch(page,/NCA_Official_Risk_Register_Upload_Template\.xlsx/);
     assert.doesNotMatch(page,/NCA_Official_Risk_Register_Template_2\.xlsx/);
     assert.doesNotMatch(page,/data-upload-engine="(?:standard|legal)"/);
