@@ -25,3 +25,8 @@ test('every Focal and Administrator risk-register admission path enforces Templa
     const calls = controller.match(/requireOfficialRiskRegisterTemplate\s*\(/g) || [];
     assert.equal(calls.length, 3);
 });
+
+test('missing governed template files return 404 instead of the application shell', () => {
+    const nginx = fs.readFileSync(path.resolve(__dirname,'../../deploy/linux-test/nginx.conf'),'utf8');
+    assert.match(nginx,/location \^~ \/templates\/\s*\{\s*try_files \$uri =404;/);
+});
