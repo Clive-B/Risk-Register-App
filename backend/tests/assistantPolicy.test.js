@@ -28,12 +28,14 @@ test('screen context accepts bounded visible values but rejects unsupported prop
         pageTitle: 'Create Risk',
         activeField: { id: 'risk_title', label: 'Risk Title', kind: 'text', required: true, empty: true, invalid: false, disabled: false },
         fields: [{ id: 'target_completion_date', label: 'Target Completion Date', kind: 'date', required: true, empty: false, invalid: true, validationMessage: 'Target Completion Date must not be in the past.', disabled: false, value: '2026-12-06' }],
-        controls: [{ id: 'saveDraftBtn', label: 'Save Draft', disabled: false }],
+        controls: [{ id: 'saveDraftBtn', label: 'Save Draft', disabled: false, tag: 'button', controlType: 'button', context: 'Create Risk', purpose: 'Saves the current entry as a draft.', effect: 'No approval is recorded.', requirements: 'Enter a risk title.' }],
         content: [{ kind: 'table', title: 'Risks', text: 'Columns: Risk | Owner. 4 rendered rows.' }]
     });
     assert.equal(context.fields[0].invalid, true);
     assert.equal(context.fields[0].value, '2026-12-06');
     assert.equal(context.controls[0].id, 'saveDraftBtn');
+    assert.equal(context.controls[0].purpose, 'Saves the current entry as a draft.');
+    assert.equal(context.controls[0].effect, 'No approval is recorded.');
     assert.equal(context.content[0].kind, 'table');
     assert.equal(validateScreenContext({ fields: [{ id: 'password', kind: 'password', value: 'secret' }] }).fields[0].value, '');
     assert.throws(() => validateScreenContext({ fields: [{ id: 'risk_title', unsupportedValue: 'entry' }] }), /unsupported property/);

@@ -24,7 +24,7 @@
     <div><strong>3 · Governed onboarding</strong><p>Prior sessions are revoked; the new holder receives a temporary password and must change it.</p></div>
   </section>
   <section class="mapping-card">
-    <div class="mapping-toolbar"><div><h2>Current role holders</h2><p id="mappingSummary">Loading organizational accounts…</p></div><div class="mapping-toolbar-actions"><input id="mappingSearch" type="search" placeholder="Search division, role or holder"><button id="sendDeferredOnboarding" type="button" disabled>Send Deferred Onboarding</button></div></div>
+    <div class="mapping-toolbar"><div><h2>Current role holders</h2><p id="mappingSummary">Loading organizational accounts…</p></div><div class="mapping-toolbar-actions"><input id="mappingSearch" type="search" placeholder="Search division, role or holder"><button id="sendDeferredOnboarding" type="button" disabled data-assistant-purpose="Sends onboarding messages to all mapped holders whose onboarding was deferred." data-assistant-effect="After confirmation, it generates fresh temporary passwords, revokes active sessions for those deferred accounts and queues individual onboarding messages." data-assistant-requires="At least one mapped holder must have deferred onboarding, and a System Administrator must confirm the group send.">Send Deferred Onboarding</button></div></div>
     <div class="mapping-table-wrap"><table><thead><tr><th>Division</th><th>Organizational role account</th><th>Role</th><th>Current holder</th><th>Official login email</th><th>Effective from</th><th>State</th><th>Action</th></tr></thead><tbody id="mappingRows"></tbody></table></div>
   </section>
 </main></div>
@@ -42,7 +42,7 @@
       <label class="wide">Assignment / replacement reason<textarea name="replacement_reason" required placeholder="Promotion, transfer, retirement, new appointment…"></textarea></label>
       <label class="wide defer-option"><input name="defer_onboarding" type="checkbox"> Defer this email and include the holder in the group onboarding send</label>
     </div>
-    <footer><button type="button" id="mappingCancel">Cancel</button><button type="submit" id="mappingSubmit">Map Holder &amp; Send Onboarding</button></footer>
+    <footer><button type="button" id="mappingCancel">Cancel</button><button type="submit" id="mappingSubmit" data-assistant-purpose="Submits the personnel assignment shown in this dialog." data-assistant-effect="It maps the named holder, ends any former holder's access, preserves history, transfers unfinished assigned work and sends or defers onboarding as selected." data-assistant-requires="Complete all required identity, effective-date and assignment-reason fields, then review them before submitting.">Map Holder &amp; Send Onboarding</button></footer>
   </form>
 </dialog>
 <dialog id="clearDialog">

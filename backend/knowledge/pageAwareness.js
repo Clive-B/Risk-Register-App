@@ -1,3 +1,5 @@
+const controlGuidance = require('./controlGuidance');
+
 function clean(value, limit = 600) {
     return String(value || '').replace(/\s+/g, ' ').trim().slice(0, limit);
 }
@@ -31,6 +33,8 @@ function contentLabel(item) {
 }
 
 function answer(question, pageKey, user, screenContext = {}) {
+    const controlAnswer = controlGuidance.answer(question, pageKey, user, screenContext);
+    if (controlAnswer) return controlAnswer;
     if (!isPageAwarenessQuestion(question)) return null;
     const pageTitle = clean(screenContext.pageTitle, 160) || clean(pageKey, 160) || 'the current page';
     const dialogTitle = clean(screenContext.dialogTitle, 160);

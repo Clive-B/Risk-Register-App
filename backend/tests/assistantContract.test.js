@@ -99,6 +99,8 @@ test('assistant captures bounded visible page structure and routes it locally', 
     const client = read('frontend/js/assistant.js');
     const controller = read('backend/controllers/assistantController.js');
     assert.match(client, /collectVisibleContent\(contentScope\)/);
+    assert.match(client, /data\.assistantPurpose|dataset\.assistantPurpose/);
+    assert.match(client, /controlType:/);
     assert.match(client, /\['password', 'hidden', 'file'\]\.includes\(kind\)/);
     assert.match(client, /#ncaAssistantRoot,\[data-assistant-exclude\],\[data-sensitive\]/);
     assert.match(controller, /pageAwareness\.answer\(request\.prompt, key, user, request\.screenContext\)/);

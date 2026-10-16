@@ -37,7 +37,7 @@ function validateScreenItem(item, kind) {
     if (!item || typeof item !== 'object' || Array.isArray(item)) throw invalid(`Each screen ${kind} must be an object.`);
     const allowed = kind === 'field'
         ? new Set(['id', 'label', 'kind', 'required', 'empty', 'invalid', 'validationMessage', 'disabled', 'value'])
-        : new Set(['id', 'label', 'disabled']);
+        : new Set(['id', 'label', 'disabled', 'tag', 'controlType', 'destination', 'context', 'purpose', 'effect', 'requirements']);
     if (Object.keys(item).some(key => !allowed.has(key))) throw invalid(`Screen ${kind}s contain an unsupported property.`);
     const clean = {
         id: boundedText(item.id, LIMITS.screenText),
@@ -52,6 +52,15 @@ function validateScreenItem(item, kind) {
         validationMessage: boundedText(item.validationMessage, LIMITS.validationMessage),
         value: ['password', 'hidden', 'file'].includes(boundedText(item.kind, 40).toLowerCase())
             ? '' : boundedText(item.value, LIMITS.screenValue)
+    });
+    if (kind === 'control') Object.assign(clean, {
+        tag: boundedText(item.tag, 20).toLowerCase(),
+        controlType: boundedText(item.controlType, 40).toLowerCase(),
+        destination: boundedText(item.destination, 300),
+        context: boundedText(item.context, LIMITS.screenText),
+        purpose: boundedText(item.purpose, 400),
+        effect: boundedText(item.effect, 400),
+        requirements: boundedText(item.requirements, 400)
     });
     return clean;
 }

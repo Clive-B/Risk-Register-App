@@ -37,9 +37,9 @@
       <td>${slot.effective_from ? new Date(slot.effective_from).toLocaleDateString() : '—'}</td>
       <td><span class="state ${slot.identity_type === 'Role Placeholder' ? 'placeholder' : ''}">${esc(slot.holder_user_id ? (slot.email_status === 'Deferred' ? 'Onboarding deferred' : 'Named employee') : 'Unassigned')}</span></td>
       <td><div class="table-actions">
-        <button class="primary" data-map="${slot.id}">${slot.holder_user_id ? 'Replace' : 'Assign'}</button>
-        ${slot.holder_user_id ? `<button class="danger" data-clear="${slot.id}">Clear</button>` : ''}
-        <button data-history="${slot.id}">History</button>
+        <button class="primary" data-map="${slot.id}" data-assistant-purpose="Opens the personnel-assignment form for this permanent organisational role account." data-assistant-effect="Opening the form changes nothing. Submitting a replacement preserves assignment history, ends the former holder's access, revokes active sessions, transfers unfinished Action Centre work and maps the new named holder." data-assistant-requires="A System Administrator must provide the new holder's name, official NCA email, effective date and an assignment or replacement reason.">${slot.holder_user_id ? 'Replace' : 'Assign'}</button>
+        ${slot.holder_user_id ? `<button class="danger" data-clear="${slot.id}" data-assistant-purpose="Opens the governed access-withdrawal form for the current role holder." data-assistant-effect="Opening the form changes nothing. Confirming it ends the current assignment, disables the holder's access and preserves the assignment history; it does not appoint a successor." data-assistant-requires="A System Administrator must provide an effective end date and clearance reason.">Clear</button>` : ''}
+        <button data-history="${slot.id}" data-assistant-purpose="Opens the recorded holder-assignment history for this organisational role account." data-assistant-effect="This is a read-only view and does not change access or assignments." data-assistant-requires="No additional entry is required.">History</button>
       </div></td>
     </tr>`).join('') || '<tr><td colspan="8">No role accounts match this search.</td></tr>';
     if (sendDeferred) {

@@ -384,6 +384,31 @@
         };
     }
 
+    function screenControl(control) {
+        if (!control || !isVisible(control)) return null;
+        const labelledContext = control.closest('dialog,form,section,article,.card,.panel');
+        const context = labelledContext?.querySelector('h1,h2,h3,h4,[role="heading"]')?.textContent || '';
+        let destination = '';
+        if (control.tagName === 'A' && control.getAttribute('href')) {
+            try {
+                const target = new URL(control.getAttribute('href'), window.location.href);
+                if (target.origin === window.location.origin) destination = `${target.pathname}${target.search}`;
+            } catch (_) { /* Ignore malformed or external destinations. */ }
+        }
+        return {
+            id: String(control.id || '').slice(0, 160),
+            label: String(control.textContent || control.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim().slice(0, 160),
+            disabled: control.disabled === true,
+            tag: String(control.tagName || '').toLowerCase().slice(0, 20),
+            controlType: String(control.getAttribute('type') || (control.tagName === 'A' ? 'link' : 'button')).toLowerCase().slice(0, 40),
+            destination: destination.slice(0, 300),
+            context: normalisedScreenText(context, 160),
+            purpose: normalisedScreenText(control.dataset.assistantPurpose, 400),
+            effect: normalisedScreenText(control.dataset.assistantEffect, 400),
+            requirements: normalisedScreenText(control.dataset.assistantRequires, 400)
+        };
+    }
+
     function normalisedScreenText(value, limit = SCREEN_CONTENT_TEXT_LIMIT) {
         return String(value || '').replace(/\s+/g, ' ').trim().slice(0, limit);
     }
@@ -445,12 +470,8 @@
         const fields = [...scope.querySelectorAll('input,select,textarea')]
             .map(field => screenField(field, requiredIds)).filter(Boolean).slice(0, SCREEN_FIELD_LIMIT);
         const controls = [...scope.querySelectorAll('button,a[href]')]
-            .filter(control => isVisible(control))
-            .map(control => ({
-                id: String(control.id || '').slice(0, 160),
-                label: String(control.textContent || control.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim().slice(0, 160),
-                disabled: control.disabled === true
-            }))
+            .map(screenControl)
+            .filter(Boolean)
             .filter(control => control.id || control.label)
             .slice(0, SCREEN_CONTROL_LIMIT);
         const contentScope = overlay || document.querySelector('main,[role="main"],.main-content,.page-content') || document;
