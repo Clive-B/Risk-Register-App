@@ -22,6 +22,7 @@ local_model_sha256="74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7
 embedding_model_file="all-MiniLM-L6-v2-Q4_K_M.gguf"
 embedding_model_url="https://huggingface.co/second-state/All-MiniLM-L6-v2-Embedding-GGUF/resolve/e2cd77b26b3b606e353cf34ad3a635143d14b5de/all-MiniLM-L6-v2-Q4_K_M.gguf"
 embedding_model_sha256="2ec4cee28a27a9c973d5f5230930d6ef6e52694bd2bc71be26a9bef5b1d755e6"
+smtp_test_sender="ncariskmanagementsystem@gmail.com"
 
 umask 077
 mkdir -p "$root/releases" "$root/backups" "$root/models" "$release_dir"
@@ -81,6 +82,7 @@ SMTP_PASSWORD=
 SMTP_FROM=NCA GRC <no-reply@nca.org.gh>
 SMTP_SECURE=false
 SMTP_ALLOW_SELF_SIGNED=true
+SMTP_ALLOWED_EXTERNAL_SENDERS=$smtp_test_sender
 MAIL_FROM=no-reply@nca.org.gh
 DISABLE_COMMUNICATION_WORKER=false
 EMAIL_QUEUE_BATCH_SIZE=20
@@ -132,6 +134,9 @@ set_env_value AI_MAX_OUTPUT_TOKENS 48
 set_env_value AI_GOVERNED_CONTEXT_EXTERNAL_ALLOWED false
 set_env_value AI_PROCESSING_REGION on-premises-test-environment
 set_env_value AI_HOSTING_REGION on-premises-test-environment
+# This non-production environment permits one exact Gmail service identity for
+# onboarding delivery tests. All other external sender addresses remain denied.
+set_env_value SMTP_ALLOWED_EXTERNAL_SENDERS "$smtp_test_sender"
 chmod 600 "$env_file"
 
 if [[ -z "$db_password" ]]; then

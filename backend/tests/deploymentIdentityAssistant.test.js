@@ -43,6 +43,13 @@ test('account mapping renders rows before optional onboarding controls and expos
   assert.match(script,/retryMappingLoad/);
 });
 
+test('test deployment allowlists only the approved Gmail service identity',()=>{
+  const deployment=read('deploy/linux-test/deploy-release.sh');
+  assert.match(deployment,/smtp_test_sender="ncariskmanagementsystem@gmail\.com"/);
+  assert.match(deployment,/set_env_value SMTP_ALLOWED_EXTERNAL_SENDERS "\$smtp_test_sender"/);
+  assert.doesNotMatch(deployment,/SMTP_ALLOWED_EXTERNAL_SENDERS=\*|@gmail\.com,|gmail\.com\s*$/m);
+});
+
 test('first-login and expired-password changes are enforced by the API',()=>{
   const middleware=read('backend/middleware/authMiddleware.js');
   const login=read('frontend/js/login.js');
