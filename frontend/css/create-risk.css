@@ -120,10 +120,18 @@
 .history-entry p{margin:3px 0;color:#475467;line-height:1.45}
 .history-actor{font-size:12px;font-weight:700;color:#667085}
 .history-empty{margin:0;color:var(--muted)}
+.risk-batch-section{border-color:#b2ddff}
+.risk-batch-list{display:grid;gap:10px;padding:18px 22px}
+.risk-batch-item{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border:1px solid var(--border);border-radius:10px;background:#f8fafc}
+.risk-batch-item strong,.risk-batch-item span{display:block}
+.risk-batch-item span{margin-top:4px;color:var(--muted);font-size:12px}
+.risk-batch-item button{width:auto;min-height:38px;padding:8px 13px;border:1px solid #fca5a5;background:#fff;color:#b42318}
+.batch-count{padding:6px 10px;border-radius:999px;background:#e0f2fe;color:#075985!important;white-space:nowrap}
 
 @media(max-width:760px){
     .workflow-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
     .history-entry{grid-template-columns:1fr;gap:6px}
+    .risk-batch-item{align-items:stretch;flex-direction:column}
 }
 
 .compact{

@@ -1,0 +1,11 @@
+FROM node:20-alpine
+
+WORKDIR /app/backend
+COPY --chown=node:node backend/package.json backend/package-lock.json ./
+RUN npm ci --omit=dev
+
+COPY --chown=node:node backend ./
+USER node
+
+EXPOSE 3062
+CMD ["node", "server.js"]

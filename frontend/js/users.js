@@ -58,6 +58,7 @@ if (window.NCAGRC_ACCESS_DENIED) {
 
 const elements = {
     addUserBtn: document.getElementById("addUserBtn"),
+    createAdminBtn: document.getElementById("createAdminBtn"),
     bulkUserBtn: document.getElementById("bulkUserBtn"),
     closeModal: document.getElementById("closeModal"),
     closeModalBtn: document.getElementById("closeModalBtn"),
@@ -135,6 +136,7 @@ function setLoading(isLoading) {
     elements.loadingState.style.display = isLoading ? "block" : "none";
     elements.saveUser.disabled = isLoading;
     elements.addUserBtn.disabled = isLoading;
+    if (elements.createAdminBtn) elements.createAdminBtn.disabled = isLoading;
     if (elements.bulkUserBtn) elements.bulkUserBtn.disabled = isLoading;
 }
 
@@ -311,6 +313,16 @@ function updateRoleScope() {
     fields.directorate.required = !isSystemAdministrator;
 
     if (isSystemAdministrator) fields.directorate.value = "";
+    const warning = document.getElementById("adminPrivilegeWarning");
+    if (warning) warning.hidden = fields.role.value !== "System Administrator";
+}
+
+function openAdministratorModal() {
+    openModal();
+    fields.role.value = "System Administrator";
+    updateRoleScope();
+    elements.modalTitle.textContent = "Create Administrator";
+    elements.saveUser.textContent = "Create Administrator";
 }
 
 function openModal(user = null) {
@@ -738,6 +750,7 @@ function bindEvents() {
     });
 
     elements.addUserBtn.addEventListener("click", () => openModal());
+    elements.createAdminBtn?.addEventListener("click", openAdministratorModal);
     elements.bulkUserBtn.addEventListener("click", openBulkUserModal);
     document.getElementById("closeBulkUserModal").addEventListener("click", closeBulkUserModal);
     document.getElementById("manualBulkTab").addEventListener("click", () => switchBulkMode("manual"));

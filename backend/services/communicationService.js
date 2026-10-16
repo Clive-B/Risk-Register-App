@@ -7,12 +7,12 @@ function encrypt(value){const iv=crypto.randomBytes(12),cipher=crypto.createCiph
 function decrypt(value){const data=Buffer.from(value,'base64'),iv=data.subarray(0,12),tag=data.subarray(12,28),body=data.subarray(28),decipher=crypto.createDecipheriv('aes-256-gcm',key(),iv);decipher.setAuthTag(tag);return JSON.parse(Buffer.concat([decipher.update(body),decipher.final()]).toString('utf8'));}
 function render(template,values={}){return String(template||'').replace(/{{\s*([a-z0-9_]+)\s*}}/gi,(_,name)=>String(values[name]??''));}
 
-async function queueEmail({to,subject,text,html,emailType='General',userId=null,role=null,directorate=null,sentBy=null,idempotencyKey=null,metadata={}}){
+async function queueEmail({to,subject,text,html,includeUserManual=false,emailType='General',userId=null,role=null,directorate=null,sentBy=null,idempotencyKey=null,metadata={}}){
  const recipient=String(to||'').trim().toLowerCase();
  if(!isValidNcaEmail(recipient))throw new Error('Email delivery is restricted to official @nca.org.gh addresses.');
  if(/[\r\n]/.test(String(subject||'')))throw new Error('Email subject contains invalid characters.');
  const result=await pool.query(`INSERT INTO email_deliveries(recipient_email,recipient_user_id,recipient_role,recipient_directorate,email_type,subject,status,encrypted_payload,sent_by,idempotency_key,metadata)
- VALUES($1,$2,$3,$4,$5,$6,'Queued',$7,$8,$9,$10) ON CONFLICT(idempotency_key) WHERE idempotency_key IS NOT NULL DO UPDATE SET idempotency_key=EXCLUDED.idempotency_key RETURNING id,status,created_at`,[recipient,userId,role,directorate,emailType,subject,encrypt({to:recipient,subject,text,html}),sentBy,idempotencyKey,metadata]);
+ VALUES($1,$2,$3,$4,$5,$6,'Queued',$7,$8,$9,$10) ON CONFLICT(idempotency_key) WHERE idempotency_key IS NOT NULL DO UPDATE SET idempotency_key=EXCLUDED.idempotency_key RETURNING id,status,created_at`,[recipient,userId,role,directorate,emailType,subject,encrypt({to:recipient,subject,text,html,includeUserManual:Boolean(includeUserManual)}),sentBy,idempotencyKey,metadata]);
  return {messageId:String(result.rows[0].id),queued:true,status:result.rows[0].status};
 }
 

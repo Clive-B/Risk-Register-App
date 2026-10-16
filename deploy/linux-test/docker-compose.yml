@@ -1,0 +1,83 @@
+services:
+  local-ai:
+    image: ghcr.io/ggml-org/llama.cpp:server-b10868@sha256:adcaa8dcf950de0a5c826e265d823b49d6426dec90b7c616e3ddbe6421e4dad2
+    container_name: nca-grc-test-local-ai
+    restart: unless-stopped
+    network_mode: container:dev-postgres
+    command: ["-m", "/models/qwen2.5-0.5b-instruct-q4_k_m.gguf", "--host", "127.0.0.1", "--port", "8080", "-c", "2048", "-np", "1", "-t", "5", "-n", "64", "--no-webui"]
+    volumes:
+      - /development/playground/nca-grc-test/models:/models:ro
+    mem_limit: 6g
+    cpus: 5.0
+    pids_limit: 256
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "/app/llama-server", "--version"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 15s
+
+  local-embeddings:
+    image: ghcr.io/ggml-org/llama.cpp:server-b10868@sha256:adcaa8dcf950de0a5c826e265d823b49d6426dec90b7c616e3ddbe6421e4dad2
+    container_name: nca-grc-test-local-embeddings
+    restart: unless-stopped
+    network_mode: container:dev-postgres
+    command: ["-m", "/models/all-MiniLM-L6-v2-Q4_K_M.gguf", "--host", "127.0.0.1", "--port", "8081", "--embeddings", "--pooling", "mean", "-c", "512", "-b", "512", "-ub", "512", "-t", "2", "--no-webui"]
+    volumes:
+      - /development/playground/nca-grc-test/models:/models:ro
+    mem_limit: 1g
+    cpus: 2.0
+    pids_limit: 128
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "/app/llama-server", "--version"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    image: nca-grc-test-api:${RELEASE_ID:-current}
+    container_name: nca-grc-test-api
+    restart: unless-stopped
+    network_mode: container:dev-postgres
+    env_file:
+      - /development/playground/nca-grc-test/.env
+    depends_on:
+      local-ai:
+        condition: service_healthy
+      local-embeddings:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3062/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  web:
+    image: nginx:alpine
+    container_name: nca-grc-test-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "3054:443"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /development/base_containers/npm/data/custom_ssl/npm-1/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
+      - /development/base_containers/npm/data/custom_ssl/npm-1/privkey.pem:/etc/nginx/certs/privkey.pem:ro
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    external: true

@@ -50,6 +50,7 @@ const elements = {
     saveTreatment: document.getElementById("saveTreatment"),
     searchInput: document.getElementById("searchInput"),
     statusFilter: document.getElementById("statusFilter"),
+    sortFilter: document.getElementById("sortFilter"),
     table: document.getElementById("treatmentTable"),
     toastContainer: document.getElementById("toastContainer"),
     treatmentViewBody: document.getElementById("treatmentViewBody"),
@@ -151,10 +152,12 @@ function buildTreatmentQuery() {
     const search = elements.searchInput.value.trim();
     const directorate = elements.directorateFilter.value;
     const status = elements.statusFilter.value;
+    const sort = elements.sortFilter.value;
 
     if (search) params.set("search", search);
     if (directorate) params.set("directorate", directorate);
     if (status) params.set("status", status);
+    if (sort) params.set("sort", sort);
 
     const query = params.toString();
     return query ? `?${query}` : "";
@@ -283,6 +286,7 @@ function renderTreatmentPlans() {
                     ${escapeHtml(plan.is_overdue && plan.status !== "Completed" ? "Overdue" : plan.status)}
                 </span>
             </td>
+            <td>${plan.completed_at ? `<strong>${formatDate(plan.completed_at)}</strong>` : '<span class="not-recorded">—</span>'}</td>
             <td>
                 <span class="evidence-badge ${evidenceLabel === "Attached" ? "attached" : "pending"}">
                     ${evidenceLabel}
@@ -868,7 +872,8 @@ function bindEvents() {
     [
         elements.searchInput,
         elements.directorateFilter,
-        elements.statusFilter
+        elements.statusFilter,
+        elements.sortFilter
     ].forEach(field => {
         field.addEventListener("input", loadPageData);
         field.addEventListener("change", loadPageData);

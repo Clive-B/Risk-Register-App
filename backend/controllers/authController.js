@@ -11,6 +11,17 @@ const { createAction, completeBySource } = require('../services/actionService');
 const publicMessage = 'If the address is registered, a password reset link will be sent.';
 const normalizeEmail = value => String(value || '').trim().toLowerCase();
 
+exports.passwordPolicy = (_req, res) => res.json({
+    success: true,
+    policy: {
+        minLength: PASSWORD_POLICY.minLength,
+        requireUppercase: true,
+        requireLowercase: true,
+        requireNumber: true,
+        requireSpecialCharacter: true
+    }
+});
+
 async function issueSession(client, user, req) {
     const sessionId = crypto.randomUUID();
     const refresh = createOpaqueToken();

@@ -1190,6 +1190,8 @@ exports.editConsolidatedRisk = async (req, res) => {
         const input = {
             risk_title: optionalString(req.body.risk_title),
             risk_description: optionalString(req.body.risk_description),
+            risk_source: optionalString(req.body.risk_source),
+            risk_cause: optionalString(req.body.risk_cause),
             risk_category: normalizeRiskCategory(req.body.risk_category),
             division,
             business_unit: optionalString(req.body.business_unit),
@@ -1237,20 +1239,20 @@ exports.editConsolidatedRisk = async (req, res) => {
 
         const updated = (await client.query(
             `UPDATE risks SET
-                risk_title=$1,risk_description=$2,risk_category=$3,
-                directorate=$4,division=$4,business_unit=$5,programme_project=$6,
-                risk_owner=$7,date_identified=COALESCE($8,date_identified),
-                existing_controls=$9,control_effectiveness=$10,risk_treatment=$11,
-                initial_mitigation_plan=$12,responsible_officer=$13,
-                target_completion_date=$14,assessment_year=$15,
-                control_type=$16,control_owner=$17,control_design_adequacy=$18,
-                control_evidence=$19,control_last_tested_date=$20,control_exceptions=$21,
-                control_next_review_date=$22,control_assessment_basis=$23,
-                control_assessment_confidence=$24,control_assessed_by=$25,
+                risk_title=$1,risk_description=$2,risk_source=$3,risk_cause=$4,risk_category=$5,
+                directorate=$6,division=$6,business_unit=$7,programme_project=$8,
+                risk_owner=$9,date_identified=COALESCE($10,date_identified),
+                existing_controls=$11,control_effectiveness=$12,risk_treatment=$13,
+                initial_mitigation_plan=$14,responsible_officer=$15,
+                target_completion_date=$16,assessment_year=$17,
+                control_type=$18,control_owner=$19,control_design_adequacy=$20,
+                control_evidence=$21,control_last_tested_date=$22,control_exceptions=$23,
+                control_next_review_date=$24,control_assessment_basis=$25,
+                control_assessment_confidence=$26,control_assessed_by=$27,
                 control_assessed_at=NOW(),updated_at=NOW()
-             WHERE id=$26 RETURNING *`,
+             WHERE id=$28 RETURNING *`,
             [
-                input.risk_title,input.risk_description,input.risk_category,input.division,
+                input.risk_title,input.risk_description,input.risk_source,input.risk_cause,input.risk_category,input.division,
                 input.business_unit,input.programme_project,input.risk_owner,input.date_identified,
                 input.existing_controls,input.control_effectiveness,input.risk_treatment,
                 input.initial_mitigation_plan,input.responsible_officer,input.target_completion_date,
@@ -1296,11 +1298,11 @@ exports.editConsolidatedRisk = async (req, res) => {
             details:{
                 source:risk.entry_source,
                 before:{
-                    title:risk.risk_title,category:risk.risk_category,division:risk.division || risk.directorate,
+                    title:risk.risk_title,source:risk.risk_source,cause:risk.risk_cause,category:risk.risk_category,division:risk.division || risk.directorate,
                     programme:risk.programme_project,owner:risk.risk_owner,treatment:risk.risk_treatment
                 },
                 after:{
-                    title:input.risk_title,category:input.risk_category,division:input.division,
+                    title:input.risk_title,source:input.risk_source,cause:input.risk_cause,category:input.risk_category,division:input.division,
                     programme:input.programme_project,owner:input.risk_owner,treatment:input.risk_treatment
                 }
             }
@@ -1466,6 +1468,7 @@ async function prepareImportedRows(parsed, user) {
         const risk = normalizeImportedRisk(row.data, user, parsed.template_type);
         return {
             ...row,
+            template_type: parsed.template_type,
             risk,
             errors: [...row.errors, ...validateImportedRisk(risk, user)]
         };
@@ -1516,10 +1519,10 @@ const CORRECTION_EDITABLE_FIELDS = [
 
 function correctionProposal(row, risk) {
     const engine = buildWorkbookCorrectionProposal({
-        row,risk,baseCorrections:row.corrections || []
+        row,risk,baseCorrections:row.corrections || [],templateType:row.template_type
     });
     const corrections = [...engine.corrections];
-    if (!row.original_data.date_identified) {
+    if (!row.original_data.date_identified && !corrections.some(item => item.field === 'date_identified')) {
         corrections.push(ruleRecord({
             ruleId:'REQUIRED-DATE-IDENTIFIED',mistakeType:'Missing required value',
             field:'date_identified',original:null,proposed:risk.date_identified,
@@ -1529,7 +1532,7 @@ function correctionProposal(row, risk) {
             validation:'Confirm a valid Date Identified between 2020 and 2100.'
         }));
     }
-    if (!row.original_data.risk_category) {
+    if (!row.original_data.risk_category && !corrections.some(item => item.field === 'risk_category')) {
         corrections.push(ruleRecord({
             ruleId:'REQUIRED-RISK-CATEGORY',mistakeType:'Missing required value',
             field:'risk_category',original:null,proposed:risk.risk_category,
@@ -1539,7 +1542,7 @@ function correctionProposal(row, risk) {
             validation:'Select an ERM-approved risk category.'
         }));
     }
-    if (!row.original_data.existing_controls) {
+    if (!row.original_data.existing_controls && !corrections.some(item => item.field === 'existing_controls')) {
         corrections.push(ruleRecord({
             ruleId:'REQUIRED-EXISTING-CONTROLS',mistakeType:'Missing required value',
             field:'existing_controls',original:null,proposed:risk.existing_controls,
@@ -1550,7 +1553,8 @@ function correctionProposal(row, risk) {
         }));
     }
     const controlProposal = assessControlAssurance(risk);
-    if (!ALLOWED_CONTROL_EFFECTIVENESS.includes(optionalString(row.original_data.control_effectiveness))) {
+    if (!ALLOWED_CONTROL_EFFECTIVENESS.includes(optionalString(row.original_data.control_effectiveness))
+        && !corrections.some(item => item.field === 'control_effectiveness')) {
         corrections.push(ruleRecord({
             ruleId:'CONTROL-EFFECTIVENESS-ASSESSMENT',
             mistakeType:'Missing or invalid governed value',
@@ -1581,7 +1585,7 @@ function correctionProposal(row, risk) {
         confidence:'High',
         validation:'Confirm the control evidence and the independently assessed risk scores.'
     }));
-    if (!row.original_data.responsible_officer) {
+    if (!row.original_data.responsible_officer && !corrections.some(item => item.field === 'responsible_officer')) {
         corrections.push(ruleRecord({
             ruleId:'REQUIRED-RESPONSIBLE-OFFICER',mistakeType:'Missing required value',
             field:'responsible_officer',original:null,proposed:risk.responsible_officer,
@@ -1639,6 +1643,7 @@ function applyConfirmedCorrections(parsed, correctedRows) {
         }
         row.user_confirmation = {
             confirmed:true,
+            parent_risk_id:row.data.parent_risk_id || null,
             original_workbook:row.original_data,
             system_proposal:originalProposal,
             confirmed_values:Object.fromEntries(CORRECTION_EDITABLE_FIELDS.map(field => [field,row.data[field] ?? null])),
@@ -1832,7 +1837,7 @@ function workbookErrorResponse(res, error) {
 exports.previewRiskImport = async (req, res) => {
     try {
         const importSubject = await resolveAdminImportSubject(req);
-        const parsed = parseRiskWorkbook(req.body.file_name, req.body.file_data);
+        const parsed = parseRiskWorkbook(req.body.file_name, req.body.file_data,{division:importSubject.division || importSubject.directorate});
         const rows = await prepareImportedRows(parsed, importSubject);
         const scoreDetails = (impact, likelihood) => {
             if (![impact, likelihood].every(value => Number.isInteger(value) && value >= 1 && value <= 5)) return null;
@@ -1891,7 +1896,7 @@ exports.previewRiskImport = async (req, res) => {
                         'The system preserves the original workbook values and proposes a separate, upload-ready record for every risk event.',
                         'The versioned rules detect structural, terminology, required-value and assessment issues. Merged parent values are carried into each event and unique child Risk IDs are proposed where required.',
                         'Missing Pre-, Current- and Post-Mitigation Likelihood and Impact values are generated from the ERM assessment and treatment rules, then left editable for Focal Person confirmation.',
-                        'Accept is translated to the approved response Tolerate. Any blank or unrecognised response must be selected by the user from Terminate, Treat, Transfer or Tolerate.',
+                        'Accept is translated to Tolerate. For Template 3, a blank response receives a contextual ERM suggestion; an unrecognised response still requires an explicit user selection.',
                         'Every proposed change shows the detection rule, proposed correction, explanation, confidence, validation rule and audit record.',
                         'Nothing is uploaded until all proposed risks are valid and explicitly confirmed by the Focal Person.'
                     ]
@@ -1916,7 +1921,7 @@ exports.importRisks = async (req, res) => {
     let importBatchId = null;
     try {
         const parsed = applyConfirmedCorrections(
-            parseRiskWorkbook(req.body.file_name, req.body.file_data),
+            parseRiskWorkbook(req.body.file_name, req.body.file_data,{division:req.user.division || req.user.directorate}),
             req.body.corrected_rows
         );
         const rows = await prepareImportedRows(parsed, req.user);
@@ -2073,7 +2078,7 @@ exports.createAdminImportGroup = async (req, res) => {
             }
             divisions.add(subject.division);
             const parsed = applyConfirmedCorrections(
-                parseRiskWorkbook(item.file_name,item.file_data),item.corrected_rows
+                parseRiskWorkbook(item.file_name,item.file_data,{division:subject.division || subject.directorate}),item.corrected_rows
             );
             const rows = await prepareImportedRows(parsed,subject);
             rows.forEach(row => {

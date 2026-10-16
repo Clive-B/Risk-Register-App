@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Consolidated Risk Register</title>
-<link rel="stylesheet" href="../css/risks.css?v=13">
+<link rel="stylesheet" href="../css/risks.css?v=15">
 <link rel="stylesheet" href="../css/approval-dialog.css?v=4">
 <link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head>
 
@@ -29,6 +29,16 @@
             <div class="form-group full-width">
                 <label>Risk Description</label>
                 <textarea id="risk_description" rows="4" placeholder="Describe the risk event, cause, and possible consequence"></textarea>
+            </div>
+
+            <div class="form-group full-width">
+                <label>Risk Source</label>
+                <textarea id="risk_source" rows="2" placeholder="Record the source or origin of the risk"></textarea>
+            </div>
+
+            <div class="form-group full-width">
+                <label>Risk Cause</label>
+                <textarea id="risk_cause" rows="3" placeholder="Record the underlying cause of the risk"></textarea>
             </div>
 
             <div class="form-group">
@@ -680,6 +690,41 @@
                 </div>
             </div>
         </dialog>
+        <dialog id="riskHistoryDialog" class="nca-approval-dialog nca-scroll-dialog nca-record-dialog" aria-labelledby="riskHistoryTitle">
+            <div class="nca-approval-accent"></div>
+            <div class="nca-approval-body">
+                <div class="nca-record-head">
+                    <div>
+                        <span class="nca-approval-eyebrow">Governed audit trail</span>
+                        <h2 id="riskHistoryTitle">Risk history</h2>
+                        <p id="riskHistoryIdentity" class="nca-approval-risk"></p>
+                    </div>
+                    <button id="closeRiskHistory" class="nca-record-close" type="button" aria-label="Close risk history">&times;</button>
+                </div>
+                <div id="riskHistoryList" class="nca-record-list" aria-live="polite"></div>
+                <div class="nca-approval-actions"><button id="dismissRiskHistory" class="confirm" type="button">Close</button></div>
+            </div>
+        </dialog>
+        <dialog id="riskAttachmentsDialog" class="nca-approval-dialog nca-scroll-dialog nca-record-dialog" aria-labelledby="riskAttachmentsTitle">
+            <div class="nca-approval-accent"></div>
+            <div class="nca-approval-body">
+                <div class="nca-record-head">
+                    <div>
+                        <span class="nca-approval-eyebrow">Risk evidence</span>
+                        <h2 id="riskAttachmentsTitle">Attachments</h2>
+                        <p id="riskAttachmentsIdentity" class="nca-approval-risk"></p>
+                    </div>
+                    <button id="closeRiskAttachments" class="nca-record-close" type="button" aria-label="Close attachments">&times;</button>
+                </div>
+                <section id="riskAttachmentUpload" class="nca-attachment-upload">
+                    <label for="riskAttachmentInput"><span>Add supporting evidence</span><input id="riskAttachmentInput" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.webp"></label>
+                    <button id="uploadRiskAttachment" class="confirm" type="button">Upload Attachment</button>
+                    <small>PDF, Word, Excel, or image. Maximum 8 MB.</small>
+                </section>
+                <div id="riskAttachmentsList" class="nca-record-list" aria-live="polite"></div>
+                <div class="nca-approval-actions"><button id="dismissRiskAttachments" class="confirm" type="button">Close</button></div>
+            </div>
+        </dialog>
         <dialog id="riskApprovalDialog" class="nca-approval-dialog">
             <div class="nca-approval-accent"></div>
             <div class="nca-approval-body">
@@ -822,9 +867,9 @@
 
 <script src="../js/app.js?v=7"></script>
 <script src="../js/authGuard.js"></script>
-<script src="../js/sidebar.js?v=20260728-1"></script>
+<script src="../js/sidebar.js?v=20261006-1"></script>
 <script src="../js/erm-assessment-rules.js?v=1"></script>
-<script src="../js/risks.js?v=24"></script>
+<script src="../js/risks.js?v=28"></script>
 </body>
 
 </html>

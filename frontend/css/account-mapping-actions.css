@@ -1,0 +1,46 @@
+.mapping-toolbar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.mapping-toolbar-actions button {
+  padding: 12px 15px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--green);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.mapping-toolbar-actions button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.table-actions .danger,
+.danger-action {
+  background: #b42318;
+  color: #fff;
+  border-color: #b42318;
+}
+
+.mapping-form-grid .defer-option {
+  display: flex;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.defer-option input {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 700px) {
+  .mapping-toolbar-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

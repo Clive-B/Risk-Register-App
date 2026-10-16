@@ -7,6 +7,7 @@
     "test": "node --test tests/*.test.js",
     "check": "node --check server.js && node --test tests/*.test.js",
     "readiness": "node scripts/readiness-check.js",
+    "verify:local-ai": "node scripts/verify-local-ai.js",
     "verify:erm": "node scripts/verify-erm-alignment.js",
     "verify:treatment-preview": "node scripts/verify-treatment-upload-preview.js",
     "verify:treatments": "node scripts/verify-treatment-plan-alignment.js",

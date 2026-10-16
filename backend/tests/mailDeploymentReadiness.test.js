@@ -13,13 +13,17 @@ test('readiness reports development mail honestly and requires verified producti
     assert.match(source,/NCA SMTP is not configured or could not be verified/);
 });
 
-test('administrator SMTP configuration enforces NCA sender and encrypted transport',()=>{
+test('administrator SMTP configuration enforces approved senders and encrypted transport',()=>{
     const controller=read('backend/controllers/communicationAdminController.js');
     const page=read('frontend/pages/communication-centre.html');
-    assert.match(controller,/isValidNcaEmail\(senderEmail\)/);
+    assert.match(controller,/isAllowedServiceSender\(senderEmail\)/);
+    assert.match(controller,/validateGmailConfiguration/);
     assert.match(controller,/\['STARTTLS','TLS'\]\.includes\(encryption\)/);
     assert.match(controller,/verifyEmailTransport/);
+    assert.match(controller,/retry_count=0/);
     assert.doesNotMatch(page,/<option>None<\/option>/);
+    assert.match(page,/smtpPasswordStatus/);
+    assert.match(read('frontend/js/communication-centre.js'),/App password saved securely/);
     assert.match(page,/Verify and Send Test/);
 });
 

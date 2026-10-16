@@ -466,7 +466,8 @@ exports.getRoleSlots = async (req,res) => {
         const result=await pool.query(`
             SELECT slot.id,slot.slot_key,slot.role_email,slot.role,slot.division,slot.display_name,slot.status,
                    holder.id AS holder_user_id,holder.full_name AS holder_name,holder.email AS holder_email,
-                   holder.staff_id,holder.position,holder.identity_type,holder.activation_status,
+                   holder.staff_id,holder.position,holder.identity_type,holder.activation_status,holder.email_status,
+                   holder.must_change_password,
                    assignment.id AS assignment_id,assignment.effective_from,assignment.replacement_reason
             FROM organizational_role_slots slot
             LEFT JOIN users holder ON holder.id=slot.current_holder_user_id
@@ -506,6 +507,7 @@ exports.mapRoleSlot = async (req,res) => {
     const position=String(req.body.position||'').trim()||null;
     const reason=String(req.body.replacement_reason||'').trim();
     const effectiveFrom=String(req.body.effective_from||'').trim()||new Date().toISOString().slice(0,10);
+    const deferOnboarding=req.body.defer_onboarding===true||String(req.body.defer_onboarding||'').toLowerCase()==='true'||String(req.body.defer_onboarding||'').toLowerCase()==='on';
     if(!fullName)return res.status(400).json({success:false,message:'The new role holder\'s full name is required.'});
     if(!isValidNcaEmail(email))return res.status(400).json({success:false,message:'Enter the employee\'s official @nca.org.gh email address.'});
     if(!reason)return res.status(400).json({success:false,message:'Record the reason for this personnel assignment.'});
@@ -554,6 +556,10 @@ exports.mapRoleSlot = async (req,res) => {
                 [staffId,fullName,email,passwordHash,slot.role,slot.division,position,req.user.id,slot.id,slot.role_email]
             )).rows[0];
         }
+        if(deferOnboarding){
+            await client.query("UPDATE users SET email_status='Deferred',updated_at=NOW() WHERE id=$1",[createdUser.id]);
+            createdUser.email_status='Deferred';
+        }
         await client.query(`UPDATE role_slot_assignments SET status='Ended',effective_to=$2::date,ended_at=NOW(),ended_by=$3
                             WHERE slot_id=$1 AND status='Current'`,[slot.id,effectiveFrom,req.user.id]);
         if(formerHolder&&Number(formerHolder.id)!==Number(createdUser.id)){
@@ -586,6 +592,14 @@ exports.mapRoleSlot = async (req,res) => {
     client.release();
 
     await logAudit({req,action:'ROLE_HOLDER_ASSIGNED',entityType:'Organizational Role',entityId:slot.id,details:{role_email:slot.role_email,new_user_id:createdUser.id,former_user_id:formerHolder?.id||null,effective_from:effectiveFrom,replacement_reason:reason}});
+    if(deferOnboarding){
+        await logAudit({req,action:'ROLE_HOLDER_ONBOARDING_DEFERRED',entityType:'User',entityId:createdUser.id,details:{role_slot_id:slot.id}});
+        return res.status(201).json({
+            success:true,
+            message:'The role holder was mapped and onboarding was deferred for the group send.',
+            user:{...createdUser,email_status:'Deferred'},role_slot:{id:slot.id,role_email:slot.role_email}
+        });
+    }
     const delivery=await deliverWelcomeEmail({req,user:createdUser,temporaryPassword,auditAction:'ROLE_HOLDER_WELCOME_EMAIL'});
     res.status(201).json({
         success:true,
@@ -594,6 +608,85 @@ exports.mapRoleSlot = async (req,res) => {
             : 'The new role holder was mapped and prior access was revoked, but the onboarding email could not be queued. Generate a new temporary password from User Management to retry.',
         user:{...createdUser,email_status:delivery.status},role_slot:{id:slot.id,role_email:slot.role_email}
     });
+};
+
+exports.clearRoleSlot = async (req,res) => {
+    const reason=String(req.body.reason||'').trim();
+    const effectiveTo=String(req.body.effective_to||'').trim()||new Date().toISOString().slice(0,10);
+    if(!reason)return res.status(400).json({success:false,message:'Record the reason for clearing this role holder.'});
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(effectiveTo))return res.status(400).json({success:false,message:'Select a valid effective date.'});
+    const client=await pool.connect();
+    let slot,holder;
+    try{
+        await client.query('BEGIN');
+        slot=(await client.query("SELECT * FROM organizational_role_slots WHERE id=$1 AND status='Active' FOR UPDATE",[req.params.id])).rows[0];
+        if(!slot)throw Object.assign(new Error('Organizational role account not found.'),{statusCode:404});
+        if(!slot.current_holder_user_id)throw Object.assign(new Error('This organizational role is already unassigned.'),{statusCode:409});
+        holder=(await client.query('SELECT id,full_name,email,role FROM users WHERE id=$1 FOR UPDATE',[slot.current_holder_user_id])).rows[0];
+        if(!holder)throw Object.assign(new Error('The current role-holder record could not be found.'),{statusCode:409});
+        await client.query(`UPDATE role_slot_assignments
+            SET status='Ended',effective_to=$2::date,ended_at=NOW(),ended_by=$3,
+                metadata=COALESCE(metadata,'{}'::jsonb)||jsonb_build_object('clearance_reason',$4,'cleared_without_successor',true)
+            WHERE slot_id=$1 AND status='Current'`,[slot.id,effectiveTo,req.user.id,reason]);
+        await client.query(`UPDATE users SET status='Inactive',activation_status='Disabled',assignment_status='Former',
+            token_version=token_version+1,updated_by=$2,updated_at=NOW() WHERE id=$1`,[holder.id,req.user.id]);
+        await client.query('UPDATE user_sessions SET revoked_at=NOW() WHERE user_id=$1 AND revoked_at IS NULL',[holder.id]);
+        await client.query(`UPDATE actions SET assigned_to=$2,assigned_role='System Administrator',updated_at=NOW()
+            WHERE assigned_to=$1 AND status NOT IN ('Completed','Cancelled')`,[holder.id,req.user.id]);
+        if(slot.role==='Risk Focal Person'){
+            await client.query(`UPDATE risk_register_import_batches SET accountable_focal_id=NULL,updated_at=NOW()
+                WHERE accountable_focal_id=$1 AND status IN ('Awaiting Focal Review','Returned')`,[holder.id]);
+            await client.query(`UPDATE risks SET accountable_focal_id=NULL,updated_at=NOW()
+                WHERE accountable_focal_id=$1 AND admission_status<>'Admitted'`,[holder.id]);
+        }
+        await client.query('UPDATE organizational_role_slots SET current_holder_user_id=NULL,updated_at=NOW() WHERE id=$1',[slot.id]);
+        await client.query('COMMIT');
+    }catch(error){
+        await client.query('ROLLBACK').catch(()=>{});
+        console.error(error);
+        return res.status(error.statusCode||500).json({success:false,message:error.statusCode?error.message:'Unable to clear the role holder. No changes were saved.'});
+    }finally{client.release();}
+    await logAudit({req,action:'ROLE_HOLDER_CLEARED',entityType:'Organizational Role',entityId:slot.id,details:{role_email:slot.role_email,former_user_id:holder.id,effective_to:effectiveTo,reason}});
+    res.json({success:true,message:`${slot.display_name} is now unassigned. The former holder was deactivated, sessions were revoked, and history was preserved.`});
+};
+
+exports.sendDeferredRoleHolderOnboarding = async (req,res) => {
+    const client=await pool.connect();
+    const prepared=[];
+    try{
+        await client.query('BEGIN');
+        const holders=(await client.query(`SELECT holder.id,holder.full_name,holder.email,holder.role,holder.division,slot.id AS slot_id
+            FROM organizational_role_slots slot JOIN users holder ON holder.id=slot.current_holder_user_id
+            WHERE slot.status='Active' AND holder.status='Active' AND holder.assignment_status='Current'
+              AND holder.email_status='Deferred'
+            ORDER BY COALESCE(slot.division,''),slot.role,slot.id
+            FOR UPDATE OF holder,slot`)).rows;
+        if(!holders.length){await client.query('ROLLBACK');return res.status(409).json({success:false,message:'There are no deferred role-holder onboarding emails to send.'});}
+        if(holders.length>100)throw Object.assign(new Error('Group onboarding is limited to 100 account holders at a time.'),{statusCode:422});
+        for(const holder of holders){
+            const temporaryPassword=generateTemporaryPassword();
+            const passwordHash=await bcrypt.hash(temporaryPassword,12);
+            await client.query(`UPDATE users SET password_hash=$1,must_change_password=TRUE,password_changed_at=NOW(),
+                last_password_reset=NOW(),activation_status='Pending Activation',email_status='Queued',
+                token_version=token_version+1,failed_login_attempts=0,locked_until=NULL,updated_by=$2,updated_at=NOW()
+                WHERE id=$3`,[passwordHash,req.user.id,holder.id]);
+            await client.query('UPDATE user_sessions SET revoked_at=NOW() WHERE user_id=$1 AND revoked_at IS NULL',[holder.id]);
+            prepared.push({...holder,temporaryPassword});
+        }
+        await client.query('COMMIT');
+    }catch(error){
+        await client.query('ROLLBACK').catch(()=>{});
+        console.error(error);
+        return res.status(error.statusCode||500).json({success:false,message:error.statusCode?error.message:'Unable to prepare group onboarding. No credentials were changed.'});
+    }finally{client.release();}
+    const results=[];
+    for(const holder of prepared){
+        const delivery=await deliverWelcomeEmail({req,user:holder,temporaryPassword:holder.temporaryPassword,auditAction:'GROUP_ROLE_HOLDER_ONBOARDING'});
+        results.push({userId:holder.id,status:delivery.status});
+    }
+    const queued=results.filter(item=>item.status==='Queued').length;
+    await logAudit({req,action:'GROUP_ROLE_HOLDER_ONBOARDING',entityType:'Organizational Role',details:{total:prepared.length,queued,failed:prepared.length-queued,role_slot_ids:prepared.map(item=>item.slot_id)}});
+    res.status(queued===prepared.length?200:207).json({success:queued>0,message:`${queued} of ${prepared.length} deferred onboarding emails were queued.`,summary:{total:prepared.length,queued,failed:prepared.length-queued}});
 };
 
 async function notifyAdministrators(req, title, message, entityId) {
@@ -610,7 +703,7 @@ async function deliverWelcomeEmail({ req, user, temporaryPassword, auditAction }
         return { sent:true,status:'Queued' };
     } catch (error) {
         await pool.query(`UPDATE users SET email_status='Failed',welcome_email_last_attempt_at=NOW() WHERE id=$1`,[user.id]);
-        await pool.query(`UPDATE email_deliveries SET status='Failed',attempted_at=NOW(),error_message=$2 WHERE id=(SELECT id FROM email_deliveries WHERE user_id=$1 AND email_type='Welcome' ORDER BY created_at DESC LIMIT 1)`,[user.id,String(error.message).slice(0,1000)]);
+        await pool.query(`UPDATE email_deliveries SET status='Failed',attempted_at=NOW(),error_message=$2 WHERE id=(SELECT id FROM email_deliveries WHERE recipient_user_id=$1 AND email_type='Welcome' ORDER BY created_at DESC LIMIT 1)`,[user.id,String(error.message).slice(0,1000)]);
         await logAudit({req,action:'WELCOME_EMAIL_FAILED',entityType:'User',entityId:user.id,status:'Failed'});
         await notifyAdministrators(req, 'Welcome Email Failed', `The welcome email for ${user.full_name} could not be sent.`, user.id);
         const admins=(await pool.query("SELECT id FROM users WHERE role='System Administrator' AND status='Active'")).rows;for(const admin of admins)await createAction({actionKey:`welcome-email-failed:${user.id}:${admin.id}:${Date.now()}`,module:'Communication',actionType:'Retry Email',title:`Welcome email failed: ${user.full_name}`,description:'Review SMTP status and retry the welcome email.',priority:'High',status:'Pending',assignedTo:admin.id,assignedRole:'System Administrator',sourceType:'WelcomeEmail',sourceId:user.id,actionUrl:'pages/communication-centre.html',availableActions:['view','dismiss']},{req});

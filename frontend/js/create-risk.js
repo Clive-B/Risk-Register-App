@@ -46,6 +46,7 @@ let loadedRisk = null;
 const draftStorageKey = `nca-risk-form-draft:${currentUser.id}:${editingRiskId || "new"}`;
 let draftSaveTimer = null;
 let historyLoaded = false;
+const riskBatch = [];
 
 const elements = {
     pageTitle: document.getElementById("pageTitle"),
@@ -66,6 +67,11 @@ const elements = {
     riskHistorySection: document.getElementById("riskHistorySection"),
     riskHistoryContent: document.getElementById("riskHistoryContent")
 };
+elements.riskBatchSection = document.getElementById("riskBatchSection");
+elements.riskBatchList = document.getElementById("riskBatchList");
+elements.riskBatchCount = document.getElementById("riskBatchCount");
+elements.addToBatchBtn = document.getElementById("addToBatchBtn");
+elements.submitBatchBtn = document.getElementById("submitBatchBtn");
 elements.riskResponseGuidance = document.getElementById("riskResponseGuidance");
 elements.controlEffectivenessGuidance = document.getElementById("controlEffectivenessGuidance");
 
@@ -339,6 +345,75 @@ function restoreLocalDraft() {
 
 function clearLocalDraft() {
     localStorage.removeItem(draftStorageKey);
+}
+
+function batchEnabled() {
+    return !editingRiskId && ["Risk Focal Person", "Risk Champion"].includes(currentUser.role);
+}
+
+function renderRiskBatch() {
+    const count = riskBatch.length;
+    elements.riskBatchCount.textContent = `${count} risk${count === 1 ? "" : "s"}`;
+    elements.submitBatchBtn.textContent = `Submit Batch (${count})`;
+    elements.submitBatchBtn.disabled = count === 0;
+    elements.riskBatchList.innerHTML = count
+        ? riskBatch.map((item, index) => `<article class="risk-batch-item"><div><strong>${escapeHtml(item.payload.risk_title)}</strong><span>${escapeHtml(item.payload.risk_category)} · L${item.payload.likelihood} × I${item.payload.impact} · ${escapeHtml(item.payload.risk_treatment)}</span></div><button type="button" data-remove-batch="${index}" aria-label="Remove ${escapeHtml(item.payload.risk_title)} from batch">Remove</button></article>`).join("")
+        : '<p class="history-empty">No risks have been added to this batch.</p>';
+}
+
+function resetForNextRisk() {
+    document.getElementById("riskForm").reset();
+    fields.attachments.value = "";
+    renderAttachmentSelection();
+    applyRoleDefaults();
+    fields.impact.value = "";
+    fields.likelihood.value = "";
+    fields.risk_category.value = "";
+    fields.control_effectiveness.value = "Not Assessed";
+    fields.risk_treatment.value = "";
+    updateInherentScore();
+    determineControlEffectiveness();
+    clearLocalDraft();
+    window.scrollTo({top: 0, behavior: "smooth"});
+}
+
+function addCurrentRiskToBatch() {
+    const payload = getRiskPayload("Submitted");
+    const validationError = validateRiskPayload(payload);
+    if (validationError) return showToast(validationError, "error");
+    riskBatch.push({payload, files: Array.from(fields.attachments.files || [])});
+    renderRiskBatch();
+    resetForNextRisk();
+    showToast("Risk added to the batch. Complete the next risk or submit the batch.");
+}
+
+async function submitRiskBatch() {
+    if (!riskBatch.length) return;
+    elements.submitBatchBtn.disabled = true;
+    elements.addToBatchBtn.disabled = true;
+    const submitted = [];
+    try {
+        while (riskBatch.length) {
+            const item = riskBatch[0];
+            const data = await apiRequest("/risks", {method: "POST", body: JSON.stringify(item.payload)});
+            for (const file of item.files) {
+                const dataUrl = await readFileAsDataUrl(file);
+                await apiRequest(`/risks/${data.risk.id}/attachments`, {method: "POST", body: JSON.stringify({file_name:file.name,file_type:file.type,file_size:file.size,file_data:dataUrl})});
+            }
+            submitted.push(data.risk);
+            riskBatch.shift();
+            renderRiskBatch();
+        }
+        localStorage.setItem("ncaRiskDataVersion", String(Date.now()));
+        showToast(`${submitted.length} risks submitted successfully.`);
+        window.setTimeout(() => { window.location.href = "risks.html"; }, 700);
+    } catch (error) {
+        showToast(`${submitted.length} risks were submitted. ${error.message || "The remaining batch could not be submitted."}`, "error");
+        renderRiskBatch();
+    } finally {
+        elements.addToBatchBtn.disabled = false;
+        elements.submitBatchBtn.disabled = riskBatch.length === 0;
+    }
 }
 
 function updateMonitoringScores() {
@@ -624,6 +699,14 @@ function bindEvents() {
 
     elements.saveDraftBtn.addEventListener("click", () => saveRisk("Draft"));
     elements.submitBtn.addEventListener("click", () => saveRisk("Submitted"));
+    elements.addToBatchBtn.addEventListener("click", addCurrentRiskToBatch);
+    elements.submitBatchBtn.addEventListener("click", submitRiskBatch);
+    elements.riskBatchList.addEventListener("click", event => {
+        const button = event.target.closest("[data-remove-batch]");
+        if (!button) return;
+        riskBatch.splice(Number(button.dataset.removeBatch), 1);
+        renderRiskBatch();
+    });
     elements.saveMonitoringBtn.addEventListener("click", saveMonitoringUpdate);
     elements.closeRiskBtn.addEventListener("click", closeRisk);
     elements.historyTab.addEventListener("click", openRiskHistory);
@@ -635,6 +718,10 @@ function bindEvents() {
 setUserCard();
 setupOptions();
 applyRoleDefaults();
+elements.riskBatchSection.classList.toggle("hidden", !batchEnabled());
+elements.addToBatchBtn.classList.toggle("hidden", !batchEnabled());
+elements.submitBatchBtn.classList.toggle("hidden", !batchEnabled());
+renderRiskBatch();
 determineControlEffectiveness();
 bindEvents();
 document.getElementById('assessmentRules').addEventListener('click', () => document.getElementById('rulesDialog').showModal());

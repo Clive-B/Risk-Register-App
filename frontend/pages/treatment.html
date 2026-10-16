@@ -318,6 +318,14 @@
                     <option>Completed</option>
                     <option>Overdue</option>
                 </select>
+                <select id="sortFilter" aria-label="Order treatments">
+                    <option value="due_asc">Due date: earliest first</option>
+                    <option value="due_desc">Due date: latest first</option>
+                    <option value="progress_desc">Progress: highest first</option>
+                    <option value="progress_asc">Progress: lowest first</option>
+                    <option value="completion_desc">Completed: most recent first</option>
+                    <option value="completion_asc">Completed: earliest first</option>
+                </select>
             </div>
             <button id="approveAllPlans" class="approve-all-btn" type="button">Approve All</button>
             <button id="addTreatmentBtn" class="add-btn" type="button">Add Plan</button>
@@ -336,6 +344,7 @@
                         <th>Due Date</th>
                         <th>Progress</th>
                         <th>Status</th>
+                        <th>Completed</th>
                         <th>Evidence</th>
                         <th>Action</th>
                     </tr>
@@ -399,8 +408,8 @@
 
 <script src="../js/app.js?v=7"></script>
 <script src="../js/authGuard.js"></script>
-<script src="../js/sidebar.js?v=20260728-1"></script>
-<script src="../js/treatment.js?v=20260728-3"></script>
+<script src="../js/sidebar.js?v=20261006-1"></script>
+<script src="../js/treatment.js?v=20261009-1"></script>
 </body>
 
 </html>

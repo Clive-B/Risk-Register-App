@@ -163,7 +163,8 @@ exports.getTreatmentPlans = async (req, res) => {
         const filters = {
             search: String(req.query.search || '').trim().toLowerCase(),
             status: String(req.query.status || '').trim(),
-            directorate: String(req.query.directorate || '').trim()
+            directorate: String(req.query.directorate || '').trim(),
+            sort: String(req.query.sort || 'due_asc').trim()
         };
 
         const conditions = [];
@@ -182,7 +183,9 @@ exports.getTreatmentPlans = async (req, res) => {
             conditions.push(`COALESCE(NULLIF(r.division,''),r.directorate) = $${params.length}`);
         }
 
-        if (filters.status) {
+        if (filters.status === 'Overdue') {
+            conditions.push(`tp.due_date < CURRENT_DATE AND tp.status <> 'Completed'`);
+        } else if (filters.status) {
             params.push(filters.status);
             conditions.push(`tp.status = $${params.length}`);
         }
@@ -198,6 +201,14 @@ exports.getTreatmentPlans = async (req, res) => {
         }
 
         const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+        const orderBy = {
+            due_asc: 'tp.due_date ASC, tp.updated_at DESC',
+            due_desc: 'tp.due_date DESC, tp.updated_at DESC',
+            progress_desc: 'tp.progress_percent DESC, tp.due_date ASC',
+            progress_asc: 'tp.progress_percent ASC, tp.due_date ASC',
+            completion_desc: 'tp.completed_at DESC NULLS LAST, tp.updated_at DESC',
+            completion_asc: 'tp.completed_at ASC NULLS LAST, tp.updated_at ASC'
+        }[filters.sort] || 'tp.due_date ASC, tp.updated_at DESC';
 
         const result = await pool.query(
             `
@@ -238,7 +249,7 @@ exports.getTreatmentPlans = async (req, res) => {
             LEFT JOIN users return_reviewer ON return_reviewer.id=tp.committee_returned_by
             LEFT JOIN users control_assessor ON control_assessor.id=r.control_assessed_by
             ${whereClause}
-            ORDER BY tp.due_date ASC, tp.updated_at DESC
+            ORDER BY ${orderBy}
             `,
             params
         );
@@ -319,9 +330,10 @@ exports.createTreatmentPlan = async (req, res) => {
                 target_residual_impact,
                 target_residual_score,
                 focal_reviewed_by,
-                focal_reviewed_at
+                focal_reviewed_at,
+                completed_at
             )
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'Manual',$12,$3,$13,$14,$15,$16,$17,$18,$19,$20,$21,NOW())
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'Manual',$12,$3,$13,$14,$15,$16,$17,$18,$19,$20,$21,NOW(),CASE WHEN $7='Completed' THEN NOW() ELSE NULL END)
             RETURNING *
             `,
             [
@@ -462,6 +474,7 @@ exports.updateTreatmentPlan = async (req, res) => {
                 lifecycle_status = $19,
                 focal_reviewed_by = CASE WHEN $20::varchar='Risk Focal Person' THEN $21 ELSE focal_reviewed_by END,
                 focal_reviewed_at = CASE WHEN $20::varchar='Risk Focal Person' THEN NOW() ELSE focal_reviewed_at END,
+                completed_at = CASE WHEN $7='Completed' THEN COALESCE(completed_at,NOW()) ELSE NULL END,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = $22
             RETURNING *

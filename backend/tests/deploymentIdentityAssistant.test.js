@@ -19,11 +19,50 @@ test('administrator account mapping preserves history and revokes former access'
   const routes=read('backend/routes/userRoutes.js');
   const page=read('frontend/pages/account-mapping.html');
   assert.match(routes,/role-slots\/:id\/map/);
+  assert.match(routes,/role-slots\/:id\/clear/);
+  assert.match(routes,/role-slots\/onboarding\/send-deferred/);
   assert.match(controller,/status='Ended'/);
   assert.match(controller,/assignment_status='Former'/);
   assert.match(controller,/UPDATE user_sessions SET revoked_at=NOW\(\)/);
   assert.match(controller,/deliverWelcomeEmail/);
   assert.match(page,/This replaces access, not history/);
+  assert.match(page,/Send Deferred Onboarding/);
+  assert.match(controller,/ROLE_HOLDER_CLEARED/);
+  assert.match(controller,/GROUP_ROLE_HOLDER_ONBOARDING/);
+  assert.match(controller,/email_status='Deferred'/);
+  assert.match(controller,/current_holder_user_id=NULL/);
+});
+
+test('account mapping renders rows before optional onboarding controls and exposes retry state',()=>{
+  const script=read('frontend/js/account-mapping.js');
+  const rowRender=script.indexOf('rows.innerHTML = filtered.map');
+  const optionalControl=script.indexOf('if (sendDeferred)');
+  assert.ok(rowRender>=0&&optionalControl>rowRender);
+  assert.match(script,/sendDeferred\?\.addEventListener/);
+  assert.match(script,/Account mappings could not be loaded/);
+  assert.match(script,/retryMappingLoad/);
+});
+
+test('first-login and expired-password changes are enforced by the API',()=>{
+  const middleware=read('backend/middleware/authMiddleware.js');
+  const login=read('frontend/js/login.js');
+  const change=read('frontend/js/change-password.js');
+  assert.match(middleware,/u\.password_changed_at/);
+  assert.match(middleware,/PASSWORD_POLICY\.expiryDays/);
+  assert.match(middleware,/PASSWORD_CHANGE_REQUIRED/);
+  assert.match(login,/data\.mustChangePassword/);
+  assert.match(change,/dashboardPath\(\)/);
+});
+
+test('administrators can explicitly create another fully warned administrator',()=>{
+  const page=read('frontend/pages/users.html');
+  const script=read('frontend/js/users.js');
+  const routes=read('backend/routes/userRoutes.js');
+  assert.match(page,/id="createAdminBtn"/);
+  assert.match(page,/Full administrative authority/);
+  assert.match(script,/openAdministratorModal/);
+  assert.match(script,/fields\.role\.value = "System Administrator"/);
+  assert.match(routes,/roleMiddleware\('System Administrator'\)/);
 });
 
 test('Admin-assisted workbook figures are provisional Focal assessments',()=>{
@@ -48,4 +87,14 @@ test('assistant is grounded in the manual, page context and authorised live risk
   assert.match(controller,/authorised scope/);
   assert.match(assistant,/\/assistant\/query/);
   assert.match(assistant,/System manual/);
+});
+
+test('deployment readiness allows model cold start without relaxing interactive response limits',()=>{
+  const verifier=read('backend/scripts/verify-local-ai.js');
+  const deploy=read('deploy/linux-test/deploy-release.sh');
+  assert.match(verifier,/AI_READINESS_TIMEOUT_MS/);
+  assert.match(verifier,/Math\.max\(Number\(process\.env\.AI_READINESS_TIMEOUT_MS\) \|\| 60000, config\.timeoutMs\)/);
+  assert.match(deploy,/set_env_value AI_TIMEOUT_MS 20000/);
+  assert.match(deploy,/set_env_value AI_ROUTER_TIMEOUT_MS 400/);
+  assert.match(deploy,/set_env_value AI_READINESS_TIMEOUT_MS 60000/);
 });

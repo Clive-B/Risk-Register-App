@@ -27,8 +27,10 @@ router.post(
 router.post('/bulk/preview', authMiddleware, roleMiddleware('System Administrator'), userController.previewBulkUsers);
 router.post('/bulk', authMiddleware, roleMiddleware('System Administrator'), userController.createBulkUsers);
 router.get('/role-slots', authMiddleware, roleMiddleware('System Administrator'), userController.getRoleSlots);
+router.post('/role-slots/onboarding/send-deferred', authMiddleware, roleMiddleware('System Administrator'), userController.sendDeferredRoleHolderOnboarding);
 router.get('/role-slots/:id/history', authMiddleware, roleMiddleware('System Administrator'), userController.getRoleSlotHistory);
 router.post('/role-slots/:id/map', authMiddleware, roleMiddleware('System Administrator'), userController.mapRoleSlot);
+router.post('/role-slots/:id/clear', authMiddleware, roleMiddleware('System Administrator'), userController.clearRoleSlot);
 
 router.put('/change-password', authMiddleware, authController.changePassword);
 

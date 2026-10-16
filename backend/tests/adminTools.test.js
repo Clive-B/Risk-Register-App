@@ -86,7 +86,7 @@ test('all role navigation uses one governed active, hover and focus state', () =
         .filter(content => content.includes('sidebar.js'));
     assert.ok(pagesUsingSidebar.length > 0);
     for (const content of pagesUsingSidebar) {
-        assert.match(content, /sidebar\.js\?v=(?:20260725-10|20260728-1)/);
+        assert.match(content, /sidebar\.js\?v=20261006-1/);
         assert.match(content, /sidebar\.css\?v=20260725-1" data-sidebar-styles="true"/);
         assert.match(content, /communication-sidebar\.css\?v=20260725-1" data-communication-sidebar-styles="true"/);
         assert.match(content, /sidebar-shell\.css\?v=3" data-sidebar-shell-styles="true"/);

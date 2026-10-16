@@ -1,1 +1,89 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>System Manual | NCA GRC</title><link rel="stylesheet" href="../css/system-manual.css?v=1"><link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true"><link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true"><link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true"><link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true"></head><body><div class="container"><aside class="sidebar"></aside><main class="main manual-main"><header class="manual-hero"><span>NCA GRC · VERSION 2026.08.28</span><h1>System User Manual</h1><p>Role-aware guidance for governed identity, risk intake, assessment, approval, treatment and assistant use.</p></header><nav class="manual-index" aria-label="Manual contents"><a href="#identity">Accounts &amp; personnel</a><a href="#intake">Risk intake</a><a href="#assessment">Assessment</a><a href="#assistant">Assistant</a><a href="#security">Secure operation</a></nav><article class="manual-content"><section id="identity"><h2>Accounts and personnel changes</h2><p>Permanent organizational role accounts are separate from changing employees. Administrators use <a href="account-mapping.html">Account Mapping</a> to assign an official NCA email, effective date and reason. Replacement deactivates the former holder, revokes sessions, preserves historic attribution, transfers unfinished assigned actions and queues secure onboarding for the new holder.</p><p>Never rename a former employee record to represent a new person.</p></section><section id="intake"><h2>Risk intake</h2><p>Focal Persons retain direct access to <a href="risk-register.html">Risk Register</a> and Work Plan uploads. Administrators can stage approved workbooks received from several division Focal Persons in one submission. Each workbook remains assigned to its accountable Focal Person.</p><p>For Administrator-assisted uploads, workbook likelihood, impact and score appear as <strong>Focal · Pending Confirmation</strong>. They are not System figures.</p></section><section id="assessment"><h2>Assessment and approvals</h2><p>The Focal Person reviews or edits every staged row and submits the complete division register once to the Risk Champion. System, Focal, Champion and Chairman assessments remain separately attributed.</p><div class="score-grid"><div><strong>Low</strong><span>1–10</span></div><div><strong>Medium</strong><span>11–16</span></div><div><strong>High</strong><span>17–25</span></div></div><p>Risk score is likelihood multiplied by impact on the approved 5×5 matrix.</p></section><section id="assistant"><h2>GRC Assistant</h2><p>The assistant uses the signed-in role, division and current page as context. It can explain the system and analyse only authorised current records. Chairman recommendations can identify high risks, overdue open risks and pending decisions with supporting risk IDs.</p><p>Recommendations are advisory. Open the source record and apply authorised human judgment before acting. The microphone listens only after Talk or Start Conversation is selected.</p></section><section id="security"><h2>Secure operation</h2><ul><li>Use only official <code>@nca.org.gh</code> employee addresses.</li><li>New holders must change the generated temporary password at first login.</li><li>Review onboarding delivery status and regenerate credentials only when required.</li><li>Record reasons for adjustments and personnel changes.</li><li>Verify source evidence before approval or completion.</li></ul></section></article></main></div><script src="../js/app.js?v=9"></script><script src="../js/authGuard.js"></script><script src="../js/sidebar.js?v=20260728-1"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>System Manual | NCA GRC</title>
+    <link rel="stylesheet" href="../css/system-manual.css?v=2">
+    <link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true">
+    <link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true">
+    <link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true">
+    <link rel="stylesheet" href="../css/navigation-state.css?v=7" data-navigation-state-styles="true">
+</head>
+<body>
+<div class="container">
+    <aside class="sidebar"></aside>
+    <main class="main manual-main">
+        <header class="manual-hero">
+            <span>NCA GRC · VERSION 2026.10.09</span>
+            <h1>System User Manual</h1>
+            <p>The current role-aware guide to secure identity, onboarding, risk governance, approvals, treatment and assistant use.</p>
+        </header>
+        <nav class="manual-index" aria-label="Manual contents">
+            <a href="#identity">Accounts</a><a href="#onboarding">Onboarding</a><a href="#email">Email</a><a href="#intake">Risk intake</a><a href="#assessment">Assessment</a><a href="#multiple-entry">Multiple risk entry</a><a href="#treatment">Treatment</a><a href="#quarterly">Quarterly dashboard</a><a href="#assistant">Assistant</a><a href="#security">Secure operation</a>
+        </nav>
+        <article class="manual-content">
+            <section id="identity">
+                <h2>Accounts and personnel changes</h2>
+                <p>Permanent organizational role accounts are separate from changing employees. Administrators use <a href="account-mapping.html">Account Mapping</a> to assign an official NCA email, effective date and reason. Replacement deactivates the former holder, revokes sessions, preserves historic attribution, transfers unfinished assigned actions and queues secure onboarding for the new holder.</p>
+                <h3>Administrator delegation</h3>
+                <p>An existing System Administrator uses <a href="users.html">User Management</a> and <strong>Create Administrator</strong> to delegate administration. Confirm the person's identity, official NCA email and business need first because the new account receives authority-wide privileges.</p>
+                <h3>Clear or replace a holder</h3>
+                <p><strong>Clear Holder</strong> removes the current employee's active access and revokes sessions while preserving the permanent role account, historical attribution and audit history. Use the replacement workflow when the successor is known. Never rename a former employee record to represent a new person.</p>
+            </section>
+            <section id="onboarding">
+                <h2>Secure onboarding and passwords</h2>
+                <p>The onboarding email contains the login link, a temporary password, a PDF copy of this manual and a link to this current in-system edition. New users must change the temporary password at first sign-in.</p>
+                <p>The change-password screen reads the active policy from the server. The standard policy requires at least <strong>12 characters</strong> with an uppercase letter, lowercase letter, number and special character. The user can choose <strong>Show</strong> for any password field, but should do so only when the screen cannot be observed.</p>
+                <p>Administrators can defer individual messages while filling several role holders, then use <strong>Send Group Onboarding</strong>. Every selected person receives a separate message and temporary password. After sign-in, users are reminded that this guide remains available from <strong>System Manual</strong> in the navigation menu.</p>
+            </section>
+            <section id="email">
+                <h2>Email delivery and Communication Centre</h2>
+                <p>System email is sent through the configured service mailbox. The Risk Management System Gmail app password is encrypted in system settings and is intentionally not displayed again after saving.</p>
+                <p>Administrators use <strong>Communication Centre</strong> to review queued, sent and failed messages and retry failures after correcting the cause. A queued message has been accepted by the application but is not yet proof of arrival. Onboarding and password messages are restricted to official <code>@nca.org.gh</code> recipients.</p>
+            </section>
+            <section id="intake">
+                <h2>Risk intake</h2>
+                <p>Focal Persons retain direct access to <a href="risk-register.html">Risk Register</a> and Work Plan uploads. Administrators can stage approved workbooks received from several division Focal Persons in one submission. Each workbook remains assigned to its accountable Focal Person.</p>
+                <p>For Administrator-assisted uploads, workbook likelihood, impact and score appear as <strong>Focal · Pending Confirmation</strong>. They are not System figures.</p>
+            </section>
+            <section id="assessment">
+                <h2>Assessment and approvals</h2>
+                <p>The Focal Person reviews or edits every staged row and submits the complete division register once to the Risk Champion. System, Focal, Champion and Chairman assessments remain separately attributed.</p>
+                <div class="score-grid"><div><strong>Low</strong><span>1–10</span></div><div><strong>Medium</strong><span>11–16</span></div><div><strong>High</strong><span>17–25</span></div></div>
+                <p>Risk score is likelihood multiplied by impact on the approved 5×5 matrix.</p>
+            </section>
+            <section id="multiple-entry">
+                <h2>Multiple risk entry</h2>
+                <p>Risk Focal Persons and Risk Champions can complete a manual risk, select <strong>Add Risk to Batch</strong>, and continue entering more risks. Review the queue before using <strong>Submit Batch</strong>. Every risk is validated separately and retains its own identifier, attachments, workflow and audit history.</p>
+            </section>
+            <section id="treatment">
+                <h2>Treatment oversight</h2>
+                <p>Risk Champions and the Risk Committee Chairman can filter overdue treatment plans and order treatments by due date, progress, or recorded completion time. Completion evidence and the separate approval stages remain mandatory.</p>
+            </section>
+            <section id="quarterly">
+                <h2>Chairman quarterly dashboard</h2>
+                <p>The Board Dashboard supports Quarter 1-4 and full-year views. Risks are grouped by approved category with totals for High, Medium, Low and closed records. Use <strong>Print / Save Dashboard</strong> to produce the selected quarterly dashboard.</p>
+            </section>
+            <section id="assistant">
+                <h2>GRC Assistant</h2>
+                <p>The assistant uses the signed-in role, division and current page as context. It can explain the system and analyse only authorised current records. Recommendations are advisory: open the supporting record and apply authorised human judgment before acting.</p>
+                <p>The assistant cannot approve, submit, assign or delete official records. Connected AI and speech processing remain subject to NCA approval, configured purpose, processing location, retention and security controls.</p>
+            </section>
+            <section id="security">
+                <h2>Secure operation</h2>
+                <ul>
+                    <li>Use only official <code>@nca.org.gh</code> employee addresses.</li>
+                    <li>Grant administrator access only for a confirmed operational need.</li>
+                    <li>Review onboarding delivery status and regenerate credentials only when required.</li>
+                    <li>Record reasons for adjustments and personnel changes.</li>
+                    <li>Verify source evidence before approval or completion.</li>
+                    <li>Use the in-system manual as the current reference after later releases.</li>
+                </ul>
+            </section>
+        </article>
+    </main>
+</div>
+<script src="../js/app.js?v=9"></script><script src="../js/authGuard.js"></script><script src="../js/sidebar.js?v=20261006-1"></script>
+</body>
+</html>

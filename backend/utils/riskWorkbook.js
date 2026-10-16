@@ -313,7 +313,97 @@ function proposeSpelling(value) {
     return corrected === original ? null : corrected;
 }
 
-function parseRiskWorkbook(fileName, fileData) {
+function eventSignature(row) {
+    return [
+        row.original_data.programme_project,
+        row.original_data.risk_title,
+        row.original_data.risk_description,
+        row.original_data.risk_event_detail,
+        row.original_data.risk_cause
+    ].map(value => displayValue(value).replace(/\s+/g,' ').trim().toLowerCase()).filter(Boolean).join('|');
+}
+
+function trackerDivisionCode(value) {
+    const words = String(value || 'NCA').trim().split(/\s+/).filter(Boolean);
+    const code = words.length === 1
+        ? words[0].replace(/[^a-zA-Z0-9]/g,'').slice(0,3)
+        : words.map(word => word[0]).join('').replace(/[^a-zA-Z0-9]/g,'').slice(0,6);
+    return (code || 'NCA').toUpperCase();
+}
+
+function applyDivisionChildRiskIds(rows,{division,fileName} = {}) {
+    const groups = new Map();
+    const year = String(fileName || '').match(/\b(20\d{2})\b/)?.[1] || String(new Date().getFullYear());
+    let activeProgramme = null;
+    let activeGroup = null;
+    let generatedGroupSequence = 0;
+
+    for (const row of rows) {
+        const suppliedProgramme = displayValue(row.original_data.programme_project).trim();
+        if (suppliedProgramme) {
+            const programmeKey = suppliedProgramme.replace(/\s+/g,' ').toLowerCase();
+            if (programmeKey !== activeProgramme?.key) activeGroup = null;
+            activeProgramme = {key:programmeKey,value:suppliedProgramme};
+        } else if (activeProgramme) {
+            row.data.programme_project = activeProgramme.value;
+            row.corrections.push({
+                field:'programme_project',original:null,proposed:activeProgramme.value,
+                reason:'The Program/Project cell is merged in Excel. The system carried its value into this separately monitored risk event.',
+                rule:'Every child risk must retain the programme or project context of its merged workbook block.'
+            });
+        }
+
+        const suppliedId = displayValue(row.original_data.risk_id).trim();
+        if (suppliedId) {
+            const key = `id:${suppliedId.toLowerCase()}`;
+            if (!groups.has(key)) groups.set(key,{parentId:suppliedId,rows:new Set(),generated:false});
+            activeGroup = groups.get(key);
+        } else if (!activeGroup) {
+            generatedGroupSequence += 1;
+            const programmeKey = activeProgramme?.key || `row-${row.excel_row}`;
+            const key = `programme:${generatedGroupSequence}:${programmeKey}`;
+            const parentId = `${trackerDivisionCode(division)}-RSK-${year}-${String(generatedGroupSequence).padStart(3,'0')}`;
+            activeGroup = {parentId,rows:new Set(),generated:true};
+            groups.set(key,activeGroup);
+        }
+        activeGroup.rows.add(row);
+    }
+
+    for (const group of groups.values()) {
+        const groupedRows = [...group.rows].sort((left,right) => left.excel_row - right.excel_row);
+        const distinctEvents = new Set(groupedRows.map(eventSignature).filter(Boolean));
+        const splitIntoChildren = groupedRows.length > 1 && distinctEvents.size > 1;
+        if (!group.generated && !splitIntoChildren) continue;
+        groupedRows.forEach((row,index) => {
+            const suffix = splitIntoChildren ? String(index + 1).padStart(2,'0') : '';
+            const parentId = group.parentId;
+            const riskId = suffix ? `${parentId.slice(0,29 - suffix.length)}-${suffix}` : parentId.slice(0,30);
+            row.data.parent_risk_id = splitIntoChildren ? parentId : null;
+            row.data.risk_id = riskId;
+            row.errors = row.errors.filter(error => !/duplicated within the workbook/i.test(error));
+            row.corrections.push({
+                field:'risk_id',original:row.original_data.risk_id,proposed:riskId,
+                reason:splitIntoChildren
+                    ? `The ${group.generated ? 'blank Risk ID and merged programme block' : `parent Risk ID ${parentId}`} cover ${groupedRows.length} distinct risk events. The system proposed child ID ${riskId} for separate monitoring.`
+                    : `The Risk ID is blank. The system proposed ${riskId} from the division, year and programme sequence.`,
+                rule:splitIntoChildren
+                    ? 'Each distinct risk event requires a unique enterprise Risk ID; parent lineage and the original value remain in the correction audit record.'
+                    : 'Every risk requires a unique enterprise Risk ID derived from its division and programme context.'
+            });
+        });
+    }
+
+    const seen = new Set();
+    rows.forEach(row => {
+        row.errors = row.errors.filter(error => !/duplicated within the workbook/i.test(error));
+        const key = displayValue(row.data.risk_id).trim().toLowerCase();
+        if (!key) return;
+        if (seen.has(key)) row.errors.push('Risk ID is duplicated within the workbook.');
+        seen.add(key);
+    });
+}
+
+function parseRiskWorkbook(fileName, fileData, options = {}) {
     const buffer = decodeWorkbook(fileName, fileData);
     let workbook;
     try {
@@ -534,6 +624,8 @@ function parseRiskWorkbook(fileName, fileData) {
         });
         return items;
     }, []);
+
+    if (detected.templateType === 'Division Risk Register Tracker') applyDivisionChildRiskIds(rows,{...options,fileName});
 
     if (!rows.length) throw new Error('No populated risk data rows were found below the header row.');
     if (rows.length > MAX_DATA_ROWS) throw new Error(`A maximum of ${MAX_DATA_ROWS} populated risk rows can be imported at once.`);

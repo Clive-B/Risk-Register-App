@@ -1,6 +1,12 @@
 let nodemailer;
 try { nodemailer = require('nodemailer'); } catch (_) { nodemailer = null; }
+const fs = require('fs/promises');
+const path = require('path');
 const { isValidNcaEmail } = require('../utils/contactValidation');
+
+const USER_MANUAL_PATH = path.join(__dirname, '..', 'docs', 'NCA_GRC_SYSTEM_USER_MANUAL.pdf');
+const USER_MANUAL_FILENAME = 'NCA_GRC_SYSTEM_USER_MANUAL_2026-10-09.pdf';
+const MAX_MANUAL_BYTES = 5 * 1024 * 1024;
 
 function cleanHeader(value, label) {
     const header = String(value || '').trim();
@@ -37,7 +43,13 @@ async function transporter() {
     client._ncaFrom=config.sender||'NCA GRC <no-reply@nca.org.gh>';return client;
 }
 
-async function sendRawEmail({ to, subject, text, html }) {
+async function userManualAttachment() {
+    const content = await fs.readFile(USER_MANUAL_PATH);
+    if (!content.length || content.length > MAX_MANUAL_BYTES) throw new Error('The packaged NCA GRC user manual is missing or exceeds the allowed attachment size.');
+    return { filename: USER_MANUAL_FILENAME, content, contentType: 'application/pdf' };
+}
+
+async function sendRawEmail({ to, subject, text, html, includeUserManual = false }) {
     const client = await transporter();
     const recipient = ncaRecipient(to);
     const safeSubject = cleanHeader(subject, 'Email subject');
@@ -48,6 +60,7 @@ async function sendRawEmail({ to, subject, text, html }) {
         subject: safeSubject,
         text: String(text || ''),
         html: String(html || ''),
+        attachments: includeUserManual ? [await userManualAttachment()] : [],
         disableFileAccess: true,
         disableUrlAccess: true
     });
@@ -73,9 +86,11 @@ const escapeHtml = value => String(value || '').replace(/[&<>"']/g, c => ({'&':'
 
 async function sendWelcomeEmail({ email, fullName, temporaryPassword, loginUrl, ...queueOptions }) {
     const name = escapeHtml(fullName), address = escapeHtml(email), url = escapeHtml(loginUrl);
+    const manualUrl = `${String(process.env.FRONTEND_URL || 'http://localhost:5500').replace(/\/+$/, '')}/pages/system-manual.html`;
+    const safeManualUrl = escapeHtml(manualUrl);
     return sendEmail({ to: email, subject: 'Welcome to the NCA Enterprise GRC Platform',
-        text: `National Communications Authority\n\nEnterprise Governance, Risk, Compliance & Audit Management Platform\n\nDear ${fullName},\n\nYour account has been created successfully.\n\nAccount Details\nName: ${fullName}\nOfficial Email: ${email}\nTemporary Password: ${temporaryPassword}\n\nFor security reasons you must change this temporary password immediately after your first login.\n\n${loginUrl}\n\nSupporting NCA's 2024–2028 Strategic Plan\nMoving from Good to Great\n\nNational Communications Authority`,
-        html: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;color:#172b4d"><h2 style="color:#006b54">National Communications Authority</h2><p><strong>Enterprise Governance, Risk, Compliance &amp; Audit Management Platform</strong></p><p>Dear ${name},</p><p>Your account has been created successfully.</p><h3>Account Details</h3><p><strong>Name:</strong><br>${name}</p><p><strong>Official Email:</strong><br>${address}</p><p><strong>Temporary Password:</strong><br>${escapeHtml(temporaryPassword)}</p><p>For security reasons you must change this temporary password immediately after your first login.</p><p><a href="${url}" style="display:inline-block;padding:12px 18px;background:#006b54;color:white;text-decoration:none;border-radius:4px">Login to NCA Enterprise GRC Platform</a></p><p>Supporting NCA's 2024–2028 Strategic Plan<br><strong>Moving from Good to Great</strong></p><p>National Communications Authority</p></div>`, emailType:'Welcome', ...queueOptions });
+        text: `National Communications Authority\n\nEnterprise Governance, Risk, Compliance & Audit Management Platform\n\nDear ${fullName},\n\nYour account has been created successfully.\n\nAccount Details\nName: ${fullName}\nOfficial Email: ${email}\nTemporary Password: ${temporaryPassword}\n\nFor security reasons you must change this temporary password immediately after your first login.\n\nSign in: ${loginUrl}\n\nThe NCA GRC System User Manual is attached as a PDF. The current guide remains available after sign-in under System Manual, or at:\n${manualUrl}\n\nSupporting NCA's 2024–2028 Strategic Plan\nMoving from Good to Great\n\nNational Communications Authority`,
+        html: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;color:#172b4d"><h2 style="color:#006b54">National Communications Authority</h2><p><strong>Enterprise Governance, Risk, Compliance &amp; Audit Management Platform</strong></p><p>Dear ${name},</p><p>Your account has been created successfully.</p><h3>Account Details</h3><p><strong>Name:</strong><br>${name}</p><p><strong>Official Email:</strong><br>${address}</p><p><strong>Temporary Password:</strong><br>${escapeHtml(temporaryPassword)}</p><p>For security reasons you must change this temporary password immediately after your first login.</p><p><a href="${url}" style="display:inline-block;padding:12px 18px;background:#006b54;color:white;text-decoration:none;border-radius:4px">Login to NCA Enterprise GRC Platform</a></p><p>The NCA GRC System User Manual is attached as a PDF. After sign-in, open <strong>System Manual</strong> from the navigation menu for the current guide.</p><p><a href="${safeManualUrl}">Open the current User Manual</a></p><p>Supporting NCA's 2024–2028 Strategic Plan<br><strong>Moving from Good to Great</strong></p><p>National Communications Authority</p></div>`, emailType:'Welcome', ...queueOptions, includeUserManual:true });
 }
 
 async function sendPasswordChangedEmail({ email, fullName, ...queueOptions }) {

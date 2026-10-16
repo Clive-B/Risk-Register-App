@@ -95,6 +95,35 @@
         </footer>
     `;
 
+    function showManualReminder() {
+        let pending = false;
+        try {
+            pending = sessionStorage.getItem('ncaGrcManualReminderPending') === 'true';
+            if (pending) sessionStorage.removeItem('ncaGrcManualReminderPending');
+        } catch (_) {}
+        if (!pending) return;
+
+        if (!document.querySelector('style[data-manual-reminder-styles]')) {
+            const style = document.createElement('style');
+            style.dataset.manualReminderStyles = 'true';
+            style.textContent = `.manual-reminder{width:min(520px,calc(100vw - 32px));border:0;border-radius:16px;padding:0;box-shadow:0 24px 70px rgba(15,35,55,.3);color:#14283f}.manual-reminder::backdrop{background:rgba(3,30,54,.55)}.manual-reminder__body{padding:28px}.manual-reminder h2{margin:0 0 10px;color:#003b6f}.manual-reminder p{line-height:1.55;color:#53677e}.manual-reminder__actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.manual-reminder__actions button,.manual-reminder__actions a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 16px;border-radius:8px;font:700 14px/1 "Segoe UI",Arial,sans-serif;text-decoration:none;cursor:pointer}.manual-reminder__actions button{border:1px solid #b9c8d6;background:#fff;color:#174b75}.manual-reminder__actions a{border:1px solid #006b54;background:#006b54;color:#fff}@media(max-width:480px){.manual-reminder__actions{align-items:stretch;flex-direction:column-reverse}}`;
+            document.head.appendChild(style);
+        }
+
+        const dialog = document.createElement('dialog');
+        dialog.className = 'manual-reminder';
+        dialog.setAttribute('aria-labelledby', 'manualReminderTitle');
+        dialog.innerHTML = `<div class="manual-reminder__body"><h2 id="manualReminderTitle">User guide available</h2><p>The current NCA GRC User Manual is always available from <strong>System Manual</strong> in the navigation menu. Use it for account, onboarding, risk workflow and security guidance.</p><div class="manual-reminder__actions"><button type="button" data-manual-continue>Continue</button><a href="${app.resolvePath('pages/system-manual.html')}">Open User Manual</a></div></div>`;
+        document.body.appendChild(dialog);
+        const close = () => { if (dialog.open) dialog.close(); dialog.remove(); };
+        dialog.querySelector('[data-manual-continue]').addEventListener('click', close);
+        dialog.querySelector('a').addEventListener('click', () => { if (dialog.open) dialog.close(); });
+        dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
+        if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
+    }
+
+    showManualReminder();
+
     const sidebarNavigation = sidebar.querySelector('.sidebar-nav');
     const sidebarScrollKey = `ncaGrc.sidebarScroll.${user.role}`;
     function saveSidebarScroll() {

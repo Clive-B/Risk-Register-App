@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Organizational Account Mapping | NCA GRC</title>
   <link rel="stylesheet" href="../css/account-mapping.css?v=1">
+  <link rel="stylesheet" href="../css/account-mapping-actions.css?v=1">
   <link rel="stylesheet" href="../css/sidebar.css?v=20260725-1" data-sidebar-styles="true">
   <link rel="stylesheet" href="../css/communication-sidebar.css?v=20260725-1" data-communication-sidebar-styles="true">
   <link rel="stylesheet" href="../css/sidebar-shell.css?v=3" data-sidebar-shell-styles="true">
@@ -23,7 +24,7 @@
     <div><strong>3 · Governed onboarding</strong><p>Prior sessions are revoked; the new holder receives a temporary password and must change it.</p></div>
   </section>
   <section class="mapping-card">
-    <div class="mapping-toolbar"><div><h2>Current role holders</h2><p id="mappingSummary">Loading organizational accounts…</p></div><input id="mappingSearch" type="search" placeholder="Search division, role or holder"></div>
+    <div class="mapping-toolbar"><div><h2>Current role holders</h2><p id="mappingSummary">Loading organizational accounts…</p></div><div class="mapping-toolbar-actions"><input id="mappingSearch" type="search" placeholder="Search division, role or holder"><button id="sendDeferredOnboarding" type="button" disabled>Send Deferred Onboarding</button></div></div>
     <div class="mapping-table-wrap"><table><thead><tr><th>Division</th><th>Organizational role account</th><th>Role</th><th>Current holder</th><th>Official login email</th><th>Effective from</th><th>State</th><th>Action</th></tr></thead><tbody id="mappingRows"></tbody></table></div>
   </section>
 </main></div>
@@ -39,11 +40,23 @@
       <label>Position <small>(optional)</small><input name="position"></label>
       <label>Effective date<input name="effective_from" type="date" required></label>
       <label class="wide">Assignment / replacement reason<textarea name="replacement_reason" required placeholder="Promotion, transfer, retirement, new appointment…"></textarea></label>
+      <label class="wide defer-option"><input name="defer_onboarding" type="checkbox"> Defer this email and include the holder in the group onboarding send</label>
     </div>
     <footer><button type="button" id="mappingCancel">Cancel</button><button type="submit" id="mappingSubmit">Map Holder &amp; Send Onboarding</button></footer>
   </form>
 </dialog>
+<dialog id="clearDialog">
+  <form id="clearForm" method="dialog">
+    <header><div><span>ACCESS WITHDRAWAL</span><h2 id="clearDialogTitle">Clear current holder</h2><p id="clearRoleDetails"></p></div><button type="button" id="clearClose" aria-label="Close">×</button></header>
+    <div class="mapping-warning"><strong>History will be preserved.</strong> The holder will be deactivated, sessions revoked, and unfinished actions transferred to you until a successor is assigned.</div>
+    <div class="mapping-form-grid">
+      <label>Effective date<input name="effective_to" type="date" required></label>
+      <label class="wide">Reason for clearing the holder<textarea name="reason" required placeholder="Test account removal, transfer, retirement…"></textarea></label>
+    </div>
+    <footer><button type="button" id="clearCancel">Cancel</button><button type="submit" id="clearSubmit" class="danger-action">Clear Holder</button></footer>
+  </form>
+</dialog>
 <dialog id="historyDialog"><section><header><h2 id="historyTitle">Assignment history</h2><button type="button" id="historyClose" aria-label="Close">×</button></header><div id="historyRows"></div></section></dialog>
 
-<script src="../js/app.js?v=9"></script><script src="../js/authGuard.js"></script><script src="../js/sidebar.js?v=20260728-1"></script><script src="../js/account-mapping.js?v=1"></script>
+<script src="../js/app.js?v=9"></script><script src="../js/authGuard.js"></script><script src="../js/sidebar.js?v=20261006-1"></script><script src="../js/account-mapping.js?v=3"></script>
 </body></html>

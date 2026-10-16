@@ -79,7 +79,6 @@ window.NCAGRC = (() => {
             ["Treatment Plans", "pages/treatment.html", "treatment"],
             ["Compliance Assurance", "pages/compliance.html", "compliance"],
             ["Reports", "pages/reports.html", "reports"]
-            ,["System Manual", "pages/system-manual.html", "systemManual"]
         ],
         [roles.CHAMPION]: [
             ["Dashboard", "nca-grc-risk-register.html", "dashboard"],
@@ -334,12 +333,12 @@ window.NCAGRC = (() => {
             const link = document.createElement("link");
             link.id = "ncaAssistantStyles";
             link.rel = "stylesheet";
-            link.href = `${prefix}css/assistant.css?v=7`;
+            link.href = `${prefix}css/assistant.css?v=12`;
             document.head.appendChild(link);
         }
         const script = document.createElement("script");
         script.id = "ncaAssistantScript";
-        script.src = `${prefix}js/assistant.js?v=10`;
+        script.src = `${prefix}js/assistant.js?v=18`;
         script.defer = true;
         document.head.appendChild(script);
     }
@@ -394,11 +393,11 @@ if (window.NCAGRC.getToken()) {
         const link = document.createElement("link");
         link.id = "ncaAssistantStyles";
         link.rel = "stylesheet";
-        link.href = `${prefix}css/assistant.css?v=7`;
+        link.href = `${prefix}css/assistant.css?v=12`;
         document.head.appendChild(link);
         const script = document.createElement("script");
         script.id = "ncaAssistantScript";
-        script.src = `${prefix}js/assistant.js?v=10`;
+        script.src = `${prefix}js/assistant.js?v=17`;
         script.defer = true;
         document.head.appendChild(script);
     }

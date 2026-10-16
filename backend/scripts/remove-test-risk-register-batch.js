@@ -51,9 +51,9 @@ async function main(){
         )).rows.map(row=>row.id):[];
         const actionIds=(await client.query(
             `SELECT id::text FROM actions
-             WHERE (source_type IN ('Risk','RiskReview','CommitteeReview') AND source_id=ANY($1::text[]))
+            WHERE (source_type IN ('Risk','RiskReview','CommitteeReview','ConsolidatedRiskAssessment','RiskCorrection') AND source_id=ANY($1::text[]))
                 OR (source_type='TreatmentPlan' AND source_id=ANY($2::text[]))
-                OR (source_type='RiskRegisterImportBatch' AND source_id=$3::text)
+                OR (source_type IN ('RiskRegisterImportBatch','RiskRegisterFocalReview') AND source_id=$3::text)
                 OR workflow_instance_id::text=ANY($4::text[])
                 OR metadata->>'riskId'=ANY($5::text[])
                 OR metadata->>'importBatchId'=$3::text`,
@@ -65,7 +65,7 @@ async function main(){
              WHERE (entity_type='Risk' AND entity_id=ANY($1::text[]))
                 OR (entity_type='Workflow' AND entity_id=ANY($2::text[]))
                 OR (entity_type='Action' AND entity_id=ANY($3::text[]))
-                OR (entity_type IN ('RiskRegisterImportBatch','Risk Import') AND entity_id=$4::text)`,
+                OR (entity_type IN ('RiskRegisterImportBatch','Risk Register Import Batch','Risk Import','Risk Register Import') AND entity_id=$4::text)`,
             [riskIds,workflowIds,actionIds,String(batch.id)]
         );
         const audits=await client.query(
@@ -73,7 +73,7 @@ async function main(){
              WHERE (entity_type='Risk' AND entity_id=ANY($1::text[]))
                 OR (entity_type='Workflow' AND entity_id=ANY($2::text[]))
                 OR (entity_type='Action' AND entity_id=ANY($3::text[]))
-                OR (entity_type='RiskRegisterImportBatch' AND entity_id=$4::text)
+                OR (entity_type IN ('RiskRegisterImportBatch','Risk Register Import Batch','Risk Register Import') AND entity_id=$4::text)
                 OR (entity_type='Risk Import'
                     AND details->>'file_name'=$5
                     AND user_id IS NOT DISTINCT FROM $6
@@ -104,6 +104,26 @@ async function main(){
             'DELETE FROM risk_register_import_batches WHERE id=$1',
             [batch.id]
         );
+        let deletedUploadGroups=0;
+        if(batch.upload_group_id){
+            const deletedGroup=await client.query(
+                `DELETE FROM risk_register_admin_upload_groups group_record
+                 WHERE group_record.id=$1
+                   AND NOT EXISTS (
+                       SELECT 1 FROM risk_register_import_batches batch_record
+                       WHERE batch_record.upload_group_id=group_record.id
+                   )`,
+                [batch.upload_group_id]
+            );
+            deletedUploadGroups=deletedGroup.rowCount;
+            if(deletedUploadGroups){
+                await client.query(
+                    `DELETE FROM audit_logs
+                     WHERE entity_type='Risk Register Import Group' AND entity_id=$1::text`,
+                    [batch.upload_group_id]
+                );
+            }
+        }
         await client.query('COMMIT');
 
         console.log(JSON.stringify({
@@ -118,6 +138,7 @@ async function main(){
             removedRisks:risks,
             deleted:{
                 importBatches:deletedBatch.rowCount,
+                uploadGroups:deletedUploadGroups,
                 risks:deletedRisks.rowCount,
                 treatmentPlans:planIds.length,
                 workflows:deletedWorkflows.rowCount,

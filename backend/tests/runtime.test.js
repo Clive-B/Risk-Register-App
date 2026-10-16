@@ -68,3 +68,19 @@ test('production rejects invalid SMTP ports and secure-mode values', () => {
     assert.ok(errors.some(error => error.includes('SMTP_PORT')));
     assert.ok(errors.some(error => error.includes('SMTP_SECURE')));
 });
+
+test('production permits only the exact configured Gmail service sender', () => {
+    const approved = productionEnvironment({
+        SMTP_HOST: 'smtp.gmail.com', SMTP_PORT: '465', SMTP_SECURE: 'true',
+        SMTP_USER: 'ncariskmanagementsystem@gmail.com', SMTP_PASSWORD: 'test-app-password',
+        SMTP_FROM: 'Risk Management System <ncariskmanagementsystem@gmail.com>',
+        SMTP_ALLOWED_EXTERNAL_SENDERS: 'ncariskmanagementsystem@gmail.com'
+    });
+    assert.deepEqual(validateProductionEnvironment(approved), []);
+
+    const unapproved = validateProductionEnvironment({ ...approved, SMTP_ALLOWED_EXTERNAL_SENDERS: '' });
+    assert.ok(unapproved.some(error => error.includes('SMTP_ALLOWED_EXTERNAL_SENDERS')));
+
+    const mismatchedUser = validateProductionEnvironment({ ...approved, SMTP_USER: 'another@gmail.com' });
+    assert.ok(mismatchedUser.some(error => error.includes('username')));
+});

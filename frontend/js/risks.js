@@ -203,6 +203,21 @@ elements.riskViewControlReview = document.getElementById("riskViewControlReview"
 elements.riskViewControlEvidence = document.getElementById("riskViewControlEvidence");
 elements.riskViewControlBasis = document.getElementById("riskViewControlBasis");
 elements.closeRiskView = document.getElementById("closeRiskView");
+elements.riskHistoryDialog = document.getElementById("riskHistoryDialog");
+elements.riskHistoryTitle = document.getElementById("riskHistoryTitle");
+elements.riskHistoryIdentity = document.getElementById("riskHistoryIdentity");
+elements.riskHistoryList = document.getElementById("riskHistoryList");
+elements.closeRiskHistory = document.getElementById("closeRiskHistory");
+elements.dismissRiskHistory = document.getElementById("dismissRiskHistory");
+elements.riskAttachmentsDialog = document.getElementById("riskAttachmentsDialog");
+elements.riskAttachmentsTitle = document.getElementById("riskAttachmentsTitle");
+elements.riskAttachmentsIdentity = document.getElementById("riskAttachmentsIdentity");
+elements.riskAttachmentsList = document.getElementById("riskAttachmentsList");
+elements.riskAttachmentUpload = document.getElementById("riskAttachmentUpload");
+elements.riskAttachmentInput = document.getElementById("riskAttachmentInput");
+elements.uploadRiskAttachment = document.getElementById("uploadRiskAttachment");
+elements.closeRiskAttachments = document.getElementById("closeRiskAttachments");
+elements.dismissRiskAttachments = document.getElementById("dismissRiskAttachments");
 elements.workplanFocalBulkBar = document.getElementById("workplanFocalBulkBar");
 elements.workplanFocalBulkTitle = document.getElementById("workplanFocalBulkTitle");
 elements.workplanFocalBulkProgress = document.getElementById("workplanFocalBulkProgress");
@@ -227,10 +242,13 @@ elements.championBulkSystemCount = document.getElementById("championBulkSystemCo
 elements.championBulkComments = document.getElementById("championBulkComments");
 elements.cancelChampionBulk = document.getElementById("cancelChampionBulk");
 elements.confirmChampionBulk = document.getElementById("confirmChampionBulk");
+state.attachmentRiskId = null;
 
 const fields = {
     risk_title: document.getElementById("risk_title"),
     risk_description: document.getElementById("risk_description"),
+    risk_source: document.getElementById("risk_source"),
+    risk_cause: document.getElementById("risk_cause"),
     risk_category: document.getElementById("risk_category"),
     directorate: document.getElementById("directorate"),
     business_unit: document.getElementById("business_unit"),
@@ -467,14 +485,47 @@ function validCorrectionDate(value) {
     return !Number.isNaN(date.getTime()) && date.toISOString().slice(0,10) === value;
 }
 
+function serverCorrectionErrorStillApplies(error,row,rows) {
+    const value = row.edited || {};
+    const message = String(error || "");
+    const editedId = String(value.risk_id || "").trim().toLowerCase();
+    const proposedId = String(row.initial_proposed?.risk_id || "").trim().toLowerCase();
+    const duplicateId = editedId && rows.filter(item => String(item.edited?.risk_id || "").trim().toLowerCase() === editedId).length > 1;
+    const has = field => Boolean(String(value[field] ?? "").trim());
+    const ratingFields = ["likelihood","impact","current_likelihood","current_impact","residual_likelihood","residual_impact"];
+    const ratingsValid = ratingFields.every(field => Number.isInteger(Number(value[field])) && Number(value[field]) >= 1 && Number(value[field]) <= 5);
+    if (/already exists/i.test(message)) return !editedId || editedId === proposedId;
+    if (/(duplicated within the workbook|unique in this upload)/i.test(message)) return duplicateId;
+    if (/risk id is required/i.test(message)) return !has("risk_id");
+    if (/risk (?:title|name) is required/i.test(message)) return !has("risk_title");
+    if (/risk description is required/i.test(message)) return !has("risk_description");
+    if (/(program|programme).+required/i.test(message)) return !has("programme_project");
+    if (/risk source is required/i.test(message)) return !has("risk_source");
+    if (/risk cause is required/i.test(message)) return !has("risk_cause");
+    if (/risk owner is required/i.test(message)) return !has("risk_owner");
+    if (/existing controls.+required/i.test(message)) return !has("existing_controls");
+    if (/mitigation plan.+required/i.test(message)) return !has("initial_mitigation_plan");
+    if (/responsible officer.+required/i.test(message)) return !has("responsible_officer");
+    if (/target completion date.+required/i.test(message)) return !has("target_completion_date");
+    if (/risk category/i.test(message)) return !CATEGORIES.includes(value.risk_category);
+    if (/risk (?:response|treatment)/i.test(message)) return !TREATMENTS.includes(value.risk_treatment);
+    if (/control effectiveness/i.test(message)) return !["Effective","Partially Effective","Ineffective","Not Assessed"].includes(value.control_effectiveness);
+    if (/control type/i.test(message)) return !["Preventive","Detective","Corrective","Mixed","Not Assessed"].includes(value.control_type);
+    if (/control design adequacy/i.test(message)) return !["Adequate","Partially Adequate","Inadequate","Not Assessed"].includes(value.control_design_adequacy);
+    if (/date identified/i.test(message)) return !validCorrectionDate(value.date_identified);
+    if (/target completion date/i.test(message)) return !validCorrectionDate(value.target_completion_date);
+    if (/control last tested date/i.test(message)) return Boolean(value.control_last_tested_date) && !validCorrectionDate(value.control_last_tested_date);
+    if (/control next review date/i.test(message)) return Boolean(value.control_next_review_date) && !validCorrectionDate(value.control_next_review_date);
+    if (/(likelihood|impact|risk score|residual score)/i.test(message)) return !ratingsValid;
+    return true;
+}
+
 function correctionErrors(row, rows) {
     const value = row.edited || {};
     const errors = [];
-    const proposedRiskId = String(row.initial_proposed?.risk_id || "").trim().toLowerCase();
     const editedRiskId = String(value.risk_id || "").trim().toLowerCase();
     (row.errors || []).forEach(error => {
-        if (/already exists/i.test(error) && editedRiskId && editedRiskId !== proposedRiskId) return;
-        errors.push(error);
+        if (serverCorrectionErrorStillApplies(error,row,rows)) errors.push(error);
     });
     const required = [
         "risk_id","risk_title","risk_description","risk_category",
@@ -487,7 +538,7 @@ function correctionErrors(row, rows) {
         if (!String(value[field] ?? "").trim()) errors.push(`${CORRECTION_LABELS[field]} is required.`);
     });
     if (String(value.risk_id || "").length > 30) errors.push("Risk ID cannot exceed 30 characters.");
-    if (rows.filter(item => String(item.edited?.risk_id || "").trim().toLowerCase() === String(value.risk_id || "").trim().toLowerCase()).length > 1) {
+    if (editedRiskId && rows.filter(item => String(item.edited?.risk_id || "").trim().toLowerCase() === editedRiskId).length > 1) {
         errors.push("Risk ID must be unique in this upload.");
     }
     if (!CATEGORIES.includes(value.risk_category)) errors.push("Select an ERM-approved risk category.");
@@ -540,7 +591,38 @@ function correctionInput(row,index,field) {
     </label>`;
 }
 
-function renderCorrectionWorkspace(preview) {
+function captureCorrectionView() {
+    const active = document.activeElement;
+    return {
+        pageX:window.scrollX,pageY:window.scrollY,scrollTop:elements.correctionWorkspace.scrollTop,
+        openRows:[...elements.correctionWorkspace.querySelectorAll('.correction-card details[open]')].map(details => details.closest('.correction-card')?.dataset.rowIndex),
+        focusRow:active?.dataset?.correctionRow || '',focusField:active?.dataset?.correctionField || '',focusConfirm:active?.dataset?.correctionConfirm || '',
+        selectionStart:typeof active?.selectionStart === 'number' ? active.selectionStart : null,
+        selectionEnd:typeof active?.selectionEnd === 'number' ? active.selectionEnd : null
+    };
+}
+
+function restoreCorrectionView(view) {
+    if (!view) return;
+    const restore = () => {
+        elements.correctionWorkspace.querySelectorAll('.correction-card details').forEach(details => {
+            details.open = view.openRows.includes(details.closest('.correction-card')?.dataset.rowIndex);
+        });
+        const controls = [...elements.correctionWorkspace.querySelectorAll('[data-correction-field],[data-correction-confirm]')];
+        const focusTarget = controls.find(control => (view.focusField && control.dataset.correctionRow === view.focusRow && control.dataset.correctionField === view.focusField) || (view.focusConfirm && control.dataset.correctionConfirm === view.focusConfirm));
+        if (focusTarget) {
+            focusTarget.focus({preventScroll:true});
+            if (view.selectionStart !== null && typeof focusTarget.setSelectionRange === 'function') focusTarget.setSelectionRange(view.selectionStart,view.selectionEnd);
+        }
+        elements.correctionWorkspace.scrollTop = view.scrollTop;
+        window.scrollTo(view.pageX,view.pageY);
+    };
+    restore();
+    window.requestAnimationFrame(restore);
+}
+
+function renderCorrectionWorkspace(preview,{preserveView=false}={}) {
+    const view = preserveView ? captureCorrectionView() : null;
     const rows = preview.rows;
     rows.forEach(row => {
         row.require_program = ["Risk Register Tracking Template","Legal Legacy Risk Register"].includes(preview.template_type);
@@ -585,7 +667,7 @@ function renderCorrectionWorkspace(preview) {
         const postScore = Number(row.edited.residual_likelihood) * Number(row.edited.residual_impact);
         const valid = row.client_errors.length === 0;
         const explanations = row.proposed_correction.corrections || [];
-        return `<article class="correction-card ${valid ? "ready" : "needs-attention"}">
+        return `<article class="correction-card ${valid ? "ready" : "needs-attention"}" data-row-index="${index}">
             <header>
                 <div>
                     <span class="correction-row-label">Excel row ${row.excel_row}${row.proposed_correction.parent_risk_id ? ` · Parent ${escapeHtml(row.proposed_correction.parent_risk_id)}` : ""}</span>
@@ -613,6 +695,7 @@ function renderCorrectionWorkspace(preview) {
     elements.confirmImportBtn.textContent = allReady
         ? `Confirm Corrections and Upload ${rows.length} Risks`
         : `Confirm ${rows.length - confirmedRows.length} Remaining Correction${rows.length - confirmedRows.length === 1 ? "" : "s"}`;
+    restoreCorrectionView(view);
 }
 
 function renderImportPreview(preview) {
@@ -666,7 +749,7 @@ function handleCorrectionWorkspaceChange(event) {
             ? Number(fieldControl.value)
             : fieldControl.value;
         row.confirmed = false;
-        renderCorrectionWorkspace(importState.preview);
+        renderCorrectionWorkspace(importState.preview,{preserveView:true});
         return;
     }
     const confirmation = event.target.closest("[data-correction-confirm]");
@@ -675,7 +758,7 @@ function handleCorrectionWorkspaceChange(event) {
         const row = importState.preview.rows[index];
         if (!row) return;
         row.confirmed = confirmation.checked && correctionErrors(row,importState.preview.rows).length === 0;
-        renderCorrectionWorkspace(importState.preview);
+        renderCorrectionWorkspace(importState.preview,{preserveView:true});
     }
 }
 
@@ -688,7 +771,7 @@ function confirmAllValidCorrections() {
         return;
     }
     rows.forEach(row => { row.confirmed = true; });
-    renderCorrectionWorkspace(importState.preview);
+    renderCorrectionWorkspace(importState.preview,{preserveView:true});
 }
 
 async function previewWorkbook(file) {
@@ -1263,7 +1346,7 @@ function getRiskActionButtons(risk) {
     const workflowStatus = risk.workflow_status || "Draft";
 
     if (canEditRisk(risk)) {
-        buttons.push(`<button class="edit-btn" type="button" data-action="edit" data-id="${risk.id}">Edit</button>`);
+        buttons.push(`<button class="edit-btn" type="button" data-action="edit" data-id="${risk.id}" aria-label="Edit ${escapeHtml(risk.risk_id)}">Edit</button>`);
     } else if (canMonitorRisk(risk)) {
         buttons.push(`<button class="edit-btn" type="button" data-action="edit" data-id="${risk.id}">Update</button>`);
     }
@@ -1361,7 +1444,7 @@ function getStatusClass(status) {
 }
 
 function calculateRiskLevel(score) {
-    return app.riskMatrix.calculateLevel(score);
+    return window.NCAGRC.riskMatrix.calculateLevel(score);
 }
 
 function updateCalculatedFields() {
@@ -1379,6 +1462,7 @@ function updateCalculatedFields() {
 
 function resetForm() {
     Object.values(fields).forEach(field => {
+        if (!field) return;
         if (field.tagName === "SELECT") {
             field.selectedIndex = 0;
         } else {
@@ -1431,12 +1515,14 @@ function openModal(risk = null) {
     updateCalculatedFields();
     elements.modal.style.display = "flex";
     elements.modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
     fields.risk_title.focus();
 }
 
 function closeModal() {
     elements.modal.style.display = "none";
     elements.modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
     state.editingRiskId = null;
     fields.likelihood.disabled=false;
     fields.impact.disabled=false;
@@ -1450,6 +1536,8 @@ function getFormPayload(workflowStatus = "Draft") {
     return {
         risk_title: fields.risk_title.value.trim(),
         risk_description: fields.risk_description.value.trim(),
+        risk_source: fields.risk_source.value.trim(),
+        risk_cause: fields.risk_cause.value.trim(),
         risk_category: fields.risk_category.value,
         directorate: fields.directorate.value,
         business_unit: fields.business_unit.value.trim(),
@@ -1623,28 +1711,90 @@ function viewRisk(id) {
 }
 
 async function showHistory(id) {
+    const risk = state.risks.find(item => Number(item.id) === Number(id));
+    if (!risk) return showToast("Risk not found.", "error");
+    elements.riskHistoryTitle.textContent = "Risk history";
+    elements.riskHistoryIdentity.textContent = `${risk.risk_id} · ${risk.risk_title}`;
+    elements.riskHistoryList.innerHTML = '<div class="nca-record-empty">Loading the governed audit trail…</div>';
+    elements.riskHistoryDialog.showModal();
     try {
         const data = await apiRequest(`/risks/${id}/history`);
-        const lines = [
-            ...(data.history || []).map(item => `${formatDate(item.changed_at)} - ${item.action}${item.comment ? `: ${item.comment}` : ""}`),
-            ...(data.reviews || []).map(item => `${formatDate(item.reviewed_at)} - ${item.decision}${item.review_comment ? `: ${item.review_comment}` : ""}`),
-            ...(data.treatment_updates || []).map(item => `${formatDate(item.created_at)} - Treatment ${item.treatment_status}${item.progress_notes ? `: ${item.progress_notes}` : ""}`)
-        ];
-        window.alert(lines.length ? lines.join("\n") : "No history recorded for this risk.");
+        const events = [
+            ...(data.history || []).map(item => ({date:item.changed_at,title:item.action,note:item.comment,actor:item.changed_by_name || "System",status:item.to_status || item.from_status,type:"Risk record"})),
+            ...(data.reviews || []).map(item => ({date:item.reviewed_at,title:`Review · ${item.decision}`,note:item.review_comment,actor:item.reviewed_by_name || "Reviewer",status:item.status,type:"Governance review"})),
+            ...(data.treatment_updates || []).map(item => ({date:item.created_at,title:`Treatment · ${item.treatment_status}`,note:item.progress_notes,actor:item.updated_by_name || "System",status:item.progress_percent === null || item.progress_percent === undefined ? "" : `${item.progress_percent}% complete`,type:"Treatment update"}))
+        ].sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0));
+        elements.riskHistoryList.innerHTML = events.length ? events.map(item => `<article class="nca-record-item">
+            <div class="nca-record-marker" aria-hidden="true"></div><div><span>${escapeHtml(item.type)}</span><h3>${escapeHtml(item.title || "Risk updated")}</h3>
+            ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ""}<small>${escapeHtml(item.actor)} · ${escapeHtml(formatDateTime(item.date))}${item.status ? ` · ${escapeHtml(item.status)}` : ""}</small></div>
+        </article>`).join("") : '<div class="nca-record-empty"><strong>No history recorded</strong><span>This risk does not yet have additional audit events.</span></div>';
     } catch (error) {
         console.error(error);
+        elements.riskHistoryDialog.close();
         showToast(error.message || "Unable to load history.", "error");
     }
 }
 
-async function showAttachments(id) {
+function formatDateTime(value) {
+    if (!value) return "Date not recorded";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "Date not recorded" : date.toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+}
+
+async function loadAttachments(id) {
     try {
         const data = await apiRequest(`/risks/${id}/attachments`);
-        const lines = (data.attachments || []).map(item => `${item.file_name} (${Math.ceil((item.file_size || 0) / 1024)} KB)`);
-        window.alert(lines.length ? lines.join("\n") : "No attachments uploaded for this risk.");
+        const attachments = data.attachments || [];
+        elements.riskAttachmentsList.innerHTML = attachments.length ? attachments.map(item => `<article class="nca-attachment-item">
+            <div class="nca-attachment-icon" aria-hidden="true">${/image/i.test(item.file_type || "") ? "IMG" : /pdf/i.test(item.file_type || "") ? "PDF" : /sheet|excel/i.test(item.file_type || "") ? "XLS" : "DOC"}</div>
+            <div><h3>${escapeHtml(item.file_name)}</h3><p>${Math.max(1,Math.ceil(Number(item.file_size || 0) / 1024))} KB · Uploaded ${escapeHtml(formatDateTime(item.uploaded_at))}</p></div>
+        </article>`).join("") : '<div class="nca-record-empty"><strong>No attachments uploaded</strong><span>Add supporting evidence using the upload control above.</span></div>';
     } catch (error) {
         console.error(error);
+        elements.riskAttachmentsDialog.close();
         showToast(error.message || "Unable to load attachments.", "error");
+    }
+}
+
+async function showAttachments(id) {
+    const risk = state.risks.find(item => Number(item.id) === Number(id));
+    if (!risk) return showToast("Risk not found.", "error");
+    state.attachmentRiskId = Number(id);
+    elements.riskAttachmentsTitle.textContent = "Risk attachments";
+    elements.riskAttachmentsIdentity.textContent = `${risk.risk_id} · ${risk.risk_title}`;
+    elements.riskAttachmentInput.value = "";
+    elements.riskAttachmentUpload.hidden = !["System Administrator","Risk Champion","Risk Focal Person"].includes(currentUser.role);
+    elements.riskAttachmentsList.innerHTML = '<div class="nca-record-empty">Loading attachments…</div>';
+    elements.riskAttachmentsDialog.showModal();
+    await loadAttachments(id);
+}
+
+function readAttachment(file) {
+    return new Promise((resolve,reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("The attachment could not be read."));
+        reader.readAsDataURL(file);
+    });
+}
+
+async function uploadRiskAttachment() {
+    const file = elements.riskAttachmentInput.files?.[0];
+    if (!file) return showToast("Choose an attachment first.", "error");
+    if (file.size > 8 * 1024 * 1024) return showToast("The attachment must be 8 MB or smaller.", "error");
+    const allowed = ["application/pdf","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document","application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","image/png","image/jpeg","image/gif","image/webp"];
+    if (file.type && !allowed.includes(file.type)) return showToast("Only PDF, Word, Excel, and image attachments are allowed.", "error");
+    try {
+        elements.uploadRiskAttachment.disabled = true;
+        const data = await readAttachment(file);
+        const response = await apiRequest(`/risks/${state.attachmentRiskId}/attachments`,{method:"POST",body:JSON.stringify({file_name:file.name,file_type:file.type,file_size:file.size,file_data:data})});
+        showToast(response.message || "Attachment uploaded successfully.");
+        elements.riskAttachmentInput.value = "";
+        await loadAttachments(state.attachmentRiskId);
+    } catch (error) {
+        showToast(error.message || "Unable to upload attachment.", "error");
+    } finally {
+        elements.uploadRiskAttachment.disabled = false;
     }
 }
 
@@ -1855,6 +2005,16 @@ function bindEvents() {
     elements.riskViewDialog.addEventListener("click", event => {
         if (event.target === elements.riskViewDialog) elements.riskViewDialog.close();
     });
+    [elements.closeRiskHistory,elements.dismissRiskHistory].forEach(button => button.addEventListener("click",() => elements.riskHistoryDialog.close()));
+    elements.riskHistoryDialog.addEventListener("click",event => {
+        if (event.target === elements.riskHistoryDialog) elements.riskHistoryDialog.close();
+    });
+    [elements.closeRiskAttachments,elements.dismissRiskAttachments].forEach(button => button.addEventListener("click",() => elements.riskAttachmentsDialog.close()));
+    elements.riskAttachmentsDialog.addEventListener("click",event => {
+        if (event.target === elements.riskAttachmentsDialog) elements.riskAttachmentsDialog.close();
+    });
+    elements.riskAttachmentsDialog.addEventListener("close",() => { state.attachmentRiskId = null; elements.riskAttachmentInput.value = ""; });
+    elements.uploadRiskAttachment.addEventListener("click",uploadRiskAttachment);
     elements.riskApprovalDialog.addEventListener("click", event => {
         if (event.target === elements.riskApprovalDialog) elements.riskApprovalDialog.close();
     });

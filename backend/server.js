@@ -69,6 +69,9 @@ app.use((req, res, next) => {
 
     next();
 });
+// Assistant requests contain only bounded text and UI metadata. Parse them with
+// a narrow limit before the application-wide JSON parser used by bulk workflows.
+app.use('/api/assistant', express.json({ limit: process.env.ASSISTANT_JSON_BODY_LIMIT || '64kb' }));
 app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '12mb' }));
 
 app.get('/api/health', async (_req, res) => {
@@ -81,6 +84,7 @@ app.get('/api/health', async (_req, res) => {
 });
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false });
+const assistantLimiter = rateLimit({ windowMs: 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
 app.use('/api/auth/reset-password', authLimiter);
@@ -101,7 +105,7 @@ app.use('/api/workplans', workplanRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/compliance-obligations', complianceRoutes);
 app.use('/api/system-settings', systemSettingsRoutes);
-app.use('/api/assistant', assistantRoutes);
+app.use('/api/assistant', assistantLimiter, assistantRoutes);
 
 app.get('/', (req, res) => {
     res.send('NCA Risk Register API is running');

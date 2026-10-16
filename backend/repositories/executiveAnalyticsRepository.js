@@ -200,7 +200,7 @@ async function board(query) {
         COALESCE(NULLIF(r.division,''),r.directorate) division,r.risk_owner,r.status,r.workflow_status,r.created_at,
         ${effectiveColumns}
         FROM risks r LEFT JOIN risk_assessment_governance g ON g.risk_id=r.id`;
-    const [allCounts, risks, treatments, emerging, strategic, compliance, audit] = await Promise.all([
+    const [allCounts, risks, treatments, emerging, strategic, compliance, audit, categories] = await Promise.all([
         pool.query(
             `SELECT COUNT(*)::int total,
                 COUNT(*) FILTER(WHERE effective_score>=17)::int high,
@@ -232,6 +232,18 @@ async function board(query) {
                AND (LOWER(a.module)='audit' OR LOWER(a.action_type) LIKE '%audit%finding%')
              ORDER BY CASE a.priority WHEN 'Critical' THEN 1 WHEN 'High' THEN 2 WHEN 'Medium' THEN 3 ELSE 4 END,
                       a.due_at NULLS LAST,a.created_at DESC LIMIT 10`
+        ),
+        pool.query(
+            `SELECT COALESCE(NULLIF(risk_category,''),'Uncategorised') risk_category,
+                    COUNT(*)::int total,
+                    COUNT(*) FILTER(WHERE effective_score>=17)::int high,
+                    COUNT(*) FILTER(WHERE effective_score BETWEEN 11 AND 16)::int medium,
+                    COUNT(*) FILTER(WHERE effective_score<=10)::int low,
+                    COUNT(*) FILTER(WHERE COALESCE(workflow_status,status)='Closed')::int closed
+             FROM (${baseSelect} ${f.where}) governed
+             GROUP BY COALESCE(NULLIF(risk_category,''),'Uncategorised')
+             ORDER BY total DESC,risk_category`,
+            f.params
         )
     ]);
     const counts = allCounts.rows[0];
@@ -243,6 +255,7 @@ async function board(query) {
         strategicRisks: strategic.rows.map(risk => ({ ...risk, risk_level: levelFor(risk.effective_score) })),
         complianceIssues: compliance.rows.map(risk => ({ ...risk, risk_level: levelFor(risk.effective_score) })),
         auditFindings: audit.rows,
+        categoryGroups: categories.rows,
         riskAppetite: {
             total: counts.total,
             high: counts.high,

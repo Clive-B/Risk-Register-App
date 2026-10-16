@@ -1,4 +1,5 @@
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
+const { isAllowedServiceSender, validateGmailConfiguration } = require('../utils/emailSenderPolicy');
 
 function truthy(value) {
     return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
@@ -65,8 +66,8 @@ function validateProductionEnvironment(env = process.env) {
 
     const from = String(env.SMTP_FROM || '').trim();
     const fromAddress = (from.match(/<([^>]+)>/) || [null, from])[1];
-    if (fromAddress && !/@nca\.org\.gh$/i.test(fromAddress)) {
-        errors.push('SMTP_FROM must use an official @nca.org.gh address.');
+    if (fromAddress && !isAllowedServiceSender(fromAddress, env)) {
+        errors.push('SMTP_FROM must use an official @nca.org.gh address or an exact address in SMTP_ALLOWED_EXTERNAL_SENDERS.');
     }
     const smtpPort = Number(env.SMTP_PORT);
     if (!Number.isInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535) {
@@ -77,6 +78,11 @@ function validateProductionEnvironment(env = process.env) {
     if (Boolean(smtpUser) !== Boolean(smtpPassword)) {
         errors.push('SMTP_USER and SMTP_PASSWORD must either both be supplied for authenticated SMTP or both be blank for an approved NCA relay.');
     }
+    const encryption = String(env.SMTP_SECURE).trim().toLowerCase() === 'true' ? 'TLS' : 'STARTTLS';
+    const gmailError = validateGmailConfiguration({
+        host: env.SMTP_HOST, port: smtpPort, username: smtpUser, senderEmail: fromAddress, encryption
+    });
+    if (gmailError) errors.push(gmailError);
     if (env.SMTP_SECURE !== undefined && !['true','false'].includes(String(env.SMTP_SECURE).trim().toLowerCase())) {
         errors.push('SMTP_SECURE must be true or false.');
     }

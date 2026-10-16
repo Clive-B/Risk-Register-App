@@ -240,9 +240,24 @@
                 </div>
             </section>
 
+            <section id="riskBatchSection" class="form-section risk-batch-section hidden" aria-labelledby="riskBatchHeading">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="riskBatchHeading">Multiple Risk Submission</h2>
+                        <span>Add each completed risk to this review list, then submit the complete batch together.</span>
+                    </div>
+                    <span id="riskBatchCount" class="batch-count">0 risks</span>
+                </div>
+                <div id="riskBatchList" class="risk-batch-list">
+                    <p class="history-empty">No risks have been added to this batch.</p>
+                </div>
+            </section>
+
             <div class="action-bar">
                 <button id="cancelBtn" class="cancel-btn" type="button">Cancel</button>
                 <button id="saveDraftBtn" class="save-btn" type="button">Save Draft</button>
+                <button id="addToBatchBtn" class="cancel-btn hidden" type="button">Add Risk to Batch</button>
+                <button id="submitBatchBtn" class="save-btn hidden" type="button" disabled>Submit Batch (0)</button>
                 <button id="submitBtn" class="save-btn" type="button">Submit for Approval</button>
                 <button id="saveMonitoringBtn" class="save-btn hidden" type="button">Save Monitoring Update</button>
                 <button id="closeRiskBtn" class="delete-btn hidden" type="button">Close Risk</button>
@@ -258,9 +273,9 @@
 
 <script src="../js/app.js?v=7"></script>
 <script src="../js/authGuard.js"></script>
-<script src="../js/sidebar.js?v=20260728-1"></script>
+<script src="../js/sidebar.js?v=20261006-1"></script>
 <script src="../js/erm-assessment-rules.js?v=1"></script>
-<script src="../js/create-risk.js?v=6"></script>
+<script src="../js/create-risk.js?v=7"></script>
 </body>
 
 </html>

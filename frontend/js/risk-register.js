@@ -113,16 +113,46 @@
         return !Number.isNaN(date.getTime()) && date.toISOString().slice(0,10) === value;
     }
 
+    function serverErrorStillApplies(error,row,rows) {
+        const value = row.edited || {};
+        const message = String(error || "");
+        const editedId = String(value.risk_id || "").trim().toLowerCase();
+        const proposedId = String(row.initial_proposed?.risk_id || "").trim().toLowerCase();
+        const duplicateId = editedId && rows.filter(item => String(item.edited?.risk_id || "").trim().toLowerCase() === editedId).length > 1;
+        const has = field => Boolean(String(value[field] ?? "").trim());
+        const ratingsValid = RATING_FIELDS.every(field => Number.isInteger(Number(value[field])) && Number(value[field]) >= 1 && Number(value[field]) <= 5);
+        if (/already exists/i.test(message)) return !editedId || editedId === proposedId;
+        if (/(duplicated within the workbook|unique in this upload)/i.test(message)) return duplicateId;
+        if (/risk id is required/i.test(message)) return !has("risk_id");
+        if (/risk (?:title|name) is required/i.test(message)) return !has("risk_title");
+        if (/risk description is required/i.test(message)) return !has("risk_description");
+        if (/(program|programme).+required/i.test(message)) return !has("programme_project");
+        if (/risk source is required/i.test(message)) return !has("risk_source");
+        if (/risk cause is required/i.test(message)) return !has("risk_cause");
+        if (/risk owner is required/i.test(message)) return !has("risk_owner");
+        if (/existing controls.+required/i.test(message)) return !has("existing_controls");
+        if (/mitigation plan.+required/i.test(message)) return !has("initial_mitigation_plan");
+        if (/responsible officer.+required/i.test(message)) return !has("responsible_officer");
+        if (/target completion date.+required/i.test(message)) return !has("target_completion_date");
+        if (/risk category/i.test(message)) return !CATEGORIES.includes(value.risk_category);
+        if (/risk (?:response|treatment)/i.test(message)) return !TREATMENTS.includes(value.risk_treatment);
+        if (/control effectiveness/i.test(message)) return !CONTROL_EFFECTIVENESS.includes(value.control_effectiveness);
+        if (/control type/i.test(message)) return !CONTROL_TYPES.includes(value.control_type);
+        if (/control design adequacy/i.test(message)) return !DESIGN_ADEQUACY.includes(value.control_design_adequacy);
+        if (/date identified/i.test(message)) return !validDate(value.date_identified);
+        if (/target completion date/i.test(message)) return !validDate(value.target_completion_date);
+        if (/control last tested date/i.test(message)) return Boolean(value.control_last_tested_date) && !validDate(value.control_last_tested_date);
+        if (/control next review date/i.test(message)) return Boolean(value.control_next_review_date) && !validDate(value.control_next_review_date);
+        if (/(likelihood|impact|risk score|residual score)/i.test(message)) return !ratingsValid;
+        return true;
+    }
+
     function correctionErrors(row,rows) {
         const value = row.edited || {};
         const errors = [];
-        const proposedId = String(row.initial_proposed?.risk_id || "").trim().toLowerCase();
         const editedId = String(value.risk_id || "").trim().toLowerCase();
         (row.errors || []).forEach(error => {
-            if (/already exists/i.test(error) && editedId && editedId !== proposedId) return;
-            if (/(select an ERM-approved risk response|select a valid risk response)/i.test(error)
-                && TREATMENTS.includes(value.risk_treatment)) return;
-            errors.push(error);
+            if (serverErrorStillApplies(error,row,rows)) errors.push(error);
         });
         const required = ["risk_id","risk_title","risk_description","risk_category","date_identified","risk_owner","risk_treatment","existing_controls","initial_mitigation_plan","responsible_officer","target_completion_date"];
         if (row.require_program) required.push("programme_project");
@@ -131,7 +161,7 @@
             if (!String(value[field] ?? "").trim()) errors.push(`${LABELS[field]} is required.`);
         });
         if (String(value.risk_id || "").length > 30) errors.push("Risk ID cannot exceed 30 characters.");
-        if (rows.filter(item => String(item.edited?.risk_id || "").trim().toLowerCase() === editedId).length > 1) errors.push("Risk ID must be unique in this upload.");
+        if (editedId && rows.filter(item => String(item.edited?.risk_id || "").trim().toLowerCase() === editedId).length > 1) errors.push("Risk ID must be unique in this upload.");
         if (!CATEGORIES.includes(value.risk_category)) errors.push("Select an ERM-approved risk category.");
         if (!TREATMENTS.includes(value.risk_treatment)) errors.push("Select an ERM-approved risk response.");
         if (!CONTROL_EFFECTIVENESS.includes(value.control_effectiveness)) errors.push("Select a governed control-effectiveness value.");
@@ -156,6 +186,7 @@
     function correctionInput(row,index,field) {
         const value = row.edited?.[field] ?? "";
         const original = row.original?.[field];
+        const systemSuggested = (original === null || original === undefined || String(original).trim() === "") && value !== null && String(value).trim() !== "";
         const originalText = original === null || original === undefined || String(original).trim() === "" ? "Blank in workbook" : `Original: ${escapeHtml(original)}`;
         const attributes = `data-correction-row="${index}" data-correction-field="${field}"`;
         let control = "";
@@ -167,7 +198,7 @@
         else if (RATING_FIELDS.includes(field)) control = `<select ${attributes}>${options([1,2,3,4,5],value)}</select>`;
         else if (LONG_FIELDS.includes(field)) control = `<textarea rows="${field === "risk_description" ? 4 : 3}" ${attributes}>${escapeHtml(value)}</textarea>`;
         else control = `<input type="${DATE_FIELDS.includes(field) ? "date" : "text"}" value="${escapeHtml(value)}" ${attributes}>`;
-        return `<label class="correction-field ${LONG_FIELDS.includes(field) ? "wide" : ""}"><span>${escapeHtml(LABELS[field])}</span>${control}<small>${originalText}</small></label>`;
+        return `<label class="correction-field ${LONG_FIELDS.includes(field) ? "wide" : ""}"><span>${escapeHtml(LABELS[field])}${systemSuggested ? '<em class="system-suggested">System suggested</em>' : ''}</span>${control}<small>${originalText}</small></label>`;
     }
 
     function initialiseRows(preview) {
@@ -190,7 +221,38 @@
         });
     }
 
-    function renderCorrectionWorkspace(preview) {
+    function captureCorrectionView() {
+        const active = document.activeElement;
+        return {
+            pageX:window.scrollX,pageY:window.scrollY,scrollTop:elements.workspace.scrollTop,
+            openRows:[...elements.workspace.querySelectorAll('.correction-card details[open]')].map(details => details.closest('.correction-card')?.dataset.rowIndex),
+            focusRow:active?.dataset?.correctionRow || '',focusField:active?.dataset?.correctionField || '',focusConfirm:active?.dataset?.correctionConfirm || '',
+            selectionStart:typeof active?.selectionStart === 'number' ? active.selectionStart : null,
+            selectionEnd:typeof active?.selectionEnd === 'number' ? active.selectionEnd : null
+        };
+    }
+
+    function restoreCorrectionView(view) {
+        if (!view) return;
+        const restore = () => {
+            elements.workspace.querySelectorAll('.correction-card details').forEach(details => {
+                details.open = view.openRows.includes(details.closest('.correction-card')?.dataset.rowIndex);
+            });
+            const controls = [...elements.workspace.querySelectorAll('[data-correction-field],[data-correction-confirm]')];
+            const focusTarget = controls.find(control => (view.focusField && control.dataset.correctionRow === view.focusRow && control.dataset.correctionField === view.focusField) || (view.focusConfirm && control.dataset.correctionConfirm === view.focusConfirm));
+            if (focusTarget) {
+                focusTarget.focus({preventScroll:true});
+                if (view.selectionStart !== null && typeof focusTarget.setSelectionRange === 'function') focusTarget.setSelectionRange(view.selectionStart,view.selectionEnd);
+            }
+            elements.workspace.scrollTop = view.scrollTop;
+            window.scrollTo(view.pageX,view.pageY);
+        };
+        restore();
+        window.requestAnimationFrame(restore);
+    }
+
+    function renderCorrectionWorkspace(preview,{preserveView=false}={}) {
+        const view = preserveView ? captureCorrectionView() : null;
         initialiseRows(preview);
         const rows = preview.rows;
         const validRows = rows.filter(row => row.client_errors.length === 0);
@@ -219,7 +281,7 @@
             const pre = Number(row.edited.likelihood) * Number(row.edited.impact);
             const current = Number(row.edited.current_likelihood) * Number(row.edited.current_impact);
             const post = Number(row.edited.residual_likelihood) * Number(row.edited.residual_impact);
-            return `<article class="correction-card ${valid ? "ready" : "needs-attention"}">
+            return `<article class="correction-card ${valid ? "ready" : "needs-attention"}" data-row-index="${index}">
                 <header><div><span class="correction-row-label">Excel row ${row.excel_row}${row.proposed_correction?.parent_risk_id ? ` · Parent ${escapeHtml(row.proposed_correction.parent_risk_id)}` : ""}</span><h4>${escapeHtml(row.edited.risk_id)} · ${escapeHtml(row.edited.risk_title)}</h4></div>
                 <span class="preview-status ${valid ? "valid" : "invalid"}">${valid ? (row.confirmed ? "Confirmed" : "Ready to confirm") : `${row.client_errors.length} issue${row.client_errors.length === 1 ? "" : "s"}`}</span></header>
                 <details${!valid || index === 0 ? " open" : ""}><summary>Review the proposed correction and explanation <strong>Pre ${pre || "—"} · Current ${current || "—"} · Post ${post || "—"}</strong></summary>
@@ -242,6 +304,7 @@
             const remaining = rows.length - confirmedRows.length;
             elements.admit.textContent = `Confirm ${remaining} Remaining Correction${remaining === 1 ? "" : "s"}`;
         }
+        restoreCorrectionView(view);
     }
 
     function renderPreview(preview) {
@@ -367,7 +430,7 @@
             if (!row) return;
             row.edited[field.dataset.correctionField] = RATING_FIELDS.includes(field.dataset.correctionField) ? Number(field.value) : field.value;
             row.confirmed = false;
-            renderCorrectionWorkspace(state.preview);
+            renderCorrectionWorkspace(state.preview,{preserveView:true});
             return;
         }
         const confirmation = event.target.closest("[data-correction-confirm]");
@@ -375,7 +438,7 @@
             const row = state.preview.rows[Number(confirmation.dataset.correctionConfirm)];
             if (!row) return;
             row.confirmed = confirmation.checked && correctionErrors(row,state.preview.rows).length === 0;
-            renderCorrectionWorkspace(state.preview);
+            renderCorrectionWorkspace(state.preview,{preserveView:true});
         }
     });
     elements.confirmAll.addEventListener("click",() => {
@@ -387,7 +450,7 @@
             return;
         }
         validRows.forEach(row => { row.confirmed = true; });
-        renderCorrectionWorkspace(state.preview);
+        renderCorrectionWorkspace(state.preview,{preserveView:true});
         const invalidCount = state.preview.rows.length - validRows.length;
         showToast(
             invalidCount

@@ -7,6 +7,9 @@ $postgresData = 'C:\tmp\nca-grc-test-pgdata'
 $localState = Join-Path $projectRoot '.local'
 New-Item -ItemType Directory -Path $localState -Force | Out-Null
 $stateFile = Join-Path $localState 'test-servers.json'
+$env:AI_VOICE_GREETING_ENABLED = 'true'
+$env:AI_VOICE_ENABLED = 'true'
+$env:AI_VOICE_AUTO_START_ENABLED = 'true'
 
 try {
     $runningApi = Invoke-RestMethod 'http://127.0.0.1:3000/api/health' -TimeoutSec 2

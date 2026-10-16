@@ -31,6 +31,7 @@ localStorage.removeItem("token");
 localStorage.removeItem("user");
 localStorage.removeItem("refreshToken");
 localStorage.removeItem("sessionExpiresAt");
+sessionStorage.removeItem("ncaGrcManualReminderPending");
 
 const forgotModal=document.getElementById('forgotModal');
 document.getElementById('forgotPasswordLink').addEventListener('click',e=>{e.preventDefault();forgotModal.style.display='flex';document.getElementById('resetEmail').focus();});
@@ -80,6 +81,7 @@ loginForm.addEventListener("submit", async function (e) {
 
         // Save user
         localStorage.setItem("user", JSON.stringify(data.user));
+        sessionStorage.setItem("ncaGrcManualReminderPending", "true");
 
         // Redirect to the role-aware, personalized dashboard shell.
         if (data.mustChangePassword) {

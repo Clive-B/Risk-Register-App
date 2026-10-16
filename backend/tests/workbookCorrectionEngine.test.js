@@ -76,3 +76,28 @@ test('generated post-mitigation targets start from the current assessment', () =
     assert.equal(result.values.residual_likelihood, 2);
     assert.equal(result.values.residual_impact, 1);
 });
+
+test('Template 3 proposes contextual values or governed review prompts for every missing field', () => {
+    const original = {
+        risk_id:null,programme_project:'Network resilience programme',risk_title:'Service outage risk',
+        risk_description:'A recurring network outage could interrupt regulated services.',risk_source:null,risk_cause:null,
+        risk_category:null,date_identified:null,risk_owner:null,likelihood:null,impact:null,risk_treatment:null,
+        current_likelihood:null,current_impact:null,residual_likelihood:null,residual_impact:null,
+        existing_controls:null,control_type:null,control_owner:null,control_design_adequacy:null,
+        control_evidence:null,control_last_tested_date:null,control_exceptions:null,control_next_review_date:null,
+        control_effectiveness:null,control_assessment_basis:null,initial_mitigation_plan:null,
+        responsible_officer:null,target_completion_date:null
+    };
+    const result = buildWorkbookCorrectionProposal({
+        row:{excel_row:13,original_data:original,corrections:[]},
+        risk:{...original,directorate:'Information Technology',division:'Information Technology'},
+        templateType:'Division Risk Register Tracker'
+    });
+
+    const missingFields = Object.entries(original).filter(([,value]) => value === null).map(([field]) => field);
+    missingFields.forEach(field => assert.ok(result.corrections.some(rule => rule.field === field),`${field} should have a governed suggestion`));
+    assert.match(result.values.risk_id,/^IT-RSK-/);
+    assert.equal(result.values.risk_treatment,'Treat');
+    assert.equal(result.values.control_effectiveness,'Not Assessed');
+    assert.equal(result.values.control_last_tested_date,null);
+});
